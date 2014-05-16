@@ -12,6 +12,7 @@ Submodules
 * `dataviews.tests.testviews <dataviews.tests.testviews-module.html>`_
 * `dataviews.tests.testboundingregion <dataviews.tests.testboundingregion-module.html>`_
 * `dataviews.tests.testndmapping <dataviews.tests.testndmapping-module.html>`_
+* `dataviews.tests.testmagics <dataviews.tests.testmagics-module.html>`_
 
 
 Module
