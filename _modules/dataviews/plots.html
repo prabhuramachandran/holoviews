@@ -27,7 +27,7 @@
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../../_static/custom.js"></script>
     <link rel="top" title="DataViews" href="../../index.html" />
-    <link rel="up" title="dataviews" href="../dataviews.html" /> 
+    <link rel="up" title="Module code" href="../index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -50,8 +50,7 @@
 
 
 
-          <li><a href="../index.html" >Module code</a> &raquo;</li>
-          <li><a href="../dataviews.html" accesskey="U">dataviews</a> &raquo;</li>
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li>
 
 </ul></li>
 
@@ -67,7 +66,7 @@
   <h1>Source code for dataviews.plots</h1><div class="highlight"><pre>
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">unicode_literals</span>
 
-<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">copy</span>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">groupby</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
@@ -81,15 +80,74 @@
 
 <span class="kn">import</span> <span class="nn">param</span>
 
-<span class="kn">from</span> <span class="nn">.dataviews</span> <span class="kn">import</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">Stack</span><span class="p">,</span> <span class="n">Table</span><span class="p">,</span> <span class="n">TableStack</span>
-<span class="kn">from</span> <span class="nn">.dataviews</span> <span class="kn">import</span> <span class="n">DataStack</span><span class="p">,</span> <span class="n">DataOverlay</span><span class="p">,</span> <span class="n">DataLayer</span><span class="p">,</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">Histogram</span>
+<span class="kn">from</span> <span class="nn">.dataviews</span> <span class="kn">import</span> <span class="n">DataStack</span><span class="p">,</span> <span class="n">DataOverlay</span><span class="p">,</span> <span class="n">DataLayer</span><span class="p">,</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">,</span>\
+    <span class="n">Table</span><span class="p">,</span> <span class="n">TableStack</span><span class="p">,</span> <span class="n">Scatter</span>
 <span class="kn">from</span> <span class="nn">.sheetviews</span> <span class="kn">import</span> <span class="n">SheetView</span><span class="p">,</span> <span class="n">SheetOverlay</span><span class="p">,</span> <span class="n">Contours</span><span class="p">,</span> \
                        <span class="n">SheetStack</span><span class="p">,</span> <span class="n">Points</span><span class="p">,</span> <span class="n">CoordinateGrid</span><span class="p">,</span> <span class="n">DataGrid</span>
-<span class="kn">from</span> <span class="nn">.views</span> <span class="kn">import</span> <span class="n">GridLayout</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">View</span><span class="p">,</span> <span class="n">Annotation</span>
-<span class="kn">from</span> <span class="nn">.operation</span> <span class="kn">import</span> <span class="n">RGBA</span><span class="p">,</span> <span class="n">HCS</span><span class="p">,</span> <span class="n">AlphaOverlay</span>
+<span class="kn">from</span> <span class="nn">.views</span> <span class="kn">import</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">Stack</span><span class="p">,</span> <span class="n">GridLayout</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">View</span><span class="p">,</span> <span class="n">Annotation</span>
 
 
-<div class="viewcode-block" id="Plot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.Plot">[docs]</a><span class="k">class</span> <span class="nc">Plot</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">PlotSaver</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">ParameterizedFunction</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parameterized function for saving the plot of a View object to</span>
+<span class="sd">    disk either as a static figure or as an animation. Keywords that</span>
+<span class="sd">    are not parameters are passed into the anim method of the</span>
+<span class="sd">    appropriate plot for animations and into matplotlib.figure.savefig</span>
+<span class="sd">    for static figures.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">size</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">NumericTuple</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">      The matplotlib figure size in inches.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">allow_None</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">      This is the filename of the saved file. The output file type</span>
+<span class="s">      will be inferred from the file extension.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">anim_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;.webm&#39;</span><span class="p">:({},</span> <span class="p">[</span><span class="s">&#39;-vcodec&#39;</span><span class="p">,</span> <span class="s">&#39;libvpx&#39;</span><span class="p">,</span> <span class="s">&#39;-b&#39;</span><span class="p">,</span> <span class="s">&#39;1000k&#39;</span><span class="p">]),</span>
+                 <span class="s">&#39;.mp4&#39;</span><span class="p">:({</span><span class="s">&#39;codec&#39;</span><span class="p">:</span><span class="s">&#39;libx264&#39;</span><span class="p">},</span> <span class="p">[</span><span class="s">&#39;-pix_fmt&#39;</span><span class="p">,</span> <span class="s">&#39;yuv420p&#39;</span><span class="p">]),</span>
+                 <span class="s">&#39;.gif&#39;</span><span class="p">:({</span><span class="s">&#39;fps&#39;</span><span class="p">:</span><span class="mi">10</span><span class="p">},</span> <span class="p">[])},</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The arguments to matplotlib.animation.save for different</span>
+<span class="s">        animation formats. The key is the file extension and the tuple</span>
+<span class="s">        consists of the kwargs followed by a list of arguments for the</span>
+<span class="s">        &#39;extra_args&#39; keyword argument.&quot;&quot;&quot;</span> <span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="n">anim_exts</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;.webm&#39;</span><span class="p">,</span> <span class="s">&#39;.mp4&#39;</span><span class="p">,</span> <span class="s">&#39;gif&#39;</span><span class="p">]</span>
+        <span class="n">image_exts</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;.png&#39;</span><span class="p">,</span> <span class="s">&#39;.jpg&#39;</span><span class="p">,</span> <span class="s">&#39;.svg&#39;</span><span class="p">]</span>
+        <span class="n">writers</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;.mp4&#39;</span><span class="p">:</span> <span class="s">&#39;ffmpeg&#39;</span><span class="p">,</span> <span class="s">&#39;.webm&#39;</span><span class="p">:</span><span class="s">&#39;ffmpeg&#39;</span><span class="p">,</span> <span class="s">&#39;.gif&#39;</span><span class="p">:</span><span class="s">&#39;imagemagick&#39;</span><span class="p">}</span>
+        <span class="n">supported_extensions</span> <span class="o">=</span> <span class="n">image_exts</span> <span class="o">+</span> <span class="n">anim_exts</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ParamOverrides</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">allow_extra_keywords</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Please supply a suitable filename.&quot;</span><span class="p">)</span>
+
+        <span class="n">_</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ext</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">supported_extensions</span><span class="p">:</span>
+            <span class="n">valid_exts</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">supported_extensions</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;File of type </span><span class="si">%r</span><span class="s"> not in </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ext</span><span class="p">,</span> <span class="n">valid_exts</span><span class="p">))</span>
+        <span class="n">file_format</span> <span class="o">=</span> <span class="n">ext</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="n">plottype</span> <span class="o">=</span> <span class="n">Plot</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">view</span><span class="p">)]</span>
+        <span class="n">plotopts</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">plotting</span><span class="p">(</span><span class="n">view</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span>
+        <span class="n">plot</span> <span class="o">=</span> <span class="n">plottype</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">plotopts</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">anim_exts</span><span class="p">:</span>
+            <span class="n">anim_kwargs</span><span class="p">,</span> <span class="n">extra_args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">anim_opts</span><span class="p">[</span><span class="n">ext</span><span class="p">]</span>
+            <span class="n">anim</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">anim</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">extra_keywords</span><span class="p">())</span>
+            <span class="n">anim</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">writer</span><span class="o">=</span><span class="n">writers</span><span class="p">[</span><span class="n">ext</span><span class="p">],</span>
+                      <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">anim_kwargs</span><span class="p">,</span> <span class="n">extra_args</span><span class="o">=</span><span class="n">extra_args</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Invalid extension </span><span class="si">%r</span><span class="s"> for animation.&quot;</span> <span class="o">%</span> <span class="n">ext</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">anim_exts</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Invalid extension </span><span class="si">%r</span><span class="s"> for figure.&quot;</span> <span class="o">%</span> <span class="n">ext</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">plot</span><span class="p">()</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">format</span><span class="o">=</span><span class="n">file_format</span><span class="p">,</span>
+                           <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">extra_keywords</span><span class="p">())</span>
+
+
+<div class="viewcode-block" id="Plot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.Plot">[docs]</a><span class="k">class</span> <span class="nc">Plot</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A Plot object returns either a matplotlib figure object (when</span>
 <span class="sd">    called or indexed) or a matplotlib animation object as</span>
@@ -107,6 +165,9 @@
 
     <span class="n">show_grid</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">      Whether to show a Cartesian grid on the plot.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">show_legend</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">      Whether to show legend for the plot.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">show_title</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">      Whether to display the plot title.&quot;&quot;&quot;</span><span class="p">)</span>
@@ -135,6 +196,13 @@
 
     <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">Stack</span>
 
+    <span class="c"># A mapping from View types to their corresponding plot types</span>
+    <span class="n">defaults</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c"># A mapping from View types to their corresponding side plot types</span>
+    <span class="n">sideplots</span> <span class="o">=</span> <span class="p">{}</span>
+
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Plot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">=</span> <span class="n">zorder</span>
@@ -156,18 +224,18 @@
         <span class="k">return</span> <span class="n">stack</span>
 
 
-    <span class="k">def</span> <span class="nf">_format_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">view</span><span class="o">.</span><span class="n">title</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_format_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">key</span><span class="p">,</span> <span class="n">view</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">items</span><span class="p">()[</span><span class="n">n</span><span class="p">]</span>
+        <span class="n">title_format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">get_title</span><span class="p">(</span><span class="n">key</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">key</span><span class="p">,),</span> <span class="n">view</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">title_format</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">None</span>
-        <span class="n">format_dict</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="s">&#39;{label}&#39;</span> <span class="ow">in</span> <span class="n">view</span><span class="o">.</span><span class="n">title</span><span class="p">:</span> <span class="n">format_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
-        <span class="k">if</span> <span class="s">&#39;{type}&#39;</span> <span class="ow">in</span> <span class="n">view</span><span class="o">.</span><span class="n">title</span><span class="p">:</span> <span class="n">format_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">view</span><span class="o">.</span><span class="n">title</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">format_dict</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">title_format</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+                                   <span class="nb">type</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
 
 
-    <span class="k">def</span> <span class="nf">_update_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_update_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_title</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">title</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
 
@@ -253,13 +321,13 @@
 <span class="sd">        Get the matplotlib figure at the given frame number.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">frame</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&quot;Showing last frame available: </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Showing last frame available: </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">update_frame</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="Plot.anim"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.Plot.anim">[docs]</a>    <span class="k">def</span> <span class="nf">anim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
+<div class="viewcode-block" id="Plot.anim"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.Plot.anim">[docs]</a>    <span class="k">def</span> <span class="nf">anim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">30</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Method to return an Matplotlib animation. The start and stop</span>
 <span class="sd">        frames may be specified as well as the fps.</span>
@@ -274,7 +342,7 @@
         <span class="k">return</span> <span class="n">anim</span>
 
 </div>
-<div class="viewcode-block" id="Plot.update_frame"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.Plot.update_frame">[docs]</a>    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+<div class="viewcode-block" id="Plot.update_frame"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.Plot.update_frame">[docs]</a>    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Set the plot(s) to the given frame number.  Operates by</span>
 <span class="sd">        manipulating the matplotlib objects held in the self._handles</span>
@@ -315,11 +383,11 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">contours</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">contours</span><span class="p">,</span> <span class="n">Contours</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">ContourPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
+        <span class="bp">self</span><span class="o">.</span><span class="n">aspect</span> <span class="o">=</span> <span class="s">&#39;equal&#39;</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="n">lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
-        <span class="n">title</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="s">&#39;y&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">lbrt</span><span class="p">())</span>
         <span class="n">line_segments</span> <span class="o">=</span> <span class="n">LineCollection</span><span class="p">(</span><span class="n">lines</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span>
                                        <span class="o">**</span><span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">lines</span><span class="p">)[</span><span class="n">cyclic_index</span><span class="p">])</span>
@@ -333,12 +401,12 @@
         <span class="n">n</span> <span class="o">=</span> <span class="n">n</span>  <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="n">contours</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;line_segments&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_paths</span><span class="p">(</span><span class="n">contours</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">contours</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
 
 
 
-<div class="viewcode-block" id="AnnotationPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.AnnotationPlot">[docs]</a><span class="k">class</span> <span class="nc">AnnotationPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+<div class="viewcode-block" id="AnnotationPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.AnnotationPlot">[docs]</a><span class="k">class</span> <span class="nc">AnnotationPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Draw the Annotation view on the supplied axis. Supports axis</span>
 <span class="sd">    vlines, hlines, arrows (with or without labels), boxes and</span>
@@ -347,7 +415,8 @@
 <span class="sd">    Annotations may only be used as part of Overlays.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;linewidth&#39;</span><span class="p">,</span>
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;edgecolors&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;facecolors&#39;</span><span class="p">,</span> <span class="s">&#39;linewidth&#39;</span><span class="p">,</span>
                                      <span class="s">&#39;linestyle&#39;</span><span class="p">,</span> <span class="s">&#39;rotation&#39;</span><span class="p">,</span> <span class="s">&#39;family&#39;</span><span class="p">,</span>
                                      <span class="s">&#39;weight&#39;</span><span class="p">,</span> <span class="s">&#39;fontsize&#39;</span><span class="p">,</span> <span class="s">&#39;visible&#39;</span><span class="p">],</span>
                             <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
@@ -480,7 +549,8 @@
 </div>
 <span class="k">class</span> <span class="nc">PointPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
 
-    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;marker&#39;</span><span class="p">,</span> <span class="s">&#39;s&#39;</span><span class="p">,</span> <span class="s">&#39;visible&#39;</span><span class="p">],</span>
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;edgecolors&#39;</span><span class="p">,</span> <span class="s">&#39;facecolors&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;linewidth&#39;</span><span class="p">,</span> <span class="s">&#39;marker&#39;</span><span class="p">,</span> <span class="s">&#39;s&#39;</span><span class="p">,</span> <span class="s">&#39;visible&#39;</span><span class="p">],</span>
                             <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">     The style options for PointPlot match those of matplotlib&#39;s</span>
 <span class="s">     scatter plot command.&quot;&quot;&quot;</span><span class="p">)</span>
@@ -494,7 +564,7 @@
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="n">points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
-        <span class="n">title</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="s">&#39;y&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">lbrt</span><span class="p">())</span>
 
         <span class="n">scatterplot</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
@@ -510,7 +580,7 @@
         <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="n">points</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;scatter&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_offsets</span><span class="p">(</span><span class="n">points</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">points</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
 
 
@@ -537,7 +607,7 @@
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
         <span class="n">sheetview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
         <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">lbrt</span><span class="p">()</span>
-        <span class="n">title</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="n">sheetview</span><span class="p">)</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="s">&#39;y&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
 
         <span class="n">opts</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">sheetview</span><span class="p">)[</span><span class="n">cyclic_index</span><span class="p">]</span>
@@ -563,31 +633,20 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize_individually</span><span class="p">:</span>
             <span class="n">im</span><span class="o">.</span><span class="n">set_clim</span><span class="p">(</span><span class="n">sheetview</span><span class="o">.</span><span class="n">range</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">sheetview</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
 
         <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
 
 
 
-<div class="viewcode-block" id="SheetPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.SheetPlot">[docs]</a><span class="k">class</span> <span class="nc">SheetPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+<div class="viewcode-block" id="OverlayPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.OverlayPlot">[docs]</a><span class="k">class</span> <span class="nc">OverlayPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A generic plot that visualizes SheetOverlays which themselves may</span>
-<span class="sd">    contain SheetLayers of type SheetView, Points or Contour objects.</span>
+<span class="sd">    An OverlayPlot supports processing of channel operations on</span>
+<span class="sd">    Overlays across stacks. SheetPlot and CoordinateGridPlot are</span>
+<span class="sd">    examples of OverlayPlots.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-
-    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">     SheetPlot renders overlay layers which individually have style</span>
-<span class="s">     options but SheetPlot itself does not.&quot;&quot;&quot;</span><span class="p">)</span>
-
-    <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">SheetStack</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">overlays</span><span class="p">,</span> <span class="n">SheetOverlay</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_channels</span><span class="p">(</span><span class="n">stack</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">plots</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">SheetPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
+    <span class="n">_abstract</span> <span class="o">=</span> <span class="bp">True</span>
 
     <span class="k">def</span> <span class="nf">_collapse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="n">style_key</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -604,7 +663,7 @@
             <span class="n">layer_labels</span> <span class="o">=</span> <span class="n">overlay</span><span class="o">.</span><span class="n">labels</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">pattern</span><span class="p">)</span><span class="o">+</span><span class="n">i</span><span class="p">]</span>
             <span class="n">matching</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">l</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">layer_labels</span><span class="p">,</span> <span class="n">pattern</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">matching</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">layer_labels</span><span class="p">)</span><span class="o">==</span><span class="nb">len</span><span class="p">(</span><span class="n">pattern</span><span class="p">):</span>
-                <span class="n">views</span> <span class="o">=</span> <span class="p">[</span><span class="n">overlay</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">layer_labels</span><span class="p">]</span>
+                <span class="n">views</span> <span class="o">=</span> <span class="p">[</span><span class="n">el</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="o">.</span><span class="n">data</span> <span class="k">if</span> <span class="n">el</span><span class="o">.</span><span class="n">label</span> <span class="ow">in</span> <span class="n">layer_labels</span><span class="p">]</span>
                 <span class="n">overlay_slice</span> <span class="o">=</span> <span class="n">SheetOverlay</span><span class="p">(</span><span class="n">views</span><span class="p">,</span> <span class="n">overlay</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>
                 <span class="n">collapsed_view</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="n">overlay_slice</span><span class="p">)</span>
                 <span class="n">collapsed_views</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">collapsed_view</span><span class="p">)</span>
@@ -641,15 +700,36 @@
             <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">sorted_customized</span> <span class="o">+</span> <span class="n">sorted_reductions</span><span class="p">:</span>
                 <span class="n">channel</span> <span class="o">=</span> <span class="n">SheetOverlay</span><span class="o">.</span><span class="n">channels</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
                 <span class="k">if</span> <span class="n">channel</span><span class="o">.</span><span class="n">mode</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">continue</span>
-                <span class="n">collapse_fn</span> <span class="o">=</span> <span class="n">channel_modes</span><span class="p">[</span><span class="n">channel</span><span class="o">.</span><span class="n">mode</span><span class="p">]</span>
+                <span class="n">collapse_fn</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="n">operation</span>
                 <span class="n">fn</span> <span class="o">=</span> <span class="n">collapse_fn</span><span class="o">.</span><span class="n">instance</span><span class="p">(</span><span class="o">**</span><span class="n">channel</span><span class="o">.</span><span class="n">opts</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_collapse</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">channel</span><span class="o">.</span><span class="n">pattern</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">stack</span>
 
 
+</div>
+<div class="viewcode-block" id="SheetPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.SheetPlot">[docs]</a><span class="k">class</span> <span class="nc">SheetPlot</span><span class="p">(</span><span class="n">OverlayPlot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A generic plot that visualizes SheetOverlays which themselves may</span>
+<span class="sd">    contain SheetLayers of type SheetView, Points or Contour objects.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">     SheetPlot renders overlay layers which individually have style</span>
+<span class="s">     options but SheetPlot itself does not.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">SheetStack</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">overlays</span><span class="p">,</span> <span class="n">SheetOverlay</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_channels</span><span class="p">(</span><span class="n">stack</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plots</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SheetPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="s">&#39;x&#39;</span><span class="p">,</span><span class="s">&#39;y&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">lbrt</span><span class="p">())</span>
-        <span class="n">stacks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="n">stacks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">split_overlays</span><span class="p">()</span>
 
         <span class="n">sorted_stacks</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">stacks</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
         <span class="n">style_groups</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span>
@@ -657,7 +737,7 @@
 
         <span class="k">for</span> <span class="n">zorder</span><span class="p">,</span> <span class="n">stack</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">stacks</span><span class="p">):</span>
             <span class="n">cyclic_index</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">style_groups</span><span class="p">[</span><span class="n">stack</span><span class="o">.</span><span class="n">style</span><span class="p">])</span>
-            <span class="n">plotype</span> <span class="o">=</span> <span class="n">viewmap</span><span class="p">[</span><span class="n">stack</span><span class="o">.</span><span class="n">type</span><span class="p">]</span>
+            <span class="n">plotype</span> <span class="o">=</span> <span class="n">Plot</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="n">stack</span><span class="o">.</span><span class="n">type</span><span class="p">]</span>
             <span class="n">plot</span> <span class="o">=</span> <span class="n">plotype</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">plotting</span><span class="p">(</span><span class="n">stack</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">)</span>
 
             <span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="n">cyclic_index</span><span class="p">)</span>
@@ -673,7 +753,7 @@
             <span class="n">plot</span><span class="o">.</span><span class="n">update_frame</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
 
 </div>
-<div class="viewcode-block" id="LayoutPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.LayoutPlot">[docs]</a><span class="k">class</span> <span class="nc">LayoutPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+<div class="viewcode-block" id="LayoutPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.LayoutPlot">[docs]</a><span class="k">class</span> <span class="nc">LayoutPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    LayoutPlot allows placing up to three Views in a number of</span>
 <span class="sd">    predefined and fixed layouts, which are defined by the layout_dict</span>
@@ -722,7 +802,7 @@
 
 
     <span class="nd">@property</span>
-<div class="viewcode-block" id="LayoutPlot.shape"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.LayoutPlot.shape">[docs]</a>    <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="LayoutPlot.shape"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.LayoutPlot.shape">[docs]</a>    <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Property used by GridLayoutPlot to compute an overall grid</span>
 <span class="sd">        structure in which to position LayoutPlots.</span>
@@ -731,7 +811,7 @@
 
 </div>
     <span class="nd">@property</span>
-<div class="viewcode-block" id="LayoutPlot.width_ratios"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.LayoutPlot.width_ratios">[docs]</a>    <span class="k">def</span> <span class="nf">width_ratios</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="LayoutPlot.width_ratios"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.LayoutPlot.width_ratios">[docs]</a>    <span class="k">def</span> <span class="nf">width_ratios</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The relative distances for horizontal divisions between the</span>
 <span class="sd">        primary plot and associated  subplots (if any).</span>
@@ -739,7 +819,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">layout_type</span><span class="p">][</span><span class="s">&#39;width_ratios&#39;</span><span class="p">]</span>
 </div>
     <span class="nd">@property</span>
-<div class="viewcode-block" id="LayoutPlot.height_ratios"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.LayoutPlot.height_ratios">[docs]</a>    <span class="k">def</span> <span class="nf">height_ratios</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="LayoutPlot.height_ratios"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.LayoutPlot.height_ratios">[docs]</a>    <span class="k">def</span> <span class="nf">height_ratios</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The relative distances for the vertical divisions between the</span>
 <span class="sd">        primary plot and associated subplots (if any).</span>
@@ -747,7 +827,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">layout_type</span><span class="p">][</span><span class="s">&#39;height_ratios&#39;</span><span class="p">]</span>
 </div>
     <span class="nd">@property</span>
-<div class="viewcode-block" id="LayoutPlot.view_positions"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.LayoutPlot.view_positions">[docs]</a>    <span class="k">def</span> <span class="nf">view_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="LayoutPlot.view_positions"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.LayoutPlot.view_positions">[docs]</a>    <span class="k">def</span> <span class="nf">view_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        A list of position names used in the plot, matching the</span>
 <span class="sd">        corresponding properties of Layouts. Valid positions are</span>
@@ -776,7 +856,7 @@
             <span class="c"># Customize plotopts depending on position.</span>
             <span class="n">plotopts</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">plotting</span><span class="p">(</span><span class="n">view</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span>
             <span class="c"># Options common for any subplot</span>
-            <span class="n">subplot_opts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">show_title</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">main</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">main</span><span class="p">)</span>
+            <span class="n">subplot_opts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">show_title</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="p">)</span>
             <span class="n">override_opts</span> <span class="o">=</span> <span class="p">{}</span>
 
             <span class="k">if</span> <span class="n">pos</span> <span class="o">==</span> <span class="s">&#39;right&#39;</span><span class="p">:</span>
@@ -790,9 +870,9 @@
             <span class="n">plotopts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">override_opts</span><span class="p">)</span>
             <span class="n">vtype</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">type</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">Stack</span><span class="p">)</span> <span class="k">else</span> <span class="n">view</span><span class="o">.</span><span class="n">__class__</span>
             <span class="k">if</span> <span class="n">pos</span> <span class="o">==</span> <span class="s">&#39;main&#39;</span><span class="p">:</span>
-                <span class="n">subplot</span> <span class="o">=</span> <span class="n">viewmap</span><span class="p">[</span><span class="n">vtype</span><span class="p">](</span><span class="n">view</span><span class="p">,</span> <span class="o">**</span><span class="n">plotopts</span><span class="p">)</span>
+                <span class="n">subplot</span> <span class="o">=</span> <span class="n">Plot</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="n">vtype</span><span class="p">](</span><span class="n">view</span><span class="p">,</span> <span class="o">**</span><span class="n">plotopts</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">subplot</span> <span class="o">=</span> <span class="n">sideviewmap</span><span class="p">[</span><span class="n">vtype</span><span class="p">](</span><span class="n">view</span><span class="p">,</span> <span class="o">**</span><span class="n">plotopts</span><span class="p">)</span>
+                <span class="n">subplot</span> <span class="o">=</span> <span class="n">Plot</span><span class="o">.</span><span class="n">sideplots</span><span class="p">[</span><span class="n">vtype</span><span class="p">](</span><span class="n">view</span><span class="p">,</span> <span class="o">**</span><span class="n">plotopts</span><span class="p">)</span>
 
             <span class="c"># &#39;Main&#39; views that should be displayed with square aspect</span>
             <span class="k">if</span> <span class="n">pos</span> <span class="o">==</span> <span class="s">&#39;main&#39;</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">vtype</span><span class="p">,</span> <span class="p">(</span><span class="n">DataOverlay</span><span class="p">,</span> <span class="n">DataLayer</span><span class="p">)):</span>
@@ -803,7 +883,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">=</span> <span class="n">subplot</span>
 
 
-<div class="viewcode-block" id="LayoutPlot.adjust_positions"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.LayoutPlot.adjust_positions">[docs]</a>    <span class="k">def</span> <span class="nf">adjust_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="LayoutPlot.adjust_positions"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.LayoutPlot.adjust_positions">[docs]</a>    <span class="k">def</span> <span class="nf">adjust_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Make adjustments to the positions of subplots (if available)</span>
 <span class="sd">        relative to the main plot axes as required.</span>
@@ -826,7 +906,7 @@
                              <span class="n">bbox</span><span class="o">.</span><span class="n">width</span><span class="p">,</span> <span class="n">bbox</span><span class="o">.</span><span class="n">height</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">subplot_size</span><span class="p">])</span>
 
 </div>
-<div class="viewcode-block" id="LayoutPlot.grid_situate"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.LayoutPlot.grid_situate">[docs]</a>    <span class="k">def</span> <span class="nf">grid_situate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_idx</span><span class="p">,</span> <span class="n">layout_type</span><span class="p">,</span> <span class="n">subgrid_width</span><span class="p">):</span>
+<div class="viewcode-block" id="LayoutPlot.grid_situate"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.LayoutPlot.grid_situate">[docs]</a>    <span class="k">def</span> <span class="nf">grid_situate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_idx</span><span class="p">,</span> <span class="n">layout_type</span><span class="p">,</span> <span class="n">subgrid_width</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Situate the current LayoutPlot in a GridLayoutPlot. The</span>
 <span class="sd">        GridLayout specifies a layout_type into which the LayoutPlot</span>
@@ -870,7 +950,7 @@
 
 
 </div>
-<div class="viewcode-block" id="GridLayoutPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.GridLayoutPlot">[docs]</a><span class="k">class</span> <span class="nc">GridLayoutPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+<div class="viewcode-block" id="GridLayoutPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.GridLayoutPlot">[docs]</a><span class="k">class</span> <span class="nc">GridLayoutPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Plot a group of views in a grid layout based on a GridLayout view</span>
 <span class="sd">    object.</span>
@@ -893,11 +973,11 @@
 
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="n">GridLayout</span><span class="p">([</span><span class="n">grid</span><span class="p">])</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">Layout</span><span class="p">)</span> <span class="k">else</span> <span class="n">grid</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">GridLayout</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;GridLayoutPlot only accepts GridLayouts.&quot;</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">grid</span>
         <span class="c"># LayoutPlots indexed by their row and column indices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">grid</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cols</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">shape</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">coords</span> <span class="o">=</span> <span class="p">[(</span><span class="n">r</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">)</span>
@@ -998,7 +1078,7 @@
 
 
 </div>
-<div class="viewcode-block" id="CoordinateGridPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.CoordinateGridPlot">[docs]</a><span class="k">class</span> <span class="nc">CoordinateGridPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+<div class="viewcode-block" id="CoordinateGridPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.CoordinateGridPlot">[docs]</a><span class="k">class</span> <span class="nc">CoordinateGridPlot</span><span class="p">(</span><span class="n">OverlayPlot</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    CoordinateGridPlot evenly spaces out plots of individual projections on</span>
 <span class="sd">    a grid, even when they differ in size. The projections can be situated</span>
@@ -1014,6 +1094,10 @@
 <span class="s">        Determines whether to situate the projection in the full bounds or</span>
 <span class="s">        apply the ROI.&quot;&quot;&quot;</span><span class="p">)</span>
 
+    <span class="n">num_ticks</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+    <span class="n">show_frame</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
     <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;cmap&#39;</span><span class="p">,</span> <span class="s">&#39;interpolation&#39;</span><span class="p">,</span>
                                      <span class="s">&#39;visible&#39;</span><span class="p">,</span> <span class="s">&#39;filterrad&#39;</span><span class="p">,</span> <span class="s">&#39;origin&#39;</span><span class="p">],</span>
                             <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
@@ -1024,17 +1108,20 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">CoordinateGrid</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;CoordinateGridPlot only accepts ProjectionGrids.&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">grid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">stack</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_channels</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">CoordinateGridPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">grid_shape</span> <span class="o">=</span> <span class="p">[[</span><span class="n">v</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">col</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">groupby</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="k">lambda</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">:</span> <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
+        <span class="n">grid_shape</span> <span class="o">=</span> <span class="p">[[</span><span class="n">v</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">col</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+                      <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">groupby</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])]</span>
         <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">b_w</span><span class="p">,</span> <span class="n">b_h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_borders</span><span class="p">(</span><span class="n">grid_shape</span><span class="p">)</span>
+        <span class="n">xticks</span><span class="p">,</span> <span class="n">yticks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_ticks</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
 
-        <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">))</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">get_xaxis</span><span class="p">()</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">get_yaxis</span><span class="p">()</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">xticks</span><span class="o">=</span><span class="n">xticks</span><span class="p">,</span>
+                        <span class="n">yticks</span><span class="o">=</span><span class="n">yticks</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;projs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">b_w</span><span class="p">,</span> <span class="n">b_h</span>
@@ -1043,7 +1130,7 @@
                 <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dims</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">view</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">SheetOverlay</span><span class="p">:</span>
                     <span class="n">data</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">last</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">situate</span> <span class="k">else</span> <span class="n">view</span><span class="o">.</span><span class="n">last</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">roi</span><span class="o">.</span><span class="n">data</span>
-                    <span class="n">opts</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">view</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span>
+                    <span class="n">opts</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">last</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">opts</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">data</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">data</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">situate</span> <span class="k">else</span> <span class="n">view</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">roi</span><span class="o">.</span><span class="n">data</span>
                     <span class="n">opts</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">view</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span>
@@ -1060,13 +1147,23 @@
     <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
         <span class="n">n</span> <span class="o">=</span> <span class="n">n</span>  <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">plot</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;projs&#39;</span><span class="p">]):</span>
-            <span class="n">view</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="n">n</span><span class="p">]</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">view</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()[</span><span class="n">n</span><span class="p">]</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">SheetOverlay</span><span class="p">):</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="n">view</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">situate</span> <span class="k">else</span> <span class="n">view</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">roi</span><span class="o">.</span><span class="n">data</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">data</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">data</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">situate</span> <span class="k">else</span> <span class="n">view</span><span class="o">.</span><span class="n">roi</span><span class="o">.</span><span class="n">data</span>
-
             <span class="n">plot</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">_format_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">key</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">items</span><span class="p">()[</span><span class="n">n</span><span class="p">]</span>
+        <span class="n">title_format</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">get_title</span><span class="p">(</span><span class="n">key</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">key</span><span class="p">,),</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">title_format</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="n">title_format</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">_get_dims</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
@@ -1095,12 +1192,22 @@
         <span class="k">return</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">border_width</span><span class="p">,</span> <span class="n">border_height</span>
 
 
+    <span class="k">def</span> <span class="nf">_compute_ticks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">):</span>
+        <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">lbrt</span>
+
+        <span class="n">xpositions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_ticks</span><span class="p">)</span>
+        <span class="n">xlabels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_ticks</span><span class="p">)</span>
+        <span class="n">ypositions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_ticks</span><span class="p">)</span>
+        <span class="n">ylabels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_ticks</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">xpositions</span><span class="p">,</span> <span class="n">xlabels</span><span class="p">),</span> <span class="p">(</span><span class="n">ypositions</span><span class="p">,</span> <span class="n">ylabels</span><span class="p">)</span>
+
+
     <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">max</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">)]</span><span class="o">+</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
 
 </div>
-<div class="viewcode-block" id="DataPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.DataPlot">[docs]</a><span class="k">class</span> <span class="nc">DataPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+<div class="viewcode-block" id="DataPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.DataPlot">[docs]</a><span class="k">class</span> <span class="nc">DataPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A high-level plot, which will plot any DataView or DataStack type</span>
 <span class="sd">    including DataOverlays.</span>
@@ -1108,9 +1215,6 @@
 <span class="sd">    A generic plot that visualizes DataStacks containing DataOverlay or</span>
 <span class="sd">    DataLayer objects.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">show_legend</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">      Whether to show legend for the plot.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">DataStack</span>
 
@@ -1130,7 +1234,7 @@
 
         <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">ylabel</span><span class="p">)</span>
 
-        <span class="n">stacks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="n">stacks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">split_overlays</span><span class="p">()</span>
         <span class="n">style_groups</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span>
                             <span class="ow">in</span> <span class="n">groupby</span><span class="p">(</span><span class="n">stacks</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">style</span><span class="p">))</span>
 
@@ -1142,7 +1246,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">rescale</span> <span class="o">=</span> <span class="n">plotopts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;rescale_individually&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
                 <span class="n">lbrt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
 
-            <span class="n">plotype</span> <span class="o">=</span> <span class="n">viewmap</span><span class="p">[</span><span class="n">stack</span><span class="o">.</span><span class="n">type</span><span class="p">]</span>
+            <span class="n">plotype</span> <span class="o">=</span> <span class="n">Plot</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="n">stack</span><span class="o">.</span><span class="n">type</span><span class="p">]</span>
             <span class="n">plot</span> <span class="o">=</span> <span class="n">plotype</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
                            <span class="n">show_xaxis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_xaxis</span><span class="p">,</span> <span class="n">show_yaxis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_yaxis</span><span class="p">,</span>
                            <span class="n">show_legend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_legend</span><span class="p">,</span> <span class="n">show_title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_title</span><span class="p">,</span>
@@ -1165,17 +1269,17 @@
                 <span class="n">lbrt</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
             <span class="n">plot</span><span class="o">.</span><span class="n">update_frame</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">lbrt</span><span class="p">)</span>
 
-</div>
-<div class="viewcode-block" id="CurvePlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.CurvePlot">[docs]</a><span class="k">class</span> <span class="nc">CurvePlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    CurvePlot can plot Curve and DataStacks of Curve,</span>
-<span class="sd">    which can be displayed as a single frame or animation. Axes,</span>
-<span class="sd">    titles and legends are automatically generated from the metadata</span>
-<span class="sd">    and dim_info.</span>
 
-<span class="sd">    If the dimension is set to cyclic in the dim_info it will</span>
-<span class="sd">    rotate the curve so that minimum y values are at the minimum</span>
-<span class="sd">    x value to make the plots easier to interpret.</span>
+</div>
+<div class="viewcode-block" id="CurvePlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.CurvePlot">[docs]</a><span class="k">class</span> <span class="nc">CurvePlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    CurvePlot can plot Curve and DataStacks of Curve, which can be</span>
+<span class="sd">    displayed as a single frame or animation. Axes, titles and legends</span>
+<span class="sd">    are automatically generated from dim_info.</span>
+
+<span class="sd">    If the dimension is set to cyclic in the dim_info it will rotate</span>
+<span class="sd">    the curve so that minimum y values are at the minimum x value to</span>
+<span class="sd">    make the plots easier to interpret.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">center</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
@@ -1192,8 +1296,8 @@
     <span class="n">show_legend</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">      Whether to show legend for the plot.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;linestyle&#39;</span><span class="p">,</span> <span class="s">&#39;linewidth&#39;</span><span class="p">,</span>
-                                     <span class="s">&#39;visible&#39;</span><span class="p">],</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;visible&#39;</span><span class="p">],</span>
+                            <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">       The style options for CurvePlot match those of matplotlib&#39;s</span>
 <span class="s">       LineCollection object.&quot;&quot;&quot;</span><span class="p">)</span>
 
@@ -1220,15 +1324,6 @@
     <span class="k">def</span> <span class="nf">_rotate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
         <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span> <span class="c"># n=hop interval</span>
         <span class="k">return</span> <span class="n">seq</span><span class="p">[</span><span class="n">n</span><span class="p">:]</span> <span class="o">+</span> <span class="n">seq</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span>
-
-
-    <span class="k">def</span> <span class="nf">_curve_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="p">,</span> <span class="n">curve</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Return the x, y, and x ticks values for the specified curve from the curve_dict&quot;&quot;&quot;</span>
-        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">coord</span>
-        <span class="n">x_values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">curve</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-        <span class="n">y_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">curve</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">x_values</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">x_values</span> <span class="o">=</span> <span class="n">x_values</span>
-        <span class="k">return</span> <span class="n">x_values</span><span class="p">,</span> <span class="n">y_values</span><span class="p">,</span> <span class="n">x_values</span>
 
 
     <span class="k">def</span> <span class="nf">_reduce_ticks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_values</span><span class="p">):</span>
@@ -1293,7 +1388,7 @@
         <span class="k">if</span> <span class="n">lbrt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">lbrt</span> <span class="o">=</span> <span class="n">curveview</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_individually</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="n">curveview</span><span class="p">),</span> <span class="n">curveview</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">curveview</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span>
                              <span class="n">curveview</span><span class="o">.</span><span class="n">ylabel</span><span class="p">,</span> <span class="n">xticks</span><span class="o">=</span><span class="n">xticks</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
 
         <span class="c"># Create line segments and apply style</span>
@@ -1327,11 +1422,91 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;line_segment&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">(</span><span class="n">curveview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">curveview</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
 
+
 </div>
-<div class="viewcode-block" id="DataGridPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.DataGridPlot">[docs]</a><span class="k">class</span> <span class="nc">DataGridPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+<div class="viewcode-block" id="ScatterPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.ScatterPlot">[docs]</a><span class="k">class</span> <span class="nc">ScatterPlot</span><span class="p">(</span><span class="n">CurvePlot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ScatterPlot can plot Scatter and DataStacks of Scatter, which can</span>
+<span class="sd">    be displayed as a single frame or animation. Axes, titles and</span>
+<span class="sd">    legends are automatically generated from dim_info.</span>
+
+<span class="sd">    If the dimension is set to cyclic in the dim_info it will</span>
+<span class="sd">    rotate the points curve so that minimum y values are at the minimum</span>
+<span class="sd">    x value to make the plots easier to interpret.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;edgecolors&#39;</span><span class="p">,</span> <span class="s">&#39;facecolors&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;linewidth&#39;</span><span class="p">,</span> <span class="s">&#39;marker&#39;</span><span class="p">,</span> <span class="s">&#39;s&#39;</span><span class="p">,</span> <span class="s">&#39;visible&#39;</span><span class="p">],</span>
+                            <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The style options for ScatterPlot match those of matplotlib&#39;s</span>
+<span class="s">       PolyCollection object.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">DataStack</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">Scatter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">ScatterPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">scatterview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span> <span class="o">=</span> <span class="n">cyclic_index</span>
+
+        <span class="c"># Create xticks and reorder data if cyclic</span>
+        <span class="n">xvals</span> <span class="o">=</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">xticks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reduce_ticks</span><span class="p">(</span><span class="n">xvals</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">lbrt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">lbrt</span> <span class="o">=</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_individually</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span>
+                             <span class="n">scatterview</span><span class="o">.</span><span class="n">ylabel</span><span class="p">,</span> <span class="n">xticks</span><span class="o">=</span><span class="n">xticks</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+
+        <span class="c"># Create line segments and apply style</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">scatterview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                                <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">scatterview</span><span class="o">.</span><span class="n">legend_label</span><span class="p">,</span>
+                                <span class="o">**</span><span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">scatterview</span><span class="p">)[</span><span class="n">cyclic_index</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;paths&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">paths</span>
+
+        <span class="c"># If legend enabled update handles and labels</span>
+        <span class="n">handles</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">get_legend_handles_labels</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">handles</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_legend</span><span class="p">:</span>
+            <span class="n">fontP</span> <span class="o">=</span> <span class="n">FontProperties</span><span class="p">()</span>
+            <span class="n">fontP</span><span class="o">.</span><span class="n">set_size</span><span class="p">(</span><span class="s">&#39;small&#39;</span><span class="p">)</span>
+            <span class="n">leg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">labels</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">prop</span><span class="o">=</span><span class="n">fontP</span><span class="p">)</span>
+            <span class="n">leg</span><span class="o">.</span><span class="n">get_frame</span><span class="p">()</span><span class="o">.</span><span class="n">set_alpha</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="k">if</span> <span class="n">axis</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">n</span>  <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">scatterview</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">lbrt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">lbrt</span> <span class="o">=</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_individually</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;paths&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+
+        <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">scatterview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                                <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">scatterview</span><span class="o">.</span><span class="n">legend_label</span><span class="p">,</span>
+                                <span class="o">**</span><span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">scatterview</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;paths&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">paths</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+
+
+</div>
+<div class="viewcode-block" id="DataGridPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.DataGridPlot">[docs]</a><span class="k">class</span> <span class="nc">DataGridPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Plot a group of views in a grid layout based on a DataGrid view</span>
 <span class="sd">    object.</span>
@@ -1381,7 +1556,7 @@
             <span class="k">if</span> <span class="n">view</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="n">subax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gridspec</span><span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">])</span>
                 <span class="n">vtype</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">type</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">DataStack</span><span class="p">)</span> <span class="k">else</span> <span class="n">view</span><span class="o">.</span><span class="n">__class__</span>
-                <span class="n">subplot</span> <span class="o">=</span> <span class="n">viewmap</span><span class="p">[</span><span class="n">vtype</span><span class="p">](</span><span class="n">view</span><span class="p">,</span> <span class="n">show_legend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_legend</span><span class="p">,</span>
+                <span class="n">subplot</span> <span class="o">=</span> <span class="n">Plot</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="n">vtype</span><span class="p">](</span><span class="n">view</span><span class="p">,</span> <span class="n">show_legend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_legend</span><span class="p">,</span>
                                          <span class="n">show_xaxis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_xaxis</span><span class="p">,</span>
                                          <span class="n">show_yaxis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_yaxis</span><span class="p">,</span>
                                          <span class="n">show_title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_title</span><span class="p">)</span>
@@ -1403,18 +1578,19 @@
 
 
     <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">max</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="p">]</span><span class="o">+</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Stack</span><span class="p">)</span> <span class="k">else</span> <span class="mi">1</span>
+                    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">]</span><span class="o">+</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
 
 </div>
-<div class="viewcode-block" id="TablePlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.TablePlot">[docs]</a><span class="k">class</span> <span class="nc">TablePlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+<div class="viewcode-block" id="TablePlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.TablePlot">[docs]</a><span class="k">class</span> <span class="nc">TablePlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A TablePlot can plot both TableViews and TableStacks which display</span>
 <span class="sd">    as either a single static table or as an animated table</span>
 <span class="sd">    respectively.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">border</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+    <span class="n">border</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        The fraction of the plot that should be empty around the</span>
 <span class="s">        edges.&quot;&quot;&quot;</span><span class="p">)</span>
 
@@ -1427,12 +1603,12 @@
 <span class="s">         table cell. Any strings longer than this length will be</span>
 <span class="s">         truncated.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">max_font_size</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+    <span class="n">max_font_size</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">       The largest allowable font size for the text in each table</span>
 <span class="s">       cell.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">font_types</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">default</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;heading&#39;</span><span class="p">:</span><span class="n">FontProperties</span><span class="p">(</span><span class="n">weight</span><span class="o">=</span><span class="s">&#39;bold&#39;</span><span class="p">,</span>
-                                                                <span class="n">family</span><span class="o">=</span><span class="s">&#39;monospace&#39;</span><span class="p">)},</span>
+    <span class="n">font_types</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;heading&#39;</span><span class="p">:</span> <span class="n">FontProperties</span><span class="p">(</span><span class="n">weight</span><span class="o">=</span><span class="s">&#39;bold&#39;</span><span class="p">,</span>
+                                                               <span class="n">family</span><span class="o">=</span><span class="s">&#39;monospace&#39;</span><span class="p">)},</span>
        <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;The font style used for heading labels used for emphasis.&quot;&quot;&quot;</span><span class="p">)</span>
 
 
@@ -1448,7 +1624,7 @@
         <span class="nb">super</span><span class="p">(</span><span class="n">TablePlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="TablePlot.pprint_value"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.TablePlot.pprint_value">[docs]</a>    <span class="k">def</span> <span class="nf">pprint_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+<div class="viewcode-block" id="TablePlot.pprint_value"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.TablePlot.pprint_value">[docs]</a>    <span class="k">def</span> <span class="nf">pprint_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Generate the pretty printed representation of a value for</span>
 <span class="sd">        inclusion in a table cell.</span>
@@ -1466,9 +1642,10 @@
 
 </div>
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
         <span class="n">tableview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
 
-        <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="n">tableview</span><span class="p">))</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
 
         <span class="n">ax</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
         <span class="n">size_factor</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">border</span><span class="p">)</span>
@@ -1514,12 +1691,12 @@
         <span class="n">table</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_font_size</span><span class="p">)</span>
         <span class="n">table</span><span class="o">.</span><span class="n">auto_set_font_size</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">tableview</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
 
 
 </div>
-<div class="viewcode-block" id="HistogramPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.HistogramPlot">[docs]</a><span class="k">class</span> <span class="nc">HistogramPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+<div class="viewcode-block" id="HistogramPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.HistogramPlot">[docs]</a><span class="k">class</span> <span class="nc">HistogramPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    HistogramPlot can plot DataHistograms and DataStacks of</span>
 <span class="sd">    DataHistograms, which can be displayed as a single frame or</span>
@@ -1572,6 +1749,7 @@
         <span class="c"># Process and apply axis settings</span>
         <span class="n">ticks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_ticks</span><span class="p">(</span><span class="n">edges</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">)</span>
         <span class="n">ax_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_axsettings</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="n">ticks</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="n">ax_settings</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="o">**</span><span class="n">ax_settings</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">orientation</span> <span class="o">==</span> <span class="s">&#39;vertical&#39;</span><span class="p">:</span>
@@ -1636,7 +1814,6 @@
         <span class="n">axis_settings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axis_settings</span><span class="p">,</span> <span class="p">[</span><span class="n">hist</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span> <span class="n">hist</span><span class="o">.</span><span class="n">ylabel</span><span class="p">,</span> <span class="n">ticks</span><span class="p">]))</span>
         <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">lims</span>
         <span class="n">axis_settings</span><span class="p">[</span><span class="s">&#39;lbrt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x1</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">orientation</span> <span class="o">==</span> <span class="s">&#39;vertical&#39;</span> <span class="k">else</span> <span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="n">axis_settings</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="n">hist</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">axis_settings</span>
 
@@ -1669,7 +1846,7 @@
         <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
 
 
-<div class="viewcode-block" id="HistogramPlot.update_frame"><a class="viewcode-back" href="../../Reference_Manual/dataviews.plots-module.html#dataviews.plots.HistogramPlot.update_frame">[docs]</a>    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="HistogramPlot.update_frame"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.HistogramPlot.update_frame">[docs]</a>    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Update the plot for an animation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1683,20 +1860,24 @@
         <span class="n">ax_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_axsettings</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="n">ticks</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">ax_settings</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_artists</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">hist</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
 
 
 </div></div>
 <span class="k">class</span> <span class="nc">SideHistogramPlot</span><span class="p">(</span><span class="n">HistogramPlot</span><span class="p">):</span>
 
-    <span class="n">main</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">        The main View or Stack this SideHistogramPlot is attached to.&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">layout</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The layout object to which this SideHistogramPlot belongs.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">offset</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        Histogram value offset for a colorbar.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">show_title</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        Titles should be disabled on all SidePlots to avoid clutter.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">show_xlabel</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether to show the x-label of the plot. Disabled by default</span>
+<span class="s">        because plots are often too cramped to fit the title correctly.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_process_hist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">lbrt</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1707,6 +1888,13 @@
         <span class="n">hvals</span> <span class="o">+=</span> <span class="n">offset</span>
         <span class="n">lims</span> <span class="o">=</span> <span class="n">lims</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">lims</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,)</span>
         <span class="k">return</span> <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span>
+
+
+    <span class="k">def</span> <span class="nf">_process_axsettings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="n">ticks</span><span class="p">):</span>
+        <span class="n">axsettings</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">SideHistogramPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_process_axsettings</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="n">ticks</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_xlabel</span><span class="p">:</span>
+            <span class="n">axsettings</span><span class="p">[</span><span class="s">&#39;ylabel&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">orientation</span> <span class="o">==</span> <span class="s">&#39;vertical&#39;</span> <span class="k">else</span> <span class="s">&#39;xlabel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">axsettings</span>
 
 
     <span class="k">def</span> <span class="nf">_update_artists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">):</span>
@@ -1721,14 +1909,14 @@
 <span class="sd">        the bars appropriately, respecting the required normalization</span>
 <span class="sd">        settings.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">main</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">main</span>
         <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">*</span> <span class="n">lims</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">)</span>
-        <span class="n">main_style</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span>
-        <span class="n">individually</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">plotting</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;normalize_individually&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="n">individually</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">plotting</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;normalize_individually&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main</span><span class="p">,</span> <span class="n">Stack</span><span class="p">):</span>
-            <span class="n">main_range</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">range</span> <span class="k">if</span> <span class="n">individually</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">main</span><span class="o">.</span><span class="n">range</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">main</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
-            <span class="n">main_range</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">main</span><span class="o">.</span><span class="n">range</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">main</span><span class="p">,</span> <span class="n">Stack</span><span class="p">):</span>
+            <span class="n">main_range</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">range</span> <span class="k">if</span> <span class="n">individually</span> <span class="k">else</span> <span class="n">main</span><span class="o">.</span><span class="n">range</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">main</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+            <span class="n">main_range</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">range</span>
 
         <span class="k">if</span> <span class="n">offset</span> <span class="ow">and</span> <span class="p">(</span><span class="s">&#39;offset_line&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;offset_line&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset_linefn</span><span class="p">(</span><span class="n">offset</span><span class="p">,</span>
@@ -1737,7 +1925,16 @@
         <span class="k">elif</span> <span class="n">offset</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_update_separator</span><span class="p">(</span><span class="n">lims</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
 
-        <span class="n">cmap</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="n">main_style</span><span class="p">[</span><span class="s">&#39;cmap&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="k">else</span> <span class="bp">None</span>
+
+        <span class="c"># If .main is an Overlay or a Stack of Overlays get the correct style</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">main</span><span class="p">,</span> <span class="n">Stack</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">):</span>
+            <span class="n">style</span> <span class="o">=</span>  <span class="n">main</span><span class="o">.</span><span class="n">last</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">main_layer</span><span class="p">]</span><span class="o">.</span><span class="n">style</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">main</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">):</span>
+            <span class="n">style</span> <span class="o">=</span> <span class="n">main</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">main_layer</span><span class="p">]</span><span class="o">.</span><span class="n">style</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">style</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">style</span>
+
+        <span class="n">cmap</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">style</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">[</span><span class="s">&#39;cmap&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="k">else</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="n">cmap</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_colorize_bars</span><span class="p">(</span><span class="n">cmap</span><span class="p">,</span> <span class="n">bars</span><span class="p">,</span> <span class="n">main_range</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">bars</span>
@@ -1782,39 +1979,26 @@
                 <span class="n">offset_line</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span>
 
 
-
-<span class="n">sideviewmap</span> <span class="o">=</span> <span class="p">{</span><span class="n">Histogram</span><span class="p">:</span> <span class="n">SideHistogramPlot</span><span class="p">,</span>
-               <span class="n">Table</span><span class="p">:</span> <span class="n">TablePlot</span><span class="p">,</span>
-               <span class="n">CoordinateGrid</span><span class="p">:</span> <span class="n">CoordinateGridPlot</span><span class="p">}</span>
-
-
-<span class="n">viewmap</span> <span class="o">=</span> <span class="p">{</span><span class="n">SheetView</span><span class="p">:</span> <span class="n">SheetViewPlot</span><span class="p">,</span>
-           <span class="n">Points</span><span class="p">:</span> <span class="n">PointPlot</span><span class="p">,</span>
-           <span class="n">Contours</span><span class="p">:</span> <span class="n">ContourPlot</span><span class="p">,</span>
-           <span class="n">SheetOverlay</span><span class="p">:</span> <span class="n">SheetPlot</span><span class="p">,</span>
-           <span class="n">CoordinateGrid</span><span class="p">:</span> <span class="n">CoordinateGridPlot</span><span class="p">,</span>
-           <span class="n">Curve</span><span class="p">:</span> <span class="n">CurvePlot</span><span class="p">,</span>
-           <span class="n">DataOverlay</span><span class="p">:</span> <span class="n">DataPlot</span><span class="p">,</span>
-           <span class="n">DataGrid</span><span class="p">:</span> <span class="n">DataGridPlot</span><span class="p">,</span>
-           <span class="n">Table</span><span class="p">:</span> <span class="n">TablePlot</span><span class="p">,</span>
-           <span class="n">Histogram</span><span class="p">:</span> <span class="n">HistogramPlot</span><span class="p">,</span>
-           <span class="n">Layout</span><span class="p">:</span> <span class="n">GridLayoutPlot</span><span class="p">,</span>
-           <span class="n">Annotation</span><span class="p">:</span> <span class="n">AnnotationPlot</span>
-<span class="p">}</span>
+<span class="n">Plot</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">SheetView</span><span class="p">:</span> <span class="n">SheetViewPlot</span><span class="p">,</span>
+                      <span class="n">Points</span><span class="p">:</span> <span class="n">PointPlot</span><span class="p">,</span>
+                      <span class="n">Contours</span><span class="p">:</span> <span class="n">ContourPlot</span><span class="p">,</span>
+                      <span class="n">SheetOverlay</span><span class="p">:</span> <span class="n">SheetPlot</span><span class="p">,</span>
+                      <span class="n">CoordinateGrid</span><span class="p">:</span> <span class="n">CoordinateGridPlot</span><span class="p">,</span>
+                      <span class="n">Curve</span><span class="p">:</span> <span class="n">CurvePlot</span><span class="p">,</span>
+                      <span class="n">Scatter</span><span class="p">:</span> <span class="n">ScatterPlot</span><span class="p">,</span>
+                      <span class="n">DataOverlay</span><span class="p">:</span> <span class="n">DataPlot</span><span class="p">,</span>
+                      <span class="n">DataGrid</span><span class="p">:</span> <span class="n">DataGridPlot</span><span class="p">,</span>
+                      <span class="n">Table</span><span class="p">:</span> <span class="n">TablePlot</span><span class="p">,</span>
+                      <span class="n">Histogram</span><span class="p">:</span> <span class="n">HistogramPlot</span><span class="p">,</span>
+                      <span class="n">Layout</span><span class="p">:</span> <span class="n">GridLayoutPlot</span><span class="p">,</span>
+                      <span class="n">Annotation</span><span class="p">:</span> <span class="n">AnnotationPlot</span><span class="p">})</span>
 
 
-<span class="c"># The channel_modes dictionary contains the available channel processing</span>
-<span class="c"># modes. These modes are ViewOperations that accept Sheet Overlays as</span>
-<span class="c"># input and process them in some way to return a single RGB(A)</span>
-<span class="c"># SheetView.</span>
+<span class="n">Plot</span><span class="o">.</span><span class="n">sideplots</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">Histogram</span><span class="p">:</span> <span class="n">SideHistogramPlot</span><span class="p">,</span>
+                       <span class="n">CoordinateGrid</span><span class="p">:</span> <span class="n">CoordinateGridPlot</span><span class="p">})</span>
 
-<span class="n">channel_modes</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;RGBA&#39;</span><span class="p">:</span><span class="n">RGBA</span><span class="p">,</span>
-               <span class="s">&#39;HCS&#39;</span><span class="p">:</span><span class="n">HCS</span><span class="p">,</span>
-               <span class="s">&#39;AlphaOverlay&#39;</span><span class="p">:</span><span class="n">AlphaOverlay</span><span class="p">}</span>
-
-
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;viewmap&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">_k</span> <span class="k">for</span> <span class="n">_k</span><span class="p">,</span><span class="n">_v</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                                  <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_v</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">_v</span><span class="p">,</span> <span class="n">Plot</span><span class="p">)]))</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">_k</span> <span class="k">for</span> <span class="n">_k</span><span class="p">,</span><span class="n">_v</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_v</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">_v</span><span class="p">,</span> <span class="n">Plot</span><span class="p">)]))</span>
 </pre></div>
 
           </div>
@@ -1878,7 +2062,6 @@
 
 
           <li><a href="../index.html" >Module code</a> &raquo;</li>
-          <li><a href="../dataviews.html" >dataviews</a> &raquo;</li>
 
 </ul></li>
 
