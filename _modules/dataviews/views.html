@@ -602,16 +602,25 @@
 <span class="sd">        Splits the Stack along a specified number of dimensions and overlays</span>
 <span class="sd">        items in the split out Stacks.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">split_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_dimensions</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span>
-        <span class="n">new_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">dimensions</span><span class="o">=</span><span class="n">split_stack</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">split_stack</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+            <span class="n">new_stack</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">split_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_dimensions</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span>
+            <span class="n">new_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">dimensions</span><span class="o">=</span><span class="n">split_stack</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span>
+
         <span class="k">for</span> <span class="n">outer</span><span class="p">,</span> <span class="n">stack</span> <span class="ow">in</span> <span class="n">split_stack</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">key</span><span class="p">,</span> <span class="n">overlay</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">items</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">overlay</span><span class="o">.</span><span class="n">legend_label</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pprint_dimkey</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">inner</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">stack</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">inner</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">stack</span><span class="o">.</span><span class="n">items</span><span class="p">())[</span><span class="mi">1</span><span class="p">:]:</span>
                 <span class="n">v</span><span class="o">.</span><span class="n">legend_label</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pprint_dimkey</span><span class="p">(</span><span class="n">inner</span><span class="p">)</span>
                 <span class="n">overlay</span> <span class="o">=</span> <span class="n">overlay</span> <span class="o">*</span> <span class="n">v</span>
             <span class="n">new_stack</span><span class="p">[</span><span class="n">outer</span><span class="p">]</span> <span class="o">=</span> <span class="n">overlay</span>
-        <span class="k">return</span> <span class="n">new_stack</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">new_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">new_stack</span>
 
 </div>
 <div class="viewcode-block" id="Stack.map"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.views.Stack.map">[docs]</a>    <span class="k">def</span> <span class="nf">map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">map_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
