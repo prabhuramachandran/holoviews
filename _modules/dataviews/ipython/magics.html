@@ -106,7 +106,8 @@
             <span class="p">[</span><span class="s">&#39;-pix_fmt&#39;</span><span class="p">,</span> <span class="s">&#39;yuv420p&#39;</span><span class="p">],</span>
             <span class="n">VIDEO_TAG</span><span class="p">),</span>
     <span class="s">&#39;gif&#39;</span><span class="p">:(</span><span class="s">&#39;imagemagick&#39;</span><span class="p">,</span> <span class="s">&#39;gif&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;fps&#39;</span><span class="p">:</span><span class="mi">10</span><span class="p">},</span> <span class="p">[],</span>
-           <span class="n">GIF_TAG</span><span class="p">)</span>
+           <span class="n">GIF_TAG</span><span class="p">),</span>
+    <span class="s">&#39;scrubber&#39;</span><span class="p">:(</span><span class="s">&#39;html&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;fps&#39;</span><span class="p">:</span><span class="mi">5</span><span class="p">},</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
 <span class="p">}</span>
 
 
@@ -135,7 +136,8 @@
 <span class="sd">    Usage: %view [png|svg] [webm|h264|gif[:&lt;fps&gt;]] [&lt;percent size&gt;]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">anim_formats</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;webm&#39;</span><span class="p">,</span><span class="s">&#39;h264&#39;</span><span class="p">,</span><span class="s">&#39;gif&#39;</span><span class="p">]</span>
+    <span class="n">anim_formats</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;webm&#39;</span><span class="p">,</span><span class="s">&#39;h264&#39;</span><span class="p">,</span><span class="s">&#39;gif&#39;</span><span class="p">,</span><span class="s">&#39;slider&#39;</span><span class="p">,</span><span class="s">&#39;scrubber&#39;</span><span class="p">]</span>
+    <span class="n">fig_formats</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;svg&#39;</span><span class="p">,</span> <span class="s">&#39;png&#39;</span><span class="p">,</span> <span class="s">&#39;mpld3&#39;</span><span class="p">]</span>
 
     <span class="n">PERCENTAGE_SIZE</span> <span class="o">=</span> <span class="mi">100</span>
     <span class="n">FPS</span> <span class="o">=</span> <span class="mi">20</span>
@@ -145,12 +147,12 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">ViewMagic</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">usage_info</span> <span class="o">=</span> <span class="s">&quot;Usage: %view [png|svg] [webm|h264|gif[:&lt;fps&gt;]] [&lt;percent size&gt;]&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">usage_info</span> <span class="o">=</span> <span class="s">&quot;Usage: %view [png|svg|mpld3] [webm|h264|gif[:&lt;fps&gt;]|slider|scrubber] [&lt;percent size&gt;]&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">usage_info</span> <span class="o">+=</span> <span class="s">&quot; (Arguments may be in any order)&quot;</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">option_completer</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">anim_formats</span> <span class="o">+</span> <span class="p">[</span><span class="s">&#39;png&#39;</span><span class="p">,</span> <span class="s">&#39;svg&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">anim_formats</span> <span class="o">+</span> <span class="n">cls</span><span class="o">.</span><span class="n">fig_formats</span>
 
     <span class="k">def</span> <span class="nf">_set_animation_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anim_spec</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -172,8 +174,8 @@
 
         <span class="k">global</span> <span class="n">ANIMATION_OPTS</span>
         <span class="n">ViewMagic</span><span class="o">.</span><span class="n">VIDEO_FORMAT</span><span class="p">,</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">FPS</span> <span class="o">=</span> <span class="n">format_choice</span><span class="p">,</span> <span class="n">fps</span>
-        <span class="k">if</span> <span class="n">format_choice</span> <span class="o">==</span> <span class="s">&#39;gif&#39;</span><span class="p">:</span>
-            <span class="n">ANIMATION_OPTS</span><span class="p">[</span><span class="s">&#39;gif&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">][</span><span class="s">&#39;fps&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fps</span>
+        <span class="k">if</span> <span class="n">format_choice</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;gif&#39;</span><span class="p">,</span> <span class="s">&#39;scrubber&#39;</span><span class="p">]:</span>
+            <span class="n">ANIMATION_OPTS</span><span class="p">[</span><span class="n">format_choice</span><span class="p">][</span><span class="mi">2</span><span class="p">][</span><span class="s">&#39;fps&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fps</span>
         <span class="k">return</span> <span class="bp">True</span>
 
 
@@ -190,13 +192,21 @@
 
 
     <span class="k">def</span> <span class="nf">_parse_settings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">opts</span><span class="p">):</span>
-        <span class="n">fig_fmt</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&#39;svg&#39;</span> <span class="ow">in</span> <span class="n">opts</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;png&#39;</span> <span class="ow">in</span> <span class="n">opts</span><span class="p">)]</span>
+        <span class="n">fig_fmt</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="ow">in</span> <span class="n">opts</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig_formats</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">fig_fmt</span><span class="p">):</span>
             <span class="n">success</span> <span class="o">=</span> <span class="bp">False</span>
-            <span class="k">print</span><span class="p">(</span><span class="s">&quot;Please select either png or svg for static output&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;Please select either png, svg or mpld3 for static output&quot;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">True</span> <span class="ow">in</span> <span class="n">fig_fmt</span><span class="p">:</span>
-            <span class="n">figure_format</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;svg&#39;</span><span class="p">,</span> <span class="s">&#39;png&#39;</span><span class="p">][</span><span class="n">fig_fmt</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="bp">True</span><span class="p">)]</span>
-            <span class="n">ViewMagic</span><span class="o">.</span><span class="n">FIGURE_FORMAT</span><span class="o">=</span> <span class="n">figure_format</span>
+            <span class="n">figure_format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig_formats</span><span class="p">[</span><span class="n">fig_fmt</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="bp">True</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">figure_format</span> <span class="o">==</span> <span class="s">&#39;mpld3&#39;</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="kn">import</span> <span class="nn">mpld3</span> <span class="c"># pyflakes:ignore (Testing optional import)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="s">&quot;mpld3 could not be imported, falling back to &quot;</span>
+                          <span class="s">&quot;previous display backend.&quot;</span><span class="p">)</span>
+                    <span class="n">figure_format</span> <span class="o">=</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">FIGURE_FORMAT</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&quot;Warning: mpld3 backend is still in development.&quot;</span><span class="p">)</span>
+            <span class="n">ViewMagic</span><span class="o">.</span><span class="n">FIGURE_FORMAT</span> <span class="o">=</span> <span class="n">figure_format</span>
             <span class="n">opts</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">figure_format</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">opts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="n">success</span> <span class="o">=</span> <span class="bp">True</span>
 

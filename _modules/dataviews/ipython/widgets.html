@@ -81,19 +81,27 @@
 <span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span>
 <span class="kn">from</span> <span class="nn">IPython.core.pylabtools</span> <span class="kn">import</span> <span class="n">print_figure</span>
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">IPython.html.widgets</span> <span class="kn">import</span> <span class="n">interactive</span>
     <span class="kn">from</span> <span class="nn">IPython.html</span> <span class="kn">import</span> <span class="n">widgets</span>
+    <span class="kn">from</span> <span class="nn">IPython.html.widgets</span> <span class="kn">import</span> <span class="n">FloatSliderWidget</span>
 <span class="k">except</span><span class="p">:</span>
-    <span class="k">raise</span> <span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;IPython widgets require IPython &gt;= 2.0&quot;</span><span class="p">)</span>
-<span class="n">ipython2</span> <span class="o">=</span> <span class="p">(</span><span class="n">IPython</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">widgets</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">FloatSliderWidget</span> <span class="o">=</span> <span class="nb">object</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">mpld3</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="n">mpld3</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="c"># IPython 0.13 does not have version_info</span>
+<span class="n">ipython2</span> <span class="o">=</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">IPython</span><span class="p">,</span> <span class="s">&#39;version_info&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">IPython</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
 
 <span class="kn">import</span> <span class="nn">param</span>
 
-<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">GridLayout</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">Stack</span>
-<span class="kn">from</span> <span class="nn">..options</span> <span class="kn">import</span> <span class="n">options</span>
-<span class="kn">from</span> <span class="nn">..views</span> <span class="kn">import</span> <span class="n">Layout</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">GridLayout</span><span class="p">,</span> <span class="n">NdMapping</span>
+<span class="kn">from</span> <span class="nn">..views</span> <span class="kn">import</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">View</span>
+<span class="kn">from</span> <span class="nn">..sheetviews</span> <span class="kn">import</span> <span class="n">CoordinateGrid</span>
 <span class="kn">from</span> <span class="nn">..plots</span> <span class="kn">import</span> <span class="n">GridLayoutPlot</span><span class="p">,</span> <span class="n">Plot</span>
-<span class="kn">from</span> <span class="nn">.display_hooks</span> <span class="kn">import</span> <span class="n">get_plot_size</span>
+<span class="kn">from</span> <span class="nn">.magics</span> <span class="kn">import</span> <span class="n">ViewMagic</span>
 
 
 <div class="viewcode-block" id="ProgressBar"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.ipython.html#dataviews.ipython.widgets.ProgressBar">[docs]</a><span class="k">class</span> <span class="nc">ProgressBar</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
@@ -187,7 +195,7 @@
 
 
 </div>
-<div class="viewcode-block" id="FixedValueSliderWidget"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.ipython.html#dataviews.ipython.widgets.FixedValueSliderWidget">[docs]</a><span class="k">class</span> <span class="nc">FixedValueSliderWidget</span><span class="p">(</span><span class="n">widgets</span><span class="o">.</span><span class="n">FloatSliderWidget</span><span class="p">):</span>
+<div class="viewcode-block" id="FixedValueSliderWidget"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.ipython.html#dataviews.ipython.widgets.FixedValueSliderWidget">[docs]</a><span class="k">class</span> <span class="nc">FixedValueSliderWidget</span><span class="p">(</span><span class="n">FloatSliderWidget</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Subclass of FloatSliderWidget that jumps discretely</span>
 <span class="sd">    between a set of supplied values.</span>
@@ -227,6 +235,12 @@
         <span class="k">return</span> <span class="bp">False</span>
 
 
+<span class="k">def</span> <span class="nf">get_plot_size</span><span class="p">():</span>
+    <span class="n">factor</span> <span class="o">=</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">PERCENTAGE_SIZE</span> <span class="o">/</span> <span class="mf">100.0</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">Plot</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">factor</span><span class="p">,</span>
+            <span class="n">Plot</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">factor</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="ViewSelector"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.ipython.html#dataviews.ipython.widgets.ViewSelector">[docs]</a><span class="k">class</span> <span class="nc">ViewSelector</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Interactive widget to select and view View objects contained</span>
@@ -246,13 +260,25 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">ViewSelector</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="n">widgets</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s">&#39;ViewSelector requires IPython &gt;= 2.0.&#39;</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_process_view</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_widgets</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">refresh</span> <span class="o">=</span> <span class="bp">True</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cached</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">frames</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">print_figure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="p">[</span><span class="n">idx</span><span class="p">]))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">frames</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plot_figure</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
                                       <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_plot_figure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">FIGURE_FORMAT</span> <span class="o">==</span> <span class="s">&#39;mpld3&#39;</span> <span class="ow">and</span> <span class="n">mpld3</span><span class="p">:</span>
+            <span class="n">fig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="kn">from</span> <span class="nn">mpld3</span> <span class="kn">import</span> <span class="n">plugins</span>
+            <span class="n">plugins</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">plugins</span><span class="o">.</span><span class="n">MousePosition</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">mpld3</span><span class="o">.</span><span class="n">fig_to_html</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">print_figure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">FIGURE_FORMAT</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">_process_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
@@ -260,34 +286,33 @@
 <span class="sd">        Determine the dimensions and keys to be turned into widgets and</span>
 <span class="sd">        initialize the plots.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="p">(</span><span class="n">GridLayout</span><span class="p">,</span> <span class="n">Layout</span><span class="p">)):</span>
-            <span class="n">view</span> <span class="o">=</span> <span class="n">GridLayout</span><span class="p">([</span><span class="n">view</span><span class="p">])</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">Layout</span><span class="p">)</span> <span class="k">else</span> <span class="n">view</span>
-            <span class="n">shape</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">shape</span>
-            <span class="n">grid_size</span> <span class="o">=</span> <span class="p">(</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">get_plot_size</span><span class="p">()[</span><span class="mi">1</span><span class="p">],</span>
-                         <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">get_plot_size</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">plot</span> <span class="o">=</span> <span class="n">GridLayoutPlot</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">grid_size</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">GridLayout</span><span class="p">):</span>
+            <span class="n">view</span> <span class="o">=</span> <span class="n">GridLayout</span><span class="p">([</span><span class="n">view</span><span class="p">])</span>
 
-            <span class="n">keys_list</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">view</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Layout</span><span class="p">):</span> <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">main</span>
-                <span class="n">keys_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">grid_size</span> <span class="o">=</span> <span class="p">(</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">get_plot_size</span><span class="p">()[</span><span class="mi">1</span><span class="p">],</span>
+                     <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">get_plot_size</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plot</span> <span class="o">=</span> <span class="n">GridLayoutPlot</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="n">grid_size</span><span class="p">))</span>
 
-            <span class="c"># Check if all elements in the Grid have common dimensions</span>
-            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">keys_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">keys_list</span><span class="p">):</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="o">=</span> <span class="n">keys_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="n">element</span> <span class="o">=</span> <span class="n">view</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">Layout</span><span class="p">):</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">main</span><span class="o">.</span><span class="n">dimensions</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">dimensions</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">view</span><span class="p">))]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Frame&#39;</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">Stack</span><span class="p">):</span>
-            <span class="n">opts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">plotting</span><span class="p">(</span><span class="n">view</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">get_plot_size</span><span class="p">())</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">plot</span> <span class="o">=</span> <span class="n">Plot</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="n">view</span><span class="o">.</span><span class="n">type</span><span class="p">](</span><span class="n">view</span><span class="p">,</span> <span class="o">**</span><span class="n">opts</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">dimensions</span>
+        <span class="n">keys_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">dimensions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">view</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">CoordinateGrid</span><span class="p">):</span> <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Layout</span><span class="p">):</span> <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">main</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">):</span> <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">stack_type</span><span class="p">([((</span><span class="mi">0</span><span class="p">,),</span> <span class="n">v</span><span class="p">)],</span> <span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;Frame&#39;</span><span class="p">])</span>
+
+            <span class="n">keys_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="n">dimensions</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">dimensions</span>
+
+        <span class="c"># Check if all elements in the Grid have common dimensions</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">keys_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">keys_list</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="o">=</span> <span class="n">keys_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span> <span class="o">=</span> <span class="n">dimensions</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">view</span><span class="p">))]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Frame&#39;</span><span class="p">]</span>
 
         <span class="c"># Create mock NdMapping to hold the common dimensions and keys</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">mock_obj</span> <span class="o">=</span> <span class="n">NdMapping</span><span class="p">([(</span><span class="n">k</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">],</span>
@@ -319,20 +344,25 @@
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c"># Initalize image widget</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">image_widget</span> <span class="o">=</span> <span class="n">widgets</span><span class="o">.</span><span class="n">ImageWidget</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">ViewMagic</span><span class="o">.</span><span class="n">FIGURE_FORMAT</span> <span class="o">==</span> <span class="s">&#39;mpld3&#39;</span> <span class="ow">and</span> <span class="n">mpld3</span><span class="p">)</span> <span class="ow">or</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">FIGURE_FORMAT</span> <span class="o">==</span> <span class="s">&#39;svg&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">image_widget</span> <span class="o">=</span> <span class="n">widgets</span><span class="o">.</span><span class="n">HTMLWidget</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">image_widget</span> <span class="o">=</span> <span class="n">widgets</span><span class="o">.</span><span class="n">ImageWidget</span><span class="p">()</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cached</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">image_widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">image_widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">print_figure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">image_widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plot_figure</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">image_widget</span><span class="o">.</span><span class="n">set_css</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">css</span><span class="p">)</span>
 
         <span class="c"># Initialize interactive widgets</span>
-        <span class="n">interactive_widget</span> <span class="o">=</span> <span class="n">interactive</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">update_widgets</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">pwidgets</span><span class="p">)</span>
+        <span class="n">interactive_widget</span> <span class="o">=</span> <span class="n">widgets</span><span class="o">.</span><span class="n">interactive</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">update_widgets</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">pwidgets</span><span class="p">)</span>
         <span class="n">interactive_widget</span><span class="o">.</span><span class="n">set_css</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">css</span><span class="p">)</span>
 
         <span class="c"># Display widgets</span>
         <span class="n">display</span><span class="p">(</span><span class="n">interactive_widget</span><span class="p">)</span>
         <span class="n">display</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image_widget</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&#39;&#39;</span> <span class="c"># Suppresses outputting View repr when called through hook</span>
 
 
     <span class="k">def</span> <span class="nf">_get_dim_vals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
@@ -386,8 +416,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cached</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">image_widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="p">[</span><span class="n">checked</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">figure</span> <span class="o">=</span> <span class="n">print_figure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">checked</span><span class="p">)])</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">image_widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">figure</span></div></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">image_widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plot_figure</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">checked</span><span class="p">))</span></div></div>
 </pre></div>
 
           </div>

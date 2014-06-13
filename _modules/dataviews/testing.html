@@ -78,6 +78,7 @@
 <span class="kn">from</span> <span class="nn">.options</span> <span class="kn">import</span> <span class="n">StyleOpts</span><span class="p">,</span> <span class="n">PlotOpts</span><span class="p">,</span> <span class="n">ChannelOpts</span>
 
 <span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">HTML</span><span class="p">,</span> <span class="n">SVG</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
 <div class="viewcode-block" id="ViewTestCase"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.testing.ViewTestCase">[docs]</a><span class="k">class</span> <span class="nc">ViewTestCase</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -116,10 +117,18 @@
         <span class="c"># Dimension objects</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">Dimension</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compare_dims</span><span class="p">)</span>
 
+        <span class="c"># Float comparisons</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compare_floats</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compare_floats</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compare_floats</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compare_floats</span><span class="p">)</span>
 
     <span class="c">#================#</span>
     <span class="c"># Helper methods #</span>
     <span class="c">#================#</span>
+
+    <span class="k">def</span> <span class="nf">compare_floats</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arr1</span><span class="p">,</span> <span class="n">arr2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;Float&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compare_arrays</span><span class="p">(</span><span class="n">arr1</span><span class="p">,</span> <span class="n">arr2</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">compare_arrays</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arr1</span><span class="p">,</span> <span class="n">arr2</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">try</span><span class="p">:</span>
@@ -168,14 +177,56 @@
         <span class="k">for</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">view1</span><span class="p">,</span> <span class="n">view1</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">compare_annotations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view1</span><span class="p">,</span> <span class="n">view2</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">view1</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">view2</span><span class="o">.</span><span class="n">data</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;Annotations contain different sets of annotations.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compare_intervals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval1</span><span class="p">,</span> <span class="n">interval2</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">interval1</span><span class="p">,</span> <span class="n">interval2</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span><span class="bp">None</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="k">elif</span> <span class="bp">None</span> <span class="ow">in</span> <span class="p">(</span><span class="n">interval1</span><span class="p">,</span> <span class="n">interval2</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;Mismatched interval annotation types.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">set</span><span class="p">(</span><span class="n">interval1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">interval2</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;Mismatched interval annotation keys.&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">interval1</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="p">(</span><span class="n">i1s</span><span class="p">,</span> <span class="n">i1e</span><span class="p">)</span> <span class="o">=</span> <span class="n">interval1</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="p">(</span><span class="n">i2s</span><span class="p">,</span> <span class="n">i2e</span><span class="p">)</span> <span class="o">=</span> <span class="n">interval2</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">if</span> <span class="bp">None</span> <span class="ow">in</span> <span class="p">[</span><span class="n">i1s</span><span class="p">,</span> <span class="n">i2s</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">i1s</span><span class="p">,</span> <span class="n">i2s</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compare_floats</span><span class="p">(</span><span class="n">i1s</span><span class="p">,</span> <span class="n">i2s</span><span class="p">,</span> <span class="s">&#39;Interval start&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">None</span> <span class="ow">in</span> <span class="p">[</span><span class="n">i1e</span><span class="p">,</span> <span class="n">i2e</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">i1e</span><span class="p">,</span> <span class="n">i2e</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compare_floats</span><span class="p">(</span><span class="n">i1e</span><span class="p">,</span> <span class="n">i2e</span><span class="p">,</span> <span class="s">&#39;Interval end&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ViewTestCase.compare_annotations"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.testing.ViewTestCase.compare_annotations">[docs]</a>    <span class="k">def</span> <span class="nf">compare_annotations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view1</span><span class="p">,</span> <span class="n">view2</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Note: Currently only process vline and hline correctly</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">view1</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">view2</span><span class="o">.</span><span class="n">data</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">el1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">el2</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;Mismatched annotation types.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">el1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;vline&#39;</span><span class="p">,</span> <span class="s">&#39;hline&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compare_floats</span><span class="p">(</span><span class="n">el1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">el2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s">&#39;V/H line position&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compare_intervals</span><span class="p">(</span><span class="n">el1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">el2</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">el1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;&lt;&#39;</span><span class="p">,</span> <span class="s">&#39;^&#39;</span><span class="p">,</span> <span class="s">&#39;&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;v&#39;</span><span class="p">]:</span>
+                <span class="p">(</span><span class="n">text1</span><span class="p">,</span> <span class="n">xy1</span><span class="p">,</span> <span class="n">points1</span><span class="p">,</span> <span class="n">arrowstyle1</span><span class="p">,</span> <span class="n">interval1</span><span class="p">)</span> <span class="o">=</span> <span class="n">el1</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                <span class="p">(</span><span class="n">text2</span><span class="p">,</span> <span class="n">xy2</span><span class="p">,</span> <span class="n">points2</span><span class="p">,</span> <span class="n">arrowstyle2</span><span class="p">,</span> <span class="n">interval2</span><span class="p">)</span> <span class="o">=</span> <span class="n">el2</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">text1</span><span class="p">,</span> <span class="n">text2</span><span class="p">,</span> <span class="s">&#39;Mismatched text in annotation.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compare_floats</span><span class="p">(</span><span class="n">xy1</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xy2</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s">&#39;Mismatched annotation x position.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compare_floats</span><span class="p">(</span><span class="n">xy1</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">xy2</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="s">&#39;Mismatched annotation y position.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compare_floats</span><span class="p">(</span><span class="n">points1</span><span class="p">,</span> <span class="n">points2</span><span class="p">,</span><span class="s">&#39;Mismatched text in annotation.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">arrowstyle1</span><span class="p">,</span> <span class="n">arrowstyle2</span><span class="p">,</span> <span class="s">&#39;Mismatched annotation arrow styles.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">compare_intervals</span><span class="p">(</span><span class="n">interval1</span><span class="p">,</span> <span class="n">interval2</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
 
     <span class="c">#============#</span>
     <span class="c"># DataLayers #</span>
     <span class="c">#============#</span>
-
+</div>
     <span class="k">def</span> <span class="nf">compare_datastack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view1</span><span class="p">,</span> <span class="n">view2</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compare_stack</span><span class="p">(</span><span class="n">view1</span><span class="p">,</span> <span class="n">view2</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
 
