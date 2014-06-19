@@ -81,7 +81,7 @@
 <span class="kn">import</span> <span class="nn">param</span>
 
 <span class="kn">from</span> <span class="nn">.dataviews</span> <span class="kn">import</span> <span class="n">DataStack</span><span class="p">,</span> <span class="n">DataOverlay</span><span class="p">,</span> <span class="n">DataLayer</span><span class="p">,</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">,</span>\
-    <span class="n">Table</span><span class="p">,</span> <span class="n">TableStack</span><span class="p">,</span> <span class="n">Scatter</span>
+    <span class="n">Table</span><span class="p">,</span> <span class="n">TableStack</span><span class="p">,</span> <span class="n">Scatter</span><span class="p">,</span> <span class="n">Grid</span>
 <span class="kn">from</span> <span class="nn">.sheetviews</span> <span class="kn">import</span> <span class="n">SheetView</span><span class="p">,</span> <span class="n">SheetOverlay</span><span class="p">,</span> <span class="n">Contours</span><span class="p">,</span> \
                        <span class="n">SheetStack</span><span class="p">,</span> <span class="n">Points</span><span class="p">,</span> <span class="n">CoordinateGrid</span><span class="p">,</span> <span class="n">DataGrid</span>
 <span class="kn">from</span> <span class="nn">.views</span> <span class="kn">import</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">Stack</span><span class="p">,</span> <span class="n">GridLayout</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">View</span><span class="p">,</span> <span class="n">Annotation</span>
@@ -573,8 +573,10 @@
         <span class="n">title</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="s">&#39;x&#39;</span><span class="p">,</span> <span class="s">&#39;y&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">lbrt</span><span class="p">())</span>
 
-        <span class="n">scatterplot</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">points</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">points</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
-                                 <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span>
+        <span class="n">xs</span> <span class="o">=</span> <span class="n">points</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="n">ys</span> <span class="o">=</span> <span class="n">points</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">points</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
+
+        <span class="n">scatterplot</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span>
                                  <span class="o">**</span><span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">points</span><span class="p">)[</span><span class="n">cyclic_index</span><span class="p">])</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">add_collection</span><span class="p">(</span><span class="n">scatterplot</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;scatter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">scatterplot</span>
@@ -1513,27 +1515,30 @@
 
 
 </div>
-<div class="viewcode-block" id="DataGridPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.DataGridPlot">[docs]</a><span class="k">class</span> <span class="nc">DataGridPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+<div class="viewcode-block" id="GridPlot"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.plots.GridPlot">[docs]</a><span class="k">class</span> <span class="nc">GridPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Plot a group of views in a grid layout based on a DataGrid view</span>
 <span class="sd">    object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">grid_axis</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether to show a global axis for the entire grid.&quot;&quot;&quot;</span><span class="p">)</span>
+
     <span class="n">joint_axes</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">     Share axes between all elements in the DataGrid.&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">        Share axes between all elements in the Grid.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">show_legend</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">      Legends add to much clutter in a grid and are disabled by default.&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">        Legends add to much clutter in a grid and are disabled by default.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">show_title</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
     <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">     DataGridPlot renders groups of DataLayers which individually have</span>
-<span class="s">     style options but DataGridPlot itself does not.&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">        GridPlot renders groups of DataLayers which individually have</span>
+<span class="s">        style options but GridPlot itself does not.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">DataGrid</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;DataGridPlot only accepts DataGrids.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">Grid</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;GridPlot only accepts DataGrids.&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">grid</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1541,7 +1546,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cols</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">y</span><span class="p">)))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_gridspec</span> <span class="o">=</span> <span class="n">gridspec</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cols</span><span class="p">)</span>
         <span class="n">extra_opts</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">plotting</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">DataGridPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">show_xaxis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">show_yaxis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GridPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">show_xaxis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">show_yaxis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
                                            <span class="n">show_frame</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
                                            <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_opts</span><span class="p">))</span>
 
@@ -1567,21 +1572,63 @@
                                          <span class="n">show_xaxis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_xaxis</span><span class="p">,</span>
                                          <span class="n">show_yaxis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_yaxis</span><span class="p">,</span>
                                          <span class="n">show_title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_title</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subplot</span><span class="p">)</span>
-            <span class="n">subplot</span><span class="p">(</span><span class="n">subax</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subplot</span><span class="p">)</span>
+                <span class="n">subplot</span><span class="p">(</span><span class="n">subax</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">c</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cols</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span>
                 <span class="n">c</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>
                 <span class="n">r</span> <span class="o">-=</span> <span class="mi">1</span>
 
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_axis</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grid_axis</span><span class="p">()</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="n">axis</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">ax</span> <span class="k">if</span> <span class="n">axis</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">_format_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">view</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">Stack</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="n">n</span><span class="p">]</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">key</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">key</span><span class="p">,)</span>
+            <span class="n">title_format</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">get_title</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">)</span>
+            <span class="n">view</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">last</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">title_format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">title</span>
+        <span class="k">return</span> <span class="n">title_format</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+                                   <span class="nb">type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_grid_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+        <span class="n">grid_axis</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        <span class="n">grid_axis</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+        <span class="c"># Set labels and titles</span>
+        <span class="n">grid_axis</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">dimensions</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">grid_axis</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">dimensions</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">grid_axis</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+
+        <span class="c"># Compute and set x- and y-ticks</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">dim1_keys</span><span class="p">,</span> <span class="n">dim2_keys</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">keys</span><span class="p">)</span>
+        <span class="n">plot_width</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">rows</span>
+        <span class="n">plot_height</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">cols</span>
+        <span class="n">xticks</span> <span class="o">=</span> <span class="p">[(</span><span class="n">plot_height</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="n">r</span><span class="o">*</span><span class="n">plot_height</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">)]</span>
+        <span class="n">yticks</span> <span class="o">=</span> <span class="p">[(</span><span class="n">plot_width</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="n">r</span><span class="o">*</span><span class="n">plot_width</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cols</span><span class="p">)]</span>
+        <span class="n">grid_axis</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">xticks</span><span class="p">)</span>
+        <span class="n">grid_axis</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">([</span><span class="nb">round</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">))])</span>
+        <span class="n">grid_axis</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="n">yticks</span><span class="p">)</span>
+        <span class="n">grid_axis</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">([</span><span class="nb">round</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">))])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;grid_axis&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">grid_axis</span>
 
 
     <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">subplot</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span><span class="p">:</span>
             <span class="n">subplot</span><span class="o">.</span><span class="n">update_frame</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid_axis</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;grid_axis&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
 
 
     <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1992,7 +2039,8 @@
                       <span class="n">Curve</span><span class="p">:</span> <span class="n">CurvePlot</span><span class="p">,</span>
                       <span class="n">Scatter</span><span class="p">:</span> <span class="n">ScatterPlot</span><span class="p">,</span>
                       <span class="n">DataOverlay</span><span class="p">:</span> <span class="n">DataPlot</span><span class="p">,</span>
-                      <span class="n">DataGrid</span><span class="p">:</span> <span class="n">DataGridPlot</span><span class="p">,</span>
+                      <span class="n">DataGrid</span><span class="p">:</span> <span class="n">GridPlot</span><span class="p">,</span>
+                      <span class="n">Grid</span><span class="p">:</span> <span class="n">GridPlot</span><span class="p">,</span>
                       <span class="n">Table</span><span class="p">:</span> <span class="n">TablePlot</span><span class="p">,</span>
                       <span class="n">Histogram</span><span class="p">:</span> <span class="n">HistogramPlot</span><span class="p">,</span>
                       <span class="n">Layout</span><span class="p">:</span> <span class="n">GridLayoutPlot</span><span class="p">,</span>
