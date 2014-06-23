@@ -79,7 +79,7 @@
 
 <span class="kn">from</span> <span class="nn">..options</span> <span class="kn">import</span> <span class="n">PlotOpts</span><span class="p">,</span> <span class="n">StyleOpts</span><span class="p">,</span> <span class="n">ChannelOpts</span>
 <span class="kn">from</span> <span class="nn">..plots</span> <span class="kn">import</span> <span class="n">Plot</span>
-<span class="kn">from</span> <span class="nn">..views</span> <span class="kn">import</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">GridLayout</span>
+<span class="kn">from</span> <span class="nn">..views</span> <span class="kn">import</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">GridLayout</span><span class="p">,</span> <span class="n">Grid</span>
 <span class="kn">from</span> <span class="nn">..dataviews</span> <span class="kn">import</span> <span class="n">Stack</span><span class="p">,</span> <span class="n">View</span>
 <span class="kn">from</span> <span class="nn">..sheetviews</span> <span class="kn">import</span> <span class="n">SheetOverlay</span>
 
@@ -280,7 +280,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Labels on Overlays are used to index channel definitions.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">Layout</span><span class="p">,</span> <span class="n">GridLayout</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">Layout</span><span class="p">,</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">GridLayout</span><span class="p">)):</span>
             <span class="k">for</span> <span class="n">subview</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
                 <span class="n">cls</span><span class="o">.</span><span class="n">_set_overlay_labels</span><span class="p">(</span><span class="n">subview</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Stack</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">):</span>
@@ -403,10 +403,13 @@
 <span class="sd">        values as keys for the the associated view type.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">group</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">Overlay</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">GridLayout</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">Overlay</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">GridLayout</span><span class="p">)):</span>
             <span class="k">for</span> <span class="n">subview</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
                 <span class="n">group</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">subview</span><span class="p">,</span> <span class="n">attr</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Stack</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">Layout</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">)):</span>
+                <span class="k">return</span> <span class="n">group</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Stack</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">):</span>
             <span class="n">key_lists</span> <span class="o">=</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">]</span>
             <span class="n">values</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">el</span> <span class="k">for</span> <span class="n">els</span> <span class="ow">in</span> <span class="n">key_lists</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">els</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
@@ -440,10 +443,13 @@
 <span class="sd">        name for all matches. A match occurs when the basename of the</span>
 <span class="sd">        view.style is found in the supplied dictionary.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">Layout</span><span class="p">,</span> <span class="n">GridLayout</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">Layout</span><span class="p">,</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">GridLayout</span><span class="p">)):</span>
             <span class="k">for</span> <span class="n">subview</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
                 <span class="n">cls</span><span class="o">.</span><span class="n">_set_style_names</span><span class="p">(</span><span class="n">subview</span><span class="p">,</span> <span class="n">custom_name_map</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">style</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Layout</span><span class="p">):</span>
+                <span class="k">return</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">style</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Layout</span><span class="p">):</span>
             <span class="n">obj</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="p">[</span><span class="n">custom_name_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">_basename</span><span class="p">(</span><span class="n">s</span><span class="p">),</span> <span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">style</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">style</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_basename</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
