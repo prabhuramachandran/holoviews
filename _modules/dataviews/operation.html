@@ -112,15 +112,17 @@
 <span class="s">        The label to identify the output of the ViewOperation. By</span>
 <span class="s">        default this will match the name of the ViewOperation itself.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Process a single input view and output a list of views. When</span>
 <span class="sd">        multiple views are returned as a list, they will be returned</span>
 <span class="sd">        to the user as a GridLayout. If a Stack is passed into a</span>
 <span class="sd">        ViewOperation, the individual layers are processed</span>
-<span class="sd">        sequentially.</span>
+<span class="sd">        sequentially and the dimension keys are passed along with</span>
+<span class="sd">        the View.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
 
 <div class="viewcode-block" id="ViewOperation.get_views"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.operation.ViewOperation.get_views">[docs]</a>    <span class="k">def</span> <span class="nf">get_views</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">view_type</span><span class="o">=</span><span class="n">SheetView</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -191,7 +193,7 @@
 
 
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">Stack</span><span class="p">):</span>
-            <span class="n">mapped_items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="p">(</span><span class="n">el</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">view</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+            <span class="n">mapped_items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">key_items</span><span class="p">(</span><span class="n">k</span><span class="p">)))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">view</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
             <span class="n">signature</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_signature</span><span class="p">(</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">mapped_items</span><span class="p">)</span>
 
             <span class="n">stack_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">stack_mapping</span><span class="p">[</span><span class="n">tp</span><span class="p">]</span> <span class="k">for</span> <span class="n">tp</span> <span class="ow">in</span> <span class="n">signature</span><span class="p">]</span>
@@ -257,7 +259,7 @@
 
     <span class="n">chain</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;A chain of existing ViewOperations.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
 
 
@@ -276,7 +278,7 @@
     <span class="n">label</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Operation&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        The label for the result after having applied the operator.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Operation requires an Overlay as input&quot;</span><span class="p">)</span>
@@ -296,7 +298,7 @@
     <span class="n">label</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;RGBA&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        The label to use for the resulting RGBA SheetView.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Requires 3 or 4 layers to convert to RGB(A)&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">SheetView</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="o">.</span><span class="n">data</span><span class="p">):</span>
@@ -329,7 +331,7 @@
 <span class="s">        The label suffix to use for the alpha overlay result where the</span>
 <span class="s">        suffix is added to the label of the first layer.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">R</span><span class="p">,</span><span class="n">G</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">_</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">cmap2rgb</span><span class="p">(</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">SheetView</span><span class="p">(</span><span class="n">RGBA</span><span class="p">(</span><span class="n">R</span><span class="o">*</span><span class="n">G</span><span class="o">*</span><span class="n">B</span><span class="o">*</span><span class="n">overlay</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">overlay</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
                           <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)]</span>
@@ -358,7 +360,7 @@
 <span class="s">        The label suffix to use for the resulting HCS plot where the</span>
 <span class="s">        suffix is added to the label of the Hue channel.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">hue</span> <span class="o">=</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">confidence</span> <span class="o">=</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
@@ -396,7 +398,7 @@
 <span class="s">        The label suffix to use for the resulting colorized plot where</span>
 <span class="s">        the suffix is added to the label of the first layer.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
 
          <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mode</span> <span class="o">!=</span> <span class="s">&#39;cmap&#39;</span><span class="p">:</span>
              <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Can only colorize grayscale overlayed with colour map.&quot;</span><span class="p">)</span>
@@ -431,7 +433,7 @@
 <span class="s">        the suffix is added to the label of the SheetView to be</span>
 <span class="s">        colored.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sheetview</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sheetview</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">sheetview</span><span class="o">.</span><span class="n">depth</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Can only apply colour maps to SheetViews with depth of 1.&quot;</span><span class="p">)</span>
 
@@ -454,7 +456,7 @@
 <span class="s">      The label suffix used to label the components of the split</span>
 <span class="s">      following the character selected from output_names.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sheetview</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sheetview</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">sheetview</span><span class="o">.</span><span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;rgb&#39;</span><span class="p">,</span> <span class="s">&#39;rgba&#39;</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Can only split SheetViews with a depth of 3 or 4&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">sheetview</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">sheetview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">],</span>
@@ -480,7 +482,7 @@
 <span class="s">      The label suffix used to label the resulting contour curves</span>
 <span class="s">      where the suffix is added to the label of the  input SheetView&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sheetview</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sheetview</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
 
         <span class="n">figure_handle</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
         <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="o">=</span> <span class="n">sheetview</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">lbrt</span><span class="p">()</span>
