@@ -69,7 +69,8 @@
 
 <span class="kn">import</span> <span class="nn">param</span>
 
-<span class="kn">from</span> <span class="nn">.ndmapping</span> <span class="kn">import</span> <span class="n">Dimension</span>
+<span class="kn">from</span> <span class="nn">.ndmapping</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">NdMapping</span>
+<span class="kn">from</span> <span class="nn">.options</span> <span class="kn">import</span> <span class="n">options</span>
 <span class="kn">from</span> <span class="nn">.views</span> <span class="kn">import</span> <span class="n">View</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">Annotation</span><span class="p">,</span> <span class="n">Stack</span><span class="p">,</span> <span class="n">find_minmax</span>
 
 
@@ -427,6 +428,284 @@
 
 
 </div>
+<div class="viewcode-block" id="Matrix"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.dataviews.Matrix">[docs]</a><span class="k">class</span> <span class="nc">Matrix</span><span class="p">(</span><span class="n">View</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Matrix is a basic 2D atomic View type.</span>
+
+<span class="sd">    Arrays with a shape of (X,Y) or (X,Y,Z) are valid. In the case of</span>
+<span class="sd">    3D arrays, each depth layer is interpreted as a channel of the 2D</span>
+<span class="sd">    representation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;X&#39;</span><span class="p">),</span> <span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;Y&#39;</span><span class="p">)],</span>
+                            <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The label of the x- and y-dimension of the Matrix in form</span>
+<span class="s">        of a string or dimension object.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ClassSelector</span><span class="p">(</span><span class="n">class_</span><span class="o">=</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">),</span>
+                                <span class="n">default</span><span class="o">=</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;Z&#39;</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The dimension description of the data held in the data array.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">lbrt</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lbrt</span> <span class="o">=</span> <span class="n">lbrt</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Matrix</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">norm_factor</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">div_by_zero</span><span class="o">=</span><span class="s">&#39;ignore&#39;</span><span class="p">):</span>
+        <span class="n">norm_factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span> <span class="k">if</span> <span class="n">norm_factor</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">norm_factor</span>
+        <span class="k">if</span> <span class="n">norm_factor</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">norm_factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">min</span><span class="p">,</span> <span class="nb">max</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">div_by_zero</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;ignore&#39;</span><span class="p">,</span> <span class="s">&#39;warn&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">norm_factor</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">div_by_zero</span> <span class="o">==</span> <span class="s">&#39;warn&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Ignoring divide by zero in normalization.&quot;</span><span class="p">)</span>
+            <span class="n">norm_factor</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="p">(</span><span class="n">norm_factor</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">else</span> <span class="n">norm_factor</span>
+
+        <span class="n">norm_data</span> <span class="o">=</span> <span class="p">(((</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="n">norm_factor</span><span class="p">)</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span>
+            <span class="p">(</span><span class="nb">max</span> <span class="o">-</span> <span class="nb">min</span><span class="p">)))</span> <span class="o">+</span> <span class="nb">min</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">norm_data</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Matrix.hist"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.dataviews.Matrix.hist">[docs]</a>    <span class="k">def</span> <span class="nf">hist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">bin_range</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">adjoin</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">individually</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a Histogram of the Matrix data, binned into</span>
+<span class="sd">        num_bins over the bin_range (if specified).</span>
+
+<span class="sd">        If adjoin is True, the histogram will be returned adjoined to</span>
+<span class="sd">        the Matrix as a side-plot.</span>
+
+<span class="sd">        The &#39;individually&#39; argument specifies whether the histogram</span>
+<span class="sd">        will be rescaled for each Matrix in a Stack.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">range</span> <span class="o">=</span> <span class="n">find_minmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">)))</span>\
+            <span class="k">if</span> <span class="n">bin_range</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">bin_range</span>
+
+        <span class="c"># Avoids range issues including zero bin range and empty bins</span>
+        <span class="k">if</span> <span class="nb">range</span> <span class="o">==</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="nb">range</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">invert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">data</span><span class="p">))]</span>
+            <span class="n">hist</span><span class="p">,</span> <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">normed</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                                       <span class="nb">range</span><span class="o">=</span><span class="nb">range</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">num_bins</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">num_bins</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_bins</span><span class="p">)</span>
+        <span class="n">hist</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">hist</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">hist_view</span> <span class="o">=</span> <span class="n">Histogram</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">],</span>
+                              <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s">&#39;Frequency&#39;</span><span class="p">)</span>
+
+        <span class="c"># Set plot and style options</span>
+        <span class="n">style_prefix</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;style_prefix&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;Custom[&lt;&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s">&#39;&gt;]_&#39;</span><span class="p">)</span>
+        <span class="n">opts_name</span> <span class="o">=</span> <span class="n">style_prefix</span> <span class="o">+</span> <span class="n">hist_view</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
+        <span class="n">hist_view</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">opts_name</span>
+        <span class="n">options</span><span class="p">[</span><span class="n">opts_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">plotting</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span>
+            <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">rescale_individually</span><span class="o">=</span><span class="n">individually</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span> <span class="o">&lt;&lt;</span> <span class="n">hist_view</span><span class="p">)</span> <span class="k">if</span> <span class="n">adjoin</span> <span class="k">else</span> <span class="n">hist_view</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">_coord2matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="p">):</span>
+        <span class="n">xd</span><span class="p">,</span> <span class="n">yd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lbrt</span>
+        <span class="n">xvals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">xd</span><span class="p">)</span>
+        <span class="n">yvals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">yd</span><span class="p">)</span>
+        <span class="n">xidx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">xvals</span><span class="o">-</span><span class="n">coord</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">yidx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">yvals</span><span class="o">-</span><span class="n">coord</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">xidx</span><span class="p">,</span> <span class="n">yidx</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Matrix.sample"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.dataviews.Matrix.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="p">[],</span> <span class="o">**</span><span class="n">samples</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sample the Matrixalong one or both of its dimensions,</span>
+<span class="sd">        returning a reduced dimensionality type, which is either</span>
+<span class="sd">        a Table, Curve or Scatter. If two dimension samples</span>
+<span class="sd">        and a new_xaxis is provided the sample will be the value</span>
+<span class="sd">        of the sampled unit indexed by the value in the new_xaxis</span>
+<span class="sd">        tuple.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">):</span>
+                <span class="n">coords</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">c</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">didx</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span>
+                               <span class="nb">sorted</span><span class="p">([(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim_index</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span>
+                                       <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">()])])</span>
+            <span class="n">table_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">coords</span><span class="p">:</span>
+                <span class="n">table_data</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_coord2matrix</span><span class="p">(</span><span class="o">*</span><span class="n">c</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="n">Table</span><span class="p">(</span><span class="n">table_data</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">,</span>
+                         <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+                         <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dimension</span><span class="p">,</span> <span class="n">sample_coord</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_coord</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s">&#39;Matrix sampling requires coordinates not slices,&#39;</span>
+                    <span class="s">&#39;use regular slicing syntax.&#39;</span><span class="p">)</span>
+            <span class="n">other_dimension</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span> <span class="k">if</span>
+                               <span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">dimension</span><span class="p">]</span>
+            <span class="c"># Indices inverted for indexing</span>
+            <span class="n">sample_ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim_index</span><span class="p">(</span><span class="n">other_dimension</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+            <span class="c"># Generate sample slice</span>
+            <span class="n">sample</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ndims</span><span class="p">)]</span>
+            <span class="n">coord_fn</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="k">if</span> <span class="n">sample_ind</span> <span class="k">else</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+            <span class="n">sample</span><span class="p">[</span><span class="n">sample_ind</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coord2matrix</span><span class="p">(</span><span class="o">*</span><span class="n">coord_fn</span><span class="p">(</span><span class="n">sample_coord</span><span class="p">))[</span><span class="n">sample_ind</span><span class="p">]</span>
+
+            <span class="c"># Sample data</span>
+            <span class="n">x_vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dimension</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x_vals</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sample</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_param_values</span><span class="p">(),</span>
+                                      <span class="n">dimensions</span><span class="o">=</span><span class="n">other_dimension</span><span class="p">))</span>
+
+</div>
+<div class="viewcode-block" id="Matrix.reduce"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.dataviews.Matrix.reduce">[docs]</a>    <span class="k">def</span> <span class="nf">reduce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label_prefix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">dimreduce_map</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reduces the Matrix using functions provided via the</span>
+<span class="sd">        kwargs, where the keyword is the dimension to be reduced.</span>
+<span class="sd">        Optionally a label_prefix can be provided to prepend to</span>
+<span class="sd">        the result View label.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">label_prefix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dimreduce_map</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span><span class="p">:</span>
+            <span class="n">reduced_view</span> <span class="o">=</span> <span class="bp">self</span>
+            <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">reduce_fn</span> <span class="ow">in</span> <span class="n">dimreduce_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">reduced_view</span> <span class="o">=</span> <span class="n">reduced_view</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">label_prefix</span><span class="o">=</span><span class="n">label_prefix</span><span class="p">,</span>
+                                                   <span class="o">**</span><span class="p">{</span><span class="n">dim</span><span class="p">:</span> <span class="n">reduce_fn</span><span class="p">})</span>
+                <span class="n">label_prefix</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+            <span class="k">return</span> <span class="n">reduced_view</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dimension</span><span class="p">,</span> <span class="n">reduce_fn</span> <span class="o">=</span> <span class="n">dimreduce_map</span><span class="o">.</span><span class="n">items</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">other_dimension</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">dimension</span><span class="p">]</span>
+            <span class="n">x_vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dimension</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x_vals</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim_index</span><span class="p">(</span><span class="n">dimension</span><span class="p">)))</span>
+            <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">other_dimension</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+                         <span class="n">title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Matrix.cyclic_range"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.dataviews.Matrix.cyclic_range">[docs]</a>    <span class="k">def</span> <span class="nf">cyclic_range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        For a cyclic quantity, the range over which the values</span>
+<span class="sd">        repeat. For instance, the orientation of a mirror-symmetric</span>
+<span class="sd">        pattern in a plane is pi-periodic, with orientation x the same</span>
+<span class="sd">        as orientation x+pi (and x+2pi, etc.). The property determines</span>
+<span class="sd">        the cyclic_range from the value dimensions range parameter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">cyclic</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">depth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Matrix.mode"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.dataviews.Matrix.mode">[docs]</a>    <span class="k">def</span> <span class="nf">mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Mode specifying the color space for visualizing the array data</span>
+<span class="sd">        and is a function of the depth. For a depth of one, a colormap</span>
+<span class="sd">        is used as determined by the style. If the depth is 3 or 4,</span>
+<span class="sd">        the mode is &#39;rgb&#39; or &#39;rgba&#39; respectively.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span>   <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="k">return</span> <span class="s">&#39;cmap&#39;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>  <span class="k">return</span> <span class="s">&#39;rgb&#39;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>  <span class="k">return</span> <span class="s">&#39;rgba&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Mode cannot be determined from the depth&quot;</span><span class="p">)</span>
+
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">N</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
+
+
+</div>
+<div class="viewcode-block" id="HeatMap"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.dataviews.HeatMap">[docs]</a><span class="k">class</span> <span class="nc">HeatMap</span><span class="p">(</span><span class="n">Matrix</span><span class="p">,</span> <span class="n">DataLayer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    HeatMap is an atomic View element used to visualize two dimensional</span>
+<span class="sd">    parameter spaces. It supports sparse or non-linear spaces, dynamically</span>
+<span class="sd">    upsampling them to a dense representation, which can be visualized.</span>
+
+<span class="sd">    A HeatMap can be initialized with any dict or NdMapping type with</span>
+<span class="sd">    two-dimensional keys. Once instantiated the dense representation is</span>
+<span class="sd">    available via the .data property.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_deep_indexable</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">dimensions</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;dimensions&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="s">&#39;dimensions&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="k">if</span> <span class="s">&#39;dimensions&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;dimensions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">dimensions</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">NdMapping</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">dimensions</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">NdMapping</span><span class="p">(</span><span class="n">dimensions</span><span class="o">=</span><span class="n">dimensions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;HeatMap only accepts dict or NdMapping types.&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_style</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Slice the underlying NdMapping.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">dimension_labels</span><span class="p">,</span> <span class="n">coords</span><span class="p">))))</span>
+
+
+    <span class="k">def</span> <span class="nf">dense_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">dim1_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">))</span>
+        <span class="n">dim2_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">dim1_keys</span><span class="p">,</span> <span class="n">dim2_keys</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dim1_keys</span><span class="p">,</span> <span class="n">dim2_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense_keys</span><span class="p">()</span>
+        <span class="n">grid_keys</span> <span class="o">=</span> <span class="p">[((</span><span class="n">i1</span><span class="p">,</span> <span class="n">d1</span><span class="p">),</span> <span class="p">(</span><span class="n">i2</span><span class="p">,</span> <span class="n">d2</span><span class="p">))</span> <span class="k">for</span> <span class="n">i1</span><span class="p">,</span> <span class="n">d1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">)</span>
+                     <span class="k">for</span> <span class="n">i2</span><span class="p">,</span> <span class="n">d2</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">)]</span>
+
+        <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">)))</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">i1</span><span class="p">,</span> <span class="n">d1</span><span class="p">),</span> <span class="p">(</span><span class="n">i2</span><span class="p">,</span> <span class="n">d2</span><span class="p">)</span> <span class="ow">in</span> <span class="n">grid_keys</span><span class="p">:</span>
+            <span class="n">array</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">)</span><span class="o">-</span><span class="n">i2</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">i1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">array</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">vals</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">vals</span><span class="p">))</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">lbrt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dim1_keys</span><span class="p">,</span> <span class="n">dim2_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense_keys</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">)</span>
+
+
+</div>
 <div class="viewcode-block" id="DataStack"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.dataviews.DataStack">[docs]</a><span class="k">class</span> <span class="nc">DataStack</span><span class="p">(</span><span class="n">Stack</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A DataStack can hold any number of DataLayers indexed by a list of</span>
@@ -434,9 +713,18 @@
 <span class="sd">    the x- and y-dimension limits and labels.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">data_type</span> <span class="o">=</span> <span class="p">(</span><span class="n">DataLayer</span><span class="p">,</span> <span class="n">Annotation</span><span class="p">)</span>
+    <span class="n">data_type</span> <span class="o">=</span> <span class="p">(</span><span class="n">DataLayer</span><span class="p">,</span> <span class="n">Annotation</span><span class="p">,</span> <span class="n">Matrix</span><span class="p">)</span>
 
     <span class="n">overlay_type</span> <span class="o">=</span> <span class="n">DataOverlay</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="s">&#39;range&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;View type </span><span class="si">%s</span><span class="s"> does not implement range.&#39;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="p">))</span>
+        <span class="nb">range</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">range</span>
+        <span class="k">for</span> <span class="n">view</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="nb">range</span> <span class="o">=</span> <span class="n">find_minmax</span><span class="p">(</span><span class="nb">range</span><span class="p">,</span> <span class="n">view</span><span class="o">.</span><span class="n">range</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">range</span>
 
 
     <span class="nd">@property</span>

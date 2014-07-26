@@ -66,16 +66,15 @@
             
   <h1>Source code for dataviews.sheetviews.sheetviews</h1><div class="highlight"><pre>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
 <span class="kn">import</span> <span class="nn">param</span>
 
 <span class="kn">from</span> <span class="nn">.boundingregion</span> <span class="kn">import</span> <span class="n">BoundingBox</span><span class="p">,</span> <span class="n">BoundingRegion</span>
 <span class="kn">from</span> <span class="nn">.sheetcoords</span> <span class="kn">import</span> <span class="n">SheetCoordinateSystem</span><span class="p">,</span> <span class="n">Slice</span>
 
-<span class="kn">from</span> <span class="nn">..dataviews</span> <span class="kn">import</span> <span class="n">Table</span><span class="p">,</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">,</span> <span class="n">DataStack</span><span class="p">,</span> <span class="n">TableStack</span>
+<span class="kn">from</span> <span class="nn">..dataviews</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">DataStack</span><span class="p">,</span> <span class="n">TableStack</span>
 <span class="kn">from</span> <span class="nn">..ndmapping</span> <span class="kn">import</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">Dimension</span>
-<span class="kn">from</span> <span class="nn">..options</span> <span class="kn">import</span> <span class="n">options</span><span class="p">,</span> <span class="n">channels</span>
+<span class="kn">from</span> <span class="nn">..options</span> <span class="kn">import</span> <span class="n">channels</span>
 <span class="kn">from</span> <span class="nn">..views</span> <span class="kn">import</span> <span class="n">View</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">Annotation</span><span class="p">,</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">find_minmax</span>
 
 
@@ -107,7 +106,7 @@
 
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">SheetLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">View</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
@@ -270,7 +269,7 @@
 
 
 </div>
-<div class="viewcode-block" id="SheetView"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.sheetviews.html#dataviews.sheetviews.sheetviews.SheetView">[docs]</a><span class="k">class</span> <span class="nc">SheetView</span><span class="p">(</span><span class="n">SheetLayer</span><span class="p">,</span> <span class="n">SheetCoordinateSystem</span><span class="p">):</span>
+<div class="viewcode-block" id="SheetView"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.sheetviews.html#dataviews.sheetviews.sheetviews.SheetView">[docs]</a><span class="k">class</span> <span class="nc">SheetView</span><span class="p">(</span><span class="n">SheetCoordinateSystem</span><span class="p">,</span> <span class="n">SheetLayer</span><span class="p">,</span> <span class="n">Matrix</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    SheetView is the atomic unit as which 2D data is stored, along with its</span>
 <span class="sd">    bounds object. Allows slicing operations of the data in sheet coordinates or</span>
@@ -296,13 +295,14 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span> <span class="k">if</span> <span class="n">bounds</span> <span class="k">else</span> <span class="n">BoundingBox</span><span class="p">()</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">]])</span> <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">data</span>
-        <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">lbrt</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lbrt</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">lbrt</span><span class="p">()</span>
+        <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">lbrt</span><span class="p">()</span>
         <span class="p">(</span><span class="n">dim1</span><span class="p">,</span> <span class="n">dim2</span><span class="p">)</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">xdensity</span> <span class="o">=</span> <span class="n">dim1</span><span class="o">/</span><span class="p">(</span><span class="n">r</span><span class="o">-</span><span class="n">l</span><span class="p">)</span>
         <span class="n">ydensity</span> <span class="o">=</span> <span class="n">dim2</span><span class="o">/</span><span class="p">(</span><span class="n">t</span><span class="o">-</span><span class="n">b</span><span class="p">)</span>
 
-        <span class="n">SheetLayer</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">SheetCoordinateSystem</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">xdensity</span><span class="p">,</span> <span class="n">ydensity</span><span class="p">)</span>
+        <span class="n">SheetLayer</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">):</span>
@@ -329,176 +329,8 @@
                          <span class="n">bounds</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
 
 
-    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">norm_factor</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">div_by_zero</span><span class="o">=</span><span class="s">&#39;ignore&#39;</span><span class="p">):</span>
-        <span class="n">norm_factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span> <span class="k">if</span> <span class="n">norm_factor</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">norm_factor</span>
-        <span class="k">if</span> <span class="n">norm_factor</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">norm_factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="nb">min</span><span class="p">,</span> <span class="nb">max</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">div_by_zero</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;ignore&#39;</span><span class="p">,</span> <span class="s">&#39;warn&#39;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">norm_factor</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">div_by_zero</span> <span class="o">==</span> <span class="s">&#39;warn&#39;</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Ignoring divide by zero in normalization.&quot;</span><span class="p">)</span>
-            <span class="n">norm_factor</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="p">(</span><span class="n">norm_factor</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">else</span> <span class="n">norm_factor</span>
-
-        <span class="n">norm_data</span> <span class="o">=</span> <span class="p">(((</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="n">norm_factor</span><span class="p">)</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span>
-            <span class="p">(</span><span class="nb">max</span> <span class="o">-</span> <span class="nb">min</span><span class="p">)))</span> <span class="o">+</span> <span class="nb">min</span>
-        <span class="k">return</span> <span class="n">SheetView</span><span class="p">(</span><span class="n">norm_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">roi_bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">roi_bounds</span><span class="p">,</span>
-                         <span class="n">style</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="SheetView.hist"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.sheetviews.html#dataviews.sheetviews.sheetviews.SheetView.hist">[docs]</a>    <span class="k">def</span> <span class="nf">hist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">bin_range</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">adjoin</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">individually</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns a Histogram of the SheetView data, binned into</span>
-<span class="sd">        num_bins over the bin_range (if specified).</span>
-
-<span class="sd">        If adjoin is True, the histogram will be returned adjoined to</span>
-<span class="sd">        the SheetView as a side-plot.</span>
-
-<span class="sd">        The &#39;individually&#39; argument specifies whether the histogram</span>
-<span class="sd">        will be rescaled for each for SheetViews in a SheetStack</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">range</span> <span class="o">=</span> <span class="n">find_minmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">)))</span>\
-            <span class="k">if</span> <span class="n">bin_range</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">bin_range</span>
-
-        <span class="c"># Avoids range issues including zero bin range and empty bins</span>
-        <span class="k">if</span> <span class="nb">range</span> <span class="o">==</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
-            <span class="nb">range</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">hist</span><span class="p">,</span> <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">normed</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-                                       <span class="nb">range</span><span class="o">=</span><span class="nb">range</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="n">num_bins</span><span class="p">)</span>
-        <span class="k">except</span><span class="p">:</span>
-            <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="nb">range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">num_bins</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-            <span class="n">hist</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_bins</span><span class="p">)</span>
-        <span class="n">hist</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">hist</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
-
-        <span class="n">hist_view</span> <span class="o">=</span> <span class="n">Histogram</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">],</span>
-                              <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="s">&#39;Frequency&#39;</span><span class="p">)</span>
-
-        <span class="c"># Set plot and style options</span>
-        <span class="n">style_prefix</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;style_prefix&#39;</span><span class="p">,</span>
-                                  <span class="s">&#39;Custom[&lt;&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s">&#39;&gt;]_&#39;</span><span class="p">)</span>
-        <span class="n">opts_name</span> <span class="o">=</span> <span class="n">style_prefix</span> <span class="o">+</span> <span class="n">hist_view</span><span class="o">.</span><span class="n">label</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
-        <span class="n">hist_view</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">opts_name</span>
-        <span class="n">options</span><span class="p">[</span><span class="n">opts_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">plotting</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span>
-            <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">rescale_individually</span><span class="o">=</span><span class="n">individually</span><span class="p">))</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span> <span class="o">&lt;&lt;</span> <span class="n">hist_view</span><span class="p">)</span> <span class="k">if</span> <span class="n">adjoin</span> <span class="k">else</span> <span class="n">hist_view</span>
-
-</div>
-<div class="viewcode-block" id="SheetView.sample"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.sheetviews.html#dataviews.sheetviews.sheetviews.SheetView.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="o">=</span><span class="p">[],</span> <span class="o">**</span><span class="n">samples</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Sample the SheetView along one or both of its dimensions,</span>
-<span class="sd">        returning a reduced dimensionality type, which is either</span>
-<span class="sd">        a Table, Curve or Scatter. If two dimension samples</span>
-<span class="sd">        and a new_xaxis is provided the sample will be the value</span>
-<span class="sd">        of the sampled unit indexed by the value in the new_xaxis</span>
-<span class="sd">        tuple.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">):</span>
-                <span class="n">coords</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">c</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">didx</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span>
-                               <span class="nb">sorted</span><span class="p">([(</span><span class="bp">self</span><span class="o">.</span><span class="n">dim_index</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span>
-                                       <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">()])])</span>
-            <span class="n">table_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">coords</span><span class="p">:</span>
-                <span class="n">table_data</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sheet2matrixidx</span><span class="p">(</span><span class="o">*</span><span class="n">c</span><span class="p">)]</span>
-            <span class="k">return</span> <span class="n">Table</span><span class="p">(</span><span class="n">table_data</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">,</span>
-                         <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
-                         <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">dimension</span><span class="p">,</span> <span class="n">sample_coord</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">items</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_coord</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s">&#39;SheetView sampling requires coordinates not slices,&#39;</span>
-                    <span class="s">&#39;use regular slicing syntax.&#39;</span><span class="p">)</span>
-            <span class="n">other_dimension</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span> <span class="k">if</span>
-                               <span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">dimension</span><span class="p">]</span>
-            <span class="c"># Indices inverted for indexing</span>
-            <span class="n">sample_ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dim_index</span><span class="p">(</span><span class="n">other_dimension</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-
-            <span class="c"># Generate sample slice</span>
-            <span class="n">sample</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ndims</span><span class="p">)]</span>
-            <span class="n">coord_fn</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="k">if</span> <span class="n">sample_ind</span> <span class="k">else</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
-            <span class="n">sample</span><span class="p">[</span><span class="n">sample_ind</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sheet2matrixidx</span><span class="p">(</span><span class="o">*</span><span class="n">coord_fn</span><span class="p">(</span><span class="n">sample_coord</span><span class="p">))[</span>
-                <span class="n">sample_ind</span><span class="p">]</span>
-
-            <span class="c"># Sample data</span>
-            <span class="n">x_vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dimension</span><span class="p">)</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x_vals</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sample</span><span class="p">])</span>
-            <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_param_values</span><span class="p">(),</span>
-                                      <span class="n">dimensions</span><span class="o">=</span><span class="n">other_dimension</span><span class="p">))</span>
-
-</div>
-<div class="viewcode-block" id="SheetView.reduce"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.sheetviews.html#dataviews.sheetviews.sheetviews.SheetView.reduce">[docs]</a>    <span class="k">def</span> <span class="nf">reduce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label_prefix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">dimreduce_map</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Reduces the SheetView using functions provided via the</span>
-<span class="sd">        kwargs, where the keyword is the dimension to be reduced.</span>
-<span class="sd">        Optionally a label_prefix can be provided to prepend to</span>
-<span class="sd">        the result View label.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">label</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">label_prefix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">])</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dimreduce_map</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span><span class="p">:</span>
-            <span class="n">reduced_view</span> <span class="o">=</span> <span class="bp">self</span>
-            <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">reduce_fn</span> <span class="ow">in</span> <span class="n">dimreduce_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">reduced_view</span> <span class="o">=</span> <span class="n">reduced_view</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">label_prefix</span><span class="o">=</span><span class="n">label_prefix</span><span class="p">,</span>
-                                                   <span class="o">**</span><span class="p">{</span><span class="n">dim</span><span class="p">:</span> <span class="n">reduce_fn</span><span class="p">})</span>
-                <span class="n">label_prefix</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
-            <span class="k">return</span> <span class="n">reduced_view</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">dimension</span><span class="p">,</span> <span class="n">reduce_fn</span> <span class="o">=</span> <span class="n">dimreduce_map</span><span class="o">.</span><span class="n">items</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">other_dimension</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">dimension</span><span class="p">]</span>
-            <span class="n">x_vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dimension</span><span class="p">)</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x_vals</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim_index</span><span class="p">(</span><span class="n">dimension</span><span class="p">)))</span>
-            <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">other_dimension</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
-                         <span class="n">title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
-
-</div>
-    <span class="nd">@property</span>
-<div class="viewcode-block" id="SheetView.cyclic_range"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.sheetviews.html#dataviews.sheetviews.sheetviews.SheetView.cyclic_range">[docs]</a>    <span class="k">def</span> <span class="nf">cyclic_range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        For a cyclic quantity, the range over which the values</span>
-<span class="sd">        repeat. For instance, the orientation of a mirror-symmetric</span>
-<span class="sd">        pattern in a plane is pi-periodic, with orientation x the same</span>
-<span class="sd">        as orientation x+pi (and x+2pi, etc.). The property determines</span>
-<span class="sd">        the cyclic_range from the value dimensions range parameter.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">cyclic</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="o">.</span><span class="n">range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">None</span>
-
-</div>
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
-
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">depth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="mi">1</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-
-
-    <span class="nd">@property</span>
-<div class="viewcode-block" id="SheetView.mode"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.sheetviews.html#dataviews.sheetviews.sheetviews.SheetView.mode">[docs]</a>    <span class="k">def</span> <span class="nf">mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Mode specifying the color space for visualizing the array data</span>
-<span class="sd">        and is a function of the depth. For a depth of one, a colormap</span>
-<span class="sd">        is used as determined by the style. If the depth is 3 or 4,</span>
-<span class="sd">        the mode is &#39;rgb&#39; or &#39;rgba&#39; respectively.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span>   <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="k">return</span> <span class="s">&#39;cmap&#39;</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>  <span class="k">return</span> <span class="s">&#39;rgb&#39;</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>  <span class="k">return</span> <span class="s">&#39;rgba&#39;</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Mode cannot be determined from the depth&quot;</span><span class="p">)</span>
-
-</div>
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">N</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">_coord2matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sheet2matrixidx</span><span class="p">(</span><span class="o">*</span><span class="n">coord</span><span class="p">)</span>
 
 
     <span class="nd">@property</span>
@@ -709,13 +541,6 @@
 
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span> <span class="o">&lt;&lt;</span> <span class="n">histstack</span><span class="p">)</span> <span class="k">if</span> <span class="n">adjoin</span> <span class="k">else</span> <span class="n">histstack</span>
 
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">range</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">range</span>
-        <span class="k">for</span> <span class="n">view</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="nb">range</span> <span class="o">=</span> <span class="n">find_minmax</span><span class="p">(</span><span class="nb">range</span><span class="p">,</span> <span class="n">view</span><span class="o">.</span><span class="n">range</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">range</span>
 
 
     <span class="k">def</span> <span class="nf">_item_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim_vals</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
