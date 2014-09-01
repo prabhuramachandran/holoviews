@@ -77,7 +77,7 @@
 <span class="kn">from</span> <span class="nn">.sheetviews</span> <span class="kn">import</span> <span class="n">SheetView</span>  <span class="c"># pyflakes:ignore (Needed for doctests)</span>
 <span class="kn">from</span> <span class="nn">.views</span> <span class="kn">import</span> <span class="n">GridLayout</span><span class="p">,</span> <span class="n">Stack</span><span class="p">,</span> <span class="n">View</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">Dimension</span>
 
-<span class="kn">from</span> <span class="nn">.ipython.widgets</span> <span class="kn">import</span> <span class="n">RunProgress</span>
+<span class="kn">from</span> <span class="nn">.ipython.widgets</span> <span class="kn">import</span> <span class="n">RunProgress</span><span class="p">,</span> <span class="n">ProgressBar</span>
 
 <span class="n">Time</span> <span class="o">=</span> <span class="n">Dimension</span><span class="p">(</span><span class="s">&quot;Time&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">Dynamic</span><span class="o">.</span><span class="n">time_fn</span><span class="o">.</span><span class="n">time_type</span><span class="p">)</span>
 
@@ -105,12 +105,12 @@
             <span class="n">first</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">first</span>
 </div>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">path_items</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;parent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;children&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c"># Path items will only be populated at root node</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;path_items&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;path_items&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path_items</span> <span class="k">if</span> <span class="n">path_items</span> <span class="k">else</span> <span class="n">OrderedDict</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_fixed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
 
@@ -182,6 +182,25 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">val</span><span class="p">)</span>
 
 </div>
+<div class="viewcode-block" id="AttrTree.filter"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.collector.AttrTree.filter">[docs]</a>    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_filters</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Filters the loaded AttrTree using the supplied path_filters.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path_filters</span><span class="p">:</span> <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="c"># Convert string path filters</span>
+        <span class="n">path_filters</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">pf</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">))</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pf</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span>
+                        <span class="k">else</span> <span class="n">pf</span> <span class="k">for</span> <span class="n">pf</span> <span class="ow">in</span> <span class="n">path_filters</span><span class="p">]</span>
+
+        <span class="c"># Search for substring matches between paths and path filters</span>
+        <span class="n">new_attrtree</span> <span class="o">=</span> <span class="n">AttrTree</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">([</span><span class="nb">all</span><span class="p">([</span><span class="n">subpath</span> <span class="ow">in</span> <span class="n">path</span> <span class="k">for</span> <span class="n">subpath</span> <span class="ow">in</span> <span class="n">pf</span><span class="p">])</span> <span class="k">for</span> <span class="n">pf</span> <span class="ow">in</span> <span class="n">path_filters</span><span class="p">]):</span>
+                <span class="n">new_attrtree</span><span class="o">.</span><span class="n">set_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">new_attrtree</span>
+
+</div>
     <span class="k">def</span> <span class="nf">_propagate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Propagate the value to the root node.</span>
@@ -200,7 +219,36 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Access a child element by label.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[:]</span>
+
+
+    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__delitem__</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">item</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">default</span>
+
+
+    <span class="k">def</span> <span class="nf">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">label</span><span class="p">)]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">([(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">label</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
@@ -626,8 +674,8 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">times</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">stackwise</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;stackwise&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="s">&#39;set&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stackwise</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;stackwise&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;mode&#39;</span><span class="p">,</span> <span class="s">&#39;set&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="bp">None</span>
 
 
@@ -657,6 +705,84 @@
         <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
 
 
+</div>
+<div class="viewcode-block" id="Collator"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.collector.Collator">[docs]</a><span class="k">class</span> <span class="nc">Collator</span><span class="p">(</span><span class="n">NdMapping</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Collator is an NdMapping holding AttrTree objects and</span>
+<span class="sd">    provides methods to filter and merge them via the call</span>
+<span class="sd">    method. Collation inserts the Collator dimensions on</span>
+<span class="sd">    each Stack type contained within the AttrTree objects.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_deep_indexable</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_filters</span><span class="o">=</span><span class="p">[],</span> <span class="n">merge</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Filter each AttrTree in the Collator with the supplied</span>
+<span class="sd">        path_filters. If merge is set to True all AttrTrees are</span>
+<span class="sd">        merged, otherwise an NdMapping containing all the</span>
+<span class="sd">        AttrTrees is returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">constant_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant_dims</span>
+        <span class="n">ndmapping</span> <span class="o">=</span> <span class="n">NdMapping</span><span class="p">(</span><span class="n">dimensions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span>
+
+        <span class="n">progressbar</span> <span class="o">=</span> <span class="n">ProgressBar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s">&#39;Collation&#39;</span><span class="p">)</span>
+        <span class="n">num_elements</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+           <span class="n">attrtree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">path_filters</span><span class="p">)</span>
+
+           <span class="k">if</span> <span class="n">merge</span><span class="p">:</span>
+              <span class="n">dim_keys</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension_labels</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+              <span class="n">varying_keys</span> <span class="o">=</span> <span class="p">[(</span><span class="n">d</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">dim_keys</span>
+                              <span class="k">if</span> <span class="n">d</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">constant_dims</span><span class="p">]</span>
+              <span class="n">constant_keys</span> <span class="o">=</span> <span class="p">[(</span><span class="n">d</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">dim_keys</span>
+                               <span class="k">if</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">constant_dims</span><span class="p">]</span>
+              <span class="n">attrtree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_dimensions</span><span class="p">(</span><span class="n">attrtree</span><span class="p">,</span> <span class="n">varying_keys</span><span class="p">,</span>
+                                              <span class="nb">dict</span><span class="p">(</span><span class="n">constant_keys</span><span class="p">))</span>
+           <span class="n">ndmapping</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attrtree</span>
+           <span class="n">progressbar</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">num_elements</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">merge</span><span class="p">:</span>
+            <span class="n">trees</span> <span class="o">=</span> <span class="n">ndmapping</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="n">accumulator</span> <span class="o">=</span> <span class="n">AttrTree</span><span class="p">(</span><span class="n">path_items</span><span class="o">=</span><span class="n">trees</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">path_items</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tree</span> <span class="ow">in</span> <span class="n">trees</span><span class="p">:</span>
+                <span class="n">accumulator</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">accumulator</span>
+        <span class="k">return</span> <span class="n">ndmapping</span>
+
+
+    <span class="k">def</span> <span class="nf">_add_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">constant_keys</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Recursively descend through an AttrTree and NdMapping objects</span>
+<span class="sd">        in order to add the supplied dimension values to all contained</span>
+<span class="sd">        Stack objects.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">AttrTree</span><span class="p">):</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">fixed</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="n">new_item</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">clone</span><span class="p">({})</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">)</span> <span class="k">else</span> <span class="n">item</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Stack</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                    <span class="k">if</span> <span class="n">dim</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">dimension_labels</span><span class="p">:</span>
+                        <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">add_dimension</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">constant_keys</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">constant_keys</span> <span class="o">=</span> <span class="n">constant_keys</span>
+                <span class="n">new_item</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_item</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_dimensions</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">constant_keys</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_item</span><span class="p">,</span> <span class="n">AttrTree</span><span class="p">):</span>
+            <span class="n">new_item</span><span class="o">.</span><span class="n">fixed</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="k">return</span> <span class="n">new_item</span>
+
+
+    <span class="k">def</span> <span class="nf">_process_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;&quot;</span>
+<span class="sd">        Subclassable to apply some processing to the data elements</span>
+<span class="sd">        before filtering and merging them.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">data</span>
 
 
 </div>
@@ -773,7 +899,10 @@
 <span class="sd">        Given a ViewRef and the ViewOperation analysisfn, process the</span>
 <span class="sd">        data resolved by the reference with analysisfn at each step.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">Analyze</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">analysisfn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="n">Analyze</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">analysisfn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;merge&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="p">[</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">]</span> <span class="o">=</span> <span class="n">task</span>
+        <span class="k">return</span> <span class="n">task</span>
 
 </div>
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrtree</span><span class="o">=</span><span class="n">AttrTree</span><span class="p">(),</span> <span class="n">times</span><span class="o">=</span><span class="p">[]):</span>

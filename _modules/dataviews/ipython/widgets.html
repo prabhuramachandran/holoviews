@@ -100,7 +100,7 @@
 <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">GridLayout</span><span class="p">,</span> <span class="n">NdMapping</span>
 <span class="kn">from</span> <span class="nn">..views</span> <span class="kn">import</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">View</span>
 <span class="kn">from</span> <span class="nn">..sheetviews</span> <span class="kn">import</span> <span class="n">CoordinateGrid</span>
-<span class="kn">from</span> <span class="nn">..plots</span> <span class="kn">import</span> <span class="n">GridLayoutPlot</span><span class="p">,</span> <span class="n">Plot</span>
+<span class="kn">from</span> <span class="nn">..plotting</span> <span class="kn">import</span> <span class="n">Plot</span><span class="p">,</span> <span class="n">GridLayoutPlot</span>
 <span class="kn">from</span> <span class="nn">.magics</span> <span class="kn">import</span> <span class="n">ViewMagic</span>
 
 
@@ -109,6 +109,18 @@
 <span class="sd">    A simple text progress bar suitable for both the IPython notebook</span>
 <span class="sd">    and the IPython interactive prompt.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">display</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;stdout&#39;</span><span class="p">,</span>
+                                   <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;stdout&#39;</span><span class="p">,</span> <span class="s">&#39;disabled&#39;</span><span class="p">,</span> <span class="s">&#39;broadcast&#39;</span><span class="p">],</span>
+                               <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Parameter to control display of the progress bar. By default,</span>
+<span class="s">       progress is shown on stdout but this may be disabled e.g. for</span>
+<span class="s">       jobs that log standard output to file.</span>
+
+<span class="s">       If the output mode is set to &#39;broadcast&#39;, a socket is opened on</span>
+<span class="s">       a stated port to broadcast the completion percentage. The</span>
+<span class="s">       RemoteProgress class may then be used to view the progress from</span>
+<span class="s">       a different process.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">label</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Progress&#39;</span><span class="p">,</span> <span class="n">allow_None</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        The label of the current progress bar.&quot;&quot;&quot;</span><span class="p">)</span>
@@ -128,6 +140,8 @@
 <span class="s">        completion in percent to be broken down into smaller sub-tasks</span>
 <span class="s">        that individually complete to 100 percent.&quot;&quot;&quot;</span><span class="p">)</span>
 
+    <span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">ProgressBar</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
@@ -135,6 +149,20 @@
         <span class="s">&quot; Update the progress bar within the specified percent_range&quot;</span>
         <span class="n">span</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">percent_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">percent_range</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="n">percentage</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">percent_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">((</span><span class="n">percentage</span><span class="o">/</span><span class="mf">100.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">span</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">display</span> <span class="o">==</span> <span class="s">&#39;disabled&#39;</span><span class="p">:</span> <span class="k">return</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">display</span> <span class="o">==</span> <span class="s">&#39;stdout&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_stdout_display</span><span class="p">(</span><span class="n">percentage</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="s">&#39;socket&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="s">&#39;socket&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_socket</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="s">&#39;socket&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="s">&#39;socket&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">|</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">percentage</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">))</span>
+
+
+    <span class="k">def</span> <span class="nf">_stdout_display</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">percentage</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">clear_output</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ipython2</span><span class="p">:</span> <span class="n">clear_output</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">clear_output</span> <span class="ow">and</span> <span class="n">ipython2</span><span class="p">:</span> <span class="n">clear_output</span><span class="p">(</span><span class="n">wait</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
         <span class="n">percent_per_char</span> <span class="o">=</span> <span class="mf">100.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span>
@@ -148,6 +176,51 @@
         <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
         <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.0001</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">_get_socket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_port</span><span class="o">=</span><span class="mi">8080</span><span class="p">,</span> <span class="n">max_port</span><span class="o">=</span><span class="mi">8100</span><span class="p">,</span> <span class="n">max_tries</span><span class="o">=</span><span class="mi">20</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">zmq</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Context</span><span class="p">()</span>
+        <span class="n">sock</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">PUB</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">port</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">bind_to_random_port</span><span class="p">(</span><span class="s">&#39;tcp://*&#39;</span><span class="p">,</span>
+                                            <span class="n">min_port</span><span class="o">=</span><span class="n">min_port</span><span class="p">,</span> <span class="n">max_port</span><span class="o">=</span><span class="n">max_port</span><span class="p">,</span>
+                                            <span class="n">max_tries</span><span class="o">=</span><span class="n">max_tries</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">(</span><span class="s">&quot;Progress broadcast bound to port </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">port</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">sock</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">(</span><span class="s">&quot;No suitable port found for progress broadcast.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+</div>
+<div class="viewcode-block" id="RemoteProgress"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.ipython.html#dataviews.ipython.widgets.RemoteProgress">[docs]</a><span class="k">class</span> <span class="nc">RemoteProgress</span><span class="p">(</span><span class="n">ProgressBar</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Connect to a progress bar in a separate process with output_mode</span>
+<span class="sd">    set to &#39;broadcast&#39; in order to display the results (to stdout).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">hostname</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;localhost&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">      Hostname where progress is being broadcast.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">port</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">8080</span><span class="p">,</span>
+                         <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;Target port on hostname.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">port</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">RemoteProgress</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">port</span><span class="o">=</span><span class="n">port</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">zmq</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">zmq</span><span class="o">.</span><span class="n">Context</span><span class="p">()</span>
+        <span class="n">sock</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">SUB</span><span class="p">)</span>
+        <span class="n">sock</span><span class="o">.</span><span class="n">setsockopt</span><span class="p">(</span><span class="n">zmq</span><span class="o">.</span><span class="n">SUBSCRIBE</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">sock</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s">&#39;tcp://&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">hostname</span> <span class="o">+</span><span class="s">&#39;:&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">port</span><span class="p">))</span>
+        <span class="c"># Get progress via socket</span>
+        <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+            <span class="n">message</span><span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="p">[</span><span class="n">percent_str</span><span class="p">,</span> <span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;|&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">label</span>
+                <span class="nb">super</span><span class="p">(</span><span class="n">RemoteProgress</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__call__</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">percent_str</span><span class="p">))</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">(</span><span class="s">&quot;Could not process socket message: </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">message</span><span class="p">)</span>
 
 </div>
 <div class="viewcode-block" id="RunProgress"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.ipython.html#dataviews.ipython.widgets.RunProgress">[docs]</a><span class="k">class</span> <span class="nc">RunProgress</span><span class="p">(</span><span class="n">ProgressBar</span><span class="p">):</span>
@@ -339,7 +412,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">widget_type</span> <span class="o">=</span> <span class="n">widgets</span><span class="o">.</span><span class="n">DropdownWidget</span>
                 <span class="n">all_vals</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">all_vals</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">pwidgets</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">=</span> <span class="n">widget_type</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">all_vals</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pwidgets</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">=</span> <span class="n">widget_type</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">all_vals</span><span class="p">)))</span>
 
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -403,10 +476,6 @@
                     <span class="n">val</span> <span class="o">=</span> <span class="n">vals</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span> <span class="o">-</span> <span class="n">val</span><span class="p">))]</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">val</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">vals</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="k">if</span> <span class="n">isnumeric</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="n">widget</span><span class="o">.</span><span class="n">step</span> <span class="o">=</span> <span class="mi">0</span>
-                <span class="n">widget</span><span class="o">.</span><span class="n">min</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
-                <span class="n">widget</span><span class="o">.</span><span class="n">max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
             <span class="n">checked</span><span class="p">[</span><span class="n">dim_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">dim_val</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
             <span class="n">widget</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="mi">5</span><span class="p">)</span> <span class="k">if</span> <span class="n">isnumeric</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">else</span> <span class="n">val</span>

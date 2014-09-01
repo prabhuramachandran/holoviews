@@ -1,0 +1,974 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>dataviews.plotting.dataplots &mdash; DataViews</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2014.05.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/custom.js"></script>
+    <link rel="top" title="DataViews" href="../../../index.html" />
+    <link rel="up" title="dataviews.plotting" href="../plotting.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">DataViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../plotting.html" accesskey="U">dataviews.plotting</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for dataviews.plotting.dataplots</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span><span class="p">,</span> <span class="n">groupby</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">cm</span>
+<span class="kn">from</span> <span class="nn">matplotlib.font_manager</span> <span class="kn">import</span> <span class="n">FontProperties</span>
+<span class="kn">from</span> <span class="nn">matplotlib.table</span> <span class="kn">import</span> <span class="n">Table</span> <span class="k">as</span> <span class="n">mpl_Table</span>
+
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">DataStack</span><span class="p">,</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">DataLayer</span><span class="p">,</span> <span class="n">HeatMap</span><span class="p">,</span> <span class="n">View</span><span class="p">,</span> <span class="n">DataOverlay</span><span class="p">,</span> \
+    <span class="n">Annotation</span><span class="p">,</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">Scatter</span><span class="p">,</span> <span class="n">TableStack</span><span class="p">,</span> <span class="n">Table</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">,</span> <span class="n">Stack</span><span class="p">,</span> <span class="n">Overlay</span>
+<span class="kn">from</span> <span class="nn">.viewplots</span> <span class="kn">import</span> <span class="n">Plot</span>
+
+<span class="k">class</span> <span class="nc">MatrixPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+
+    <span class="n">normalize_individually</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">show_values</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether to annotate the values when displaying a HeatMap.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;cmap&#39;</span><span class="p">,</span> <span class="s">&#39;interpolation&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;visible&#39;</span><span class="p">,</span> <span class="s">&#39;filterrad&#39;</span><span class="p">,</span> <span class="s">&#39;origin&#39;</span><span class="p">],</span>
+                            <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The style options for MatrixPlot are a subset of those used</span>
+<span class="s">        by matplotlib&#39;s imshow command. If supplied, the clim option</span>
+<span class="s">        will be ignored as it is computed from the input View.&quot;&quot;&quot;</span><span class="p">)</span>
+
+
+    <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">DataStack</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="p">(</span><span class="n">Matrix</span><span class="p">,</span> <span class="n">DataLayer</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MatrixPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">view</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
+        <span class="n">xdim</span><span class="p">,</span> <span class="n">ydim</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">dimensions</span>
+        <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">HeatMap</span><span class="p">)</span>\
+            <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">lbrt</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">xticks</span><span class="p">,</span> <span class="n">yticks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_ticks</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">xdim</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">ydim</span><span class="p">),</span> <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span>
+                             <span class="n">xticks</span><span class="o">=</span><span class="n">xticks</span><span class="p">,</span> <span class="n">yticks</span><span class="o">=</span><span class="n">yticks</span><span class="p">)</span>
+
+        <span class="n">opts</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">view</span><span class="p">)[</span><span class="n">cyclic_index</span><span class="p">]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">if</span> <span class="n">view</span><span class="o">.</span><span class="n">depth</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">opts</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;cmap&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">HeatMap</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">data</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+            <span class="n">cmap_name</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;cmap&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">cmap</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="s">&#39;gray&#39;</span> <span class="k">if</span> <span class="n">cmap_name</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">cmap_name</span><span class="p">))</span>
+            <span class="n">cmap</span><span class="o">.</span><span class="n">set_bad</span><span class="p">(</span><span class="s">&#39;w&#39;</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+            <span class="n">opts</span><span class="p">[</span><span class="s">&#39;cmap&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cmap</span>
+
+        <span class="n">im</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="p">[</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">],</span> <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">opts</span><span class="p">)</span>
+        <span class="n">clims</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">range</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize_individually</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">range</span>
+        <span class="n">im</span><span class="o">.</span><span class="n">set_clim</span><span class="p">(</span><span class="n">clims</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;im&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">im</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">HeatMap</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">r</span> <span class="o">-</span> <span class="n">l</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">t</span><span class="o">-</span><span class="n">b</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;annotations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_annotate_values</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="k">if</span> <span class="n">axis</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">_compute_ticks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">HeatMap</span><span class="p">):</span>
+            <span class="n">dim1_keys</span><span class="p">,</span> <span class="n">dim2_keys</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">dense_keys</span><span class="p">()</span>
+            <span class="n">num_x</span><span class="p">,</span> <span class="n">num_y</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">)</span>
+            <span class="n">xstep</span><span class="p">,</span> <span class="n">ystep</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">num_x</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">num_y</span>
+            <span class="n">xpos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">xstep</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">-</span><span class="n">xstep</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="n">num_x</span><span class="p">)</span>
+            <span class="n">ypos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">ystep</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">-</span><span class="n">ystep</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="n">num_y</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">xpos</span><span class="p">,</span> <span class="n">dim1_keys</span><span class="p">),</span> <span class="p">(</span><span class="n">ypos</span><span class="p">,</span> <span class="n">dim2_keys</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+
+
+    <span class="k">def</span> <span class="nf">_annotate_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="n">dim1_keys</span><span class="p">,</span> <span class="n">dim2_keys</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">dense_keys</span><span class="p">()</span>
+        <span class="n">num_x</span><span class="p">,</span> <span class="n">num_y</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">)</span>
+        <span class="n">xstep</span><span class="p">,</span> <span class="n">ystep</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">num_x</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">num_y</span>
+        <span class="n">xpos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">xstep</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">-</span><span class="n">xstep</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="n">num_x</span><span class="p">)</span>
+        <span class="n">ypos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">ystep</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="mf">1.0</span><span class="o">-</span><span class="n">ystep</span><span class="o">/</span><span class="mf">2.</span><span class="p">,</span> <span class="n">num_y</span><span class="p">)</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="n">product</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">,</span> <span class="n">dim2_keys</span><span class="p">)</span>
+        <span class="n">plot_coords</span> <span class="o">=</span> <span class="n">product</span><span class="p">(</span><span class="n">xpos</span><span class="p">,</span> <span class="n">ypos</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">plot_coord</span><span class="p">,</span> <span class="n">coord</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">plot_coords</span><span class="p">,</span> <span class="n">coords</span><span class="p">):</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">coord</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">plot_coord</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;annotations&#39;</span><span class="p">]:</span>
+                <span class="n">annotation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">xy</span><span class="o">=</span><span class="n">plot_coord</span><span class="p">,</span>
+                                              <span class="n">xycoords</span><span class="o">=</span><span class="s">&#39;axes fraction&#39;</span><span class="p">,</span>
+                                              <span class="n">horizontalalignment</span><span class="o">=</span><span class="s">&#39;center&#39;</span><span class="p">,</span>
+                                              <span class="n">verticalalignment</span><span class="o">=</span><span class="s">&#39;center&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;annotations&#39;</span><span class="p">][</span><span class="n">plot_coord</span><span class="p">]</span> <span class="o">=</span> <span class="n">annotation</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;annotations&#39;</span><span class="p">][</span><span class="n">plot_coord</span><span class="p">]</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+
+
+    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">n</span>  <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">im</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;im&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+        <span class="n">view</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span>
+        <span class="n">im</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">HeatMap</span><span class="p">):</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">_annotate_values</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize_individually</span><span class="p">:</span>
+            <span class="n">im</span><span class="o">.</span><span class="n">set_clim</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">range</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+
+
+
+<div class="viewcode-block" id="DataPlot"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.plotting.html#dataviews.plotting.dataplots.DataPlot">[docs]</a><span class="k">class</span> <span class="nc">DataPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A high-level plot, which will plot any DataView or DataStack type</span>
+<span class="sd">    including DataOverlays.</span>
+
+<span class="sd">    A generic plot that visualizes DataStacks containing DataOverlay or</span>
+<span class="sd">    DataLayer objects.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">DataStack</span>
+
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">     DataPlot renders overlay layers which individually have style</span>
+<span class="s">     options but DataPlot itself does not.&quot;&quot;&quot;</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">overlays</span><span class="p">,</span> <span class="n">DataOverlay</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plots</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rescale</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DataPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">ylabel</span><span class="p">)</span>
+
+        <span class="n">stacks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">split_overlays</span><span class="p">()</span>
+        <span class="n">style_groups</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span>
+                            <span class="ow">in</span> <span class="n">groupby</span><span class="p">(</span><span class="n">stacks</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">style</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">zorder</span><span class="p">,</span> <span class="n">stack</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">stacks</span><span class="p">):</span>
+            <span class="n">cyclic_index</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">style_groups</span><span class="p">[</span><span class="n">stack</span><span class="o">.</span><span class="n">style</span><span class="p">])</span>
+            <span class="n">plotopts</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">plotting</span><span class="p">(</span><span class="n">stack</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span>
+
+            <span class="k">if</span> <span class="n">zorder</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rescale</span> <span class="o">=</span> <span class="n">plotopts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;rescale_individually&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+                <span class="n">lbrt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
+
+            <span class="n">plotype</span> <span class="o">=</span> <span class="n">Plot</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="n">stack</span><span class="o">.</span><span class="n">type</span><span class="p">]</span>
+            <span class="n">plot</span> <span class="o">=</span> <span class="n">plotype</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+                           <span class="n">show_xaxis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_xaxis</span><span class="p">,</span> <span class="n">show_yaxis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_yaxis</span><span class="p">,</span>
+                           <span class="n">show_legend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_legend</span><span class="p">,</span> <span class="n">show_title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_title</span><span class="p">,</span>
+                           <span class="n">show_grid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_grid</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="n">zorder</span><span class="p">,</span>
+                           <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">plotopts</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+            <span class="n">plot</span><span class="o">.</span><span class="n">aspect</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aspect</span>
+
+            <span class="n">lbrt</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="n">stack</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">Annotation</span> <span class="k">else</span> <span class="n">lbrt</span>
+            <span class="n">plot</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="n">cyclic_index</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">ax</span> <span class="k">if</span> <span class="n">axis</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">zorder</span><span class="p">,</span> <span class="n">plot</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plots</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">zorder</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">lbrt</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
+            <span class="n">plot</span><span class="o">.</span><span class="n">update_frame</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">lbrt</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="CurvePlot"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.plotting.html#dataviews.plotting.dataplots.CurvePlot">[docs]</a><span class="k">class</span> <span class="nc">CurvePlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    CurvePlot can plot Curve and DataStacks of Curve, which can be</span>
+<span class="sd">    displayed as a single frame or animation. Axes, titles and legends</span>
+<span class="sd">    are automatically generated from dim_info.</span>
+
+<span class="sd">    If the dimension is set to cyclic in the dim_info it will rotate</span>
+<span class="sd">    the curve so that minimum y values are at the minimum x value to</span>
+<span class="sd">    make the plots easier to interpret.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">center</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">num_ticks</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+
+    <span class="n">relative_labels</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">rescale_individually</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">show_frame</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Disabled by default for clarity.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">show_legend</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">      Whether to show legend for the plot.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;visible&#39;</span><span class="p">],</span>
+                            <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The style options for CurvePlot match those of matplotlib&#39;s</span>
+<span class="s">       LineCollection object.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">DataStack</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">curves</span><span class="p">,</span> <span class="n">Curve</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">cyclic_range</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">CurvePlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_format_x_tick_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%g</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">round</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_cyclic_format_x_tick_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_labels</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">180</span><span class="o">*</span><span class="n">x</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span><span class="p">)))</span>
+
+
+    <span class="k">def</span> <span class="nf">_rotate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">seq</span><span class="p">)</span> <span class="c"># n=hop interval</span>
+        <span class="k">return</span> <span class="n">seq</span><span class="p">[</span><span class="n">n</span><span class="p">:]</span> <span class="o">+</span> <span class="n">seq</span><span class="p">[:</span><span class="n">n</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">_reduce_ticks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_values</span><span class="p">):</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">x_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="n">rangex</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="n">x_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_ticks</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">rangex</span><span class="o">/</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_ticks</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">values</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_x_tick_label</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">values</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">_cyclic_reduce_ticks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x_values</span><span class="p">):</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_ticks</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">relative_labels</span><span class="p">:</span>
+            <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mi">90</span><span class="p">)</span>
+            <span class="n">label_step</span> <span class="o">=</span> <span class="mi">180</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_ticks</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">label_step</span> <span class="o">=</span> <span class="n">step</span>
+        <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_ticks</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">label_step</span><span class="p">)</span>
+            <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">step</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">values</span><span class="p">,</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_cyclic_format_x_tick_label</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">_cyclic_curves</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">curveview</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Mutate the lines object to generate a rotated cyclic curves.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x_values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">curveview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">y_values</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">curveview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">:</span>
+            <span class="n">rotate_n</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">peak_argmax</span><span class="o">+</span><span class="nb">len</span><span class="p">(</span><span class="n">x_values</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span>
+            <span class="n">y_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rotate</span><span class="p">(</span><span class="n">y_values</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">rotate_n</span><span class="p">)</span>
+            <span class="n">ticks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rotate</span><span class="p">(</span><span class="n">x_values</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="n">rotate_n</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ticks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">x_values</span><span class="p">)</span>
+
+        <span class="n">ticks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ticks</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">x_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x_values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span><span class="p">)</span>
+        <span class="n">y_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y_values</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">curveview</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">x_values</span><span class="p">,</span> <span class="n">y_values</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xvalues</span> <span class="o">=</span> <span class="n">x_values</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">curveview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
+
+        <span class="c"># Create xticks and reorder data if cyclic</span>
+        <span class="n">xvals</span> <span class="o">=</span> <span class="n">curveview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">center</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">peak_argmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">curveview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cyclic_curves</span><span class="p">(</span><span class="n">curveview</span><span class="p">)</span>
+            <span class="n">xticks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cyclic_reduce_ticks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xvalues</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">xticks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reduce_ticks</span><span class="p">(</span><span class="n">xvals</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">lbrt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">lbrt</span> <span class="o">=</span> <span class="n">curveview</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_individually</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">curveview</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span>
+                             <span class="n">curveview</span><span class="o">.</span><span class="n">ylabel</span><span class="p">,</span> <span class="n">xticks</span><span class="o">=</span><span class="n">xticks</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+
+        <span class="c"># Create line segments and apply style</span>
+        <span class="n">line_segment</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">curveview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">curveview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                                    <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">curveview</span><span class="o">.</span><span class="n">legend_label</span><span class="p">,</span>
+                                    <span class="o">**</span><span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">curveview</span><span class="p">)[</span><span class="n">cyclic_index</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;line_segment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">line_segment</span>
+
+        <span class="c"># If legend enabled update handles and labels</span>
+        <span class="n">handles</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">get_legend_handles_labels</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">handles</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_legend</span><span class="p">:</span>
+            <span class="n">fontP</span> <span class="o">=</span> <span class="n">FontProperties</span><span class="p">()</span>
+            <span class="n">fontP</span><span class="o">.</span><span class="n">set_size</span><span class="p">(</span><span class="s">&#39;small&#39;</span><span class="p">)</span>
+            <span class="n">leg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">labels</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">prop</span><span class="o">=</span><span class="n">fontP</span><span class="p">)</span>
+            <span class="n">leg</span><span class="o">.</span><span class="n">get_frame</span><span class="p">()</span><span class="o">.</span><span class="n">set_alpha</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="k">if</span> <span class="n">axis</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">n</span>  <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">curveview</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">lbrt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">lbrt</span> <span class="o">=</span> <span class="n">curveview</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_individually</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cyclic_curves</span><span class="p">(</span><span class="n">curveview</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;line_segment&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_xdata</span><span class="p">(</span><span class="n">curveview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;line_segment&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">(</span><span class="n">curveview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+
+
+</div>
+<div class="viewcode-block" id="ScatterPlot"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.plotting.html#dataviews.plotting.dataplots.ScatterPlot">[docs]</a><span class="k">class</span> <span class="nc">ScatterPlot</span><span class="p">(</span><span class="n">CurvePlot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ScatterPlot can plot Scatter and DataStacks of Scatter, which can</span>
+<span class="sd">    be displayed as a single frame or animation. Axes, titles and</span>
+<span class="sd">    legends are automatically generated from dim_info.</span>
+
+<span class="sd">    If the dimension is set to cyclic in the dim_info it will</span>
+<span class="sd">    rotate the points curve so that minimum y values are at the minimum</span>
+<span class="sd">    x value to make the plots easier to interpret.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;edgecolors&#39;</span><span class="p">,</span> <span class="s">&#39;facecolors&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;linewidth&#39;</span><span class="p">,</span> <span class="s">&#39;marker&#39;</span><span class="p">,</span> <span class="s">&#39;s&#39;</span><span class="p">,</span> <span class="s">&#39;visible&#39;</span><span class="p">],</span>
+                            <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The style options for ScatterPlot match those of matplotlib&#39;s</span>
+<span class="s">       PolyCollection object.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">DataStack</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">Scatter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="n">Plot</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">scatterview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span> <span class="o">=</span> <span class="n">cyclic_index</span>
+
+        <span class="c"># Create xticks and reorder data if cyclic</span>
+        <span class="n">xvals</span> <span class="o">=</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">xticks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reduce_ticks</span><span class="p">(</span><span class="n">xvals</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">lbrt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">lbrt</span> <span class="o">=</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_individually</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span>
+                             <span class="n">scatterview</span><span class="o">.</span><span class="n">ylabel</span><span class="p">,</span> <span class="n">xticks</span><span class="o">=</span><span class="n">xticks</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+
+        <span class="c"># Create line segments and apply style</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">scatterview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                                <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">scatterview</span><span class="o">.</span><span class="n">legend_label</span><span class="p">,</span>
+                                <span class="o">**</span><span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">scatterview</span><span class="p">)[</span><span class="n">cyclic_index</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;paths&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">paths</span>
+
+        <span class="c"># If legend enabled update handles and labels</span>
+        <span class="n">handles</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">get_legend_handles_labels</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">handles</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_legend</span><span class="p">:</span>
+            <span class="n">fontP</span> <span class="o">=</span> <span class="n">FontProperties</span><span class="p">()</span>
+            <span class="n">fontP</span><span class="o">.</span><span class="n">set_size</span><span class="p">(</span><span class="s">&#39;small&#39;</span><span class="p">)</span>
+            <span class="n">leg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">labels</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">prop</span><span class="o">=</span><span class="n">fontP</span><span class="p">)</span>
+            <span class="n">leg</span><span class="o">.</span><span class="n">get_frame</span><span class="p">()</span><span class="o">.</span><span class="n">set_alpha</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="k">if</span> <span class="n">axis</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">n</span>  <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">scatterview</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">lbrt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">lbrt</span> <span class="o">=</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_individually</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;paths&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+
+        <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">scatterview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                                <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">scatterview</span><span class="o">.</span><span class="n">legend_label</span><span class="p">,</span>
+                                <span class="o">**</span><span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">scatterview</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;paths&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">paths</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+
+
+</div>
+<div class="viewcode-block" id="TablePlot"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.plotting.html#dataviews.plotting.dataplots.TablePlot">[docs]</a><span class="k">class</span> <span class="nc">TablePlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A TablePlot can plot both TableViews and TableStacks which display</span>
+<span class="sd">    as either a single static table or as an animated table</span>
+<span class="sd">    respectively.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">border</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The fraction of the plot that should be empty around the</span>
+<span class="s">        edges.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">float_precision</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The floating point precision to use when printing float</span>
+<span class="s">        numeric data types.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">max_value_len</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">         The maximum allowable string length of a value shown in any</span>
+<span class="s">         table cell. Any strings longer than this length will be</span>
+<span class="s">         truncated.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">max_font_size</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The largest allowable font size for the text in each table</span>
+<span class="s">       cell.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">font_types</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;heading&#39;</span><span class="p">:</span> <span class="n">FontProperties</span><span class="p">(</span><span class="n">weight</span><span class="o">=</span><span class="s">&#39;bold&#39;</span><span class="p">,</span>
+                                                               <span class="n">family</span><span class="o">=</span><span class="s">&#39;monospace&#39;</span><span class="p">)},</span>
+       <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;The font style used for heading labels used for emphasis.&quot;&quot;&quot;</span><span class="p">)</span>
+
+
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">     TablePlot has specialized options which are controlled via plot</span>
+<span class="s">     options instead of matplotlib options.&quot;&quot;&quot;</span><span class="p">)</span>
+
+
+    <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">TableStack</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tables</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">tables</span><span class="p">,</span> <span class="n">Table</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">TablePlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="TablePlot.pprint_value"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.plotting.html#dataviews.plotting.dataplots.TablePlot.pprint_value">[docs]</a>    <span class="k">def</span> <span class="nf">pprint_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate the pretty printed representation of a value for</span>
+<span class="sd">        inclusion in a table cell.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="n">formatter</span> <span class="o">=</span> <span class="s">&#39;{:.</span><span class="si">%d</span><span class="s">f}&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">float_precision</span>
+            <span class="n">formatted</span> <span class="o">=</span> <span class="n">formatter</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">formatted</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">formatted</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_value_len</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">formatted</span><span class="p">[:(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_value_len</span><span class="o">-</span><span class="mi">3</span><span class="p">)]</span><span class="o">+</span><span class="s">&#39;...&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">formatted</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="n">tableview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
+
+        <span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+        <span class="n">size_factor</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">border</span><span class="p">)</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">mpl_Table</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">border</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">border</span><span class="p">,</span>
+                         <span class="n">size_factor</span><span class="p">,</span> <span class="n">size_factor</span><span class="p">])</span>
+
+        <span class="n">width</span> <span class="o">=</span> <span class="n">size_factor</span> <span class="o">/</span> <span class="n">tableview</span><span class="o">.</span><span class="n">cols</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="n">size_factor</span> <span class="o">/</span> <span class="n">tableview</span><span class="o">.</span><span class="n">rows</span>
+
+        <span class="c"># Mapping from the cell coordinates to the dictionary key.</span>
+
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tableview</span><span class="o">.</span><span class="n">rows</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tableview</span><span class="o">.</span><span class="n">cols</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">tableview</span><span class="o">.</span><span class="n">cell_value</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+                <span class="n">cell_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pprint_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+                <span class="n">cellfont</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">font_types</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tableview</span><span class="o">.</span><span class="n">cell_type</span><span class="p">(</span><span class="n">row</span><span class="p">,</span><span class="n">col</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="n">font_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">fontproperties</span><span class="o">=</span><span class="n">cellfont</span><span class="p">)</span> <span class="k">if</span> <span class="n">cellfont</span> <span class="k">else</span> <span class="p">{}</span>
+                <span class="n">table</span><span class="o">.</span><span class="n">add_cell</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">cell_text</span><span class="p">,</span>  <span class="n">loc</span><span class="o">=</span><span class="s">&#39;center&#39;</span><span class="p">,</span>
+                               <span class="o">**</span><span class="n">font_kwargs</span><span class="p">)</span>
+
+        <span class="n">table</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_font_size</span><span class="p">)</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">auto_set_font_size</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;table&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table</span>
+        <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">ax</span> <span class="k">if</span> <span class="n">axis</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+        <span class="n">tableview</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;table&#39;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">coords</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">get_celld</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">tableview</span><span class="o">.</span><span class="n">cell_value</span><span class="p">(</span><span class="o">*</span><span class="n">coords</span><span class="p">)</span>
+            <span class="n">cell</span><span class="o">.</span><span class="n">set_text_props</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pprint_value</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+        <span class="c"># Resize fonts across table as necessary</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_font_size</span><span class="p">)</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">auto_set_font_size</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+
+
+</div>
+<div class="viewcode-block" id="HistogramPlot"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.plotting.html#dataviews.plotting.dataplots.HistogramPlot">[docs]</a><span class="k">class</span> <span class="nc">HistogramPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    HistogramPlot can plot DataHistograms and DataStacks of</span>
+<span class="sd">    DataHistograms, which can be displayed as a single frame or</span>
+<span class="sd">    animation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;align&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;visible&#39;</span><span class="p">,</span> <span class="s">&#39;edgecolor&#39;</span><span class="p">,</span> <span class="s">&#39;log&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;ecolor&#39;</span><span class="p">,</span> <span class="s">&#39;capsize&#39;</span><span class="p">,</span> <span class="s">&#39;error_kw&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;hatch&#39;</span><span class="p">],</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">     The style options for HistogramPlot match those of</span>
+<span class="s">     matplotlib&#39;s bar command.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">num_ticks</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        If colorbar is enabled the number of labels will be overwritten.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">rescale_individually</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether to use redraw the axes per stack or per view.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">show_frame</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Disabled by default for clarity.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">DataStack</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">center</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cyclic</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">curves</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">HistogramPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">orientation</span> <span class="o">==</span> <span class="s">&#39;vertical&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">axis_settings</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;ylabel&#39;</span><span class="p">,</span> <span class="s">&#39;xlabel&#39;</span><span class="p">,</span> <span class="s">&#39;yticks&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">axis_settings</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;xlabel&#39;</span><span class="p">,</span> <span class="s">&#39;ylabel&#39;</span><span class="p">,</span> <span class="s">&#39;xticks&#39;</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">hist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span> <span class="o">=</span> <span class="n">cyclic_index</span>
+
+        <span class="c"># Get plot ranges and values</span>
+        <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_hist</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">lbrt</span><span class="p">)</span>
+
+        <span class="c"># Process and apply axis settings</span>
+        <span class="n">ticks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_ticks</span><span class="p">(</span><span class="n">edges</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">)</span>
+        <span class="n">ax_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_axsettings</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="n">ticks</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="n">ax_settings</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="o">**</span><span class="n">ax_settings</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">orientation</span> <span class="o">==</span> <span class="s">&#39;vertical&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">offset_linefn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">axvline</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plotfn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">barh</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">offset_linefn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">axhline</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">plotfn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">bar</span>
+
+        <span class="c"># Plot bars and make any adjustments</span>
+        <span class="n">style</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">hist</span><span class="p">)[</span><span class="n">cyclic_index</span><span class="p">]</span>
+        <span class="n">bars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plotfn</span><span class="p">(</span><span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">style</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;bars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">bars</span><span class="p">,</span> <span class="n">lims</span><span class="p">)</span> <span class="c"># Indexing top</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">axis</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="k">if</span> <span class="n">axis</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">_process_hist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get data from histogram, including bin_ranges and values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cyclic</span> <span class="o">=</span> <span class="bp">False</span> <span class="k">if</span> <span class="n">hist</span><span class="o">.</span><span class="n">cyclic_range</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">True</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="n">hist</span><span class="o">.</span><span class="n">edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">hist_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">hist</span><span class="o">.</span><span class="n">values</span><span class="p">[:])</span>
+        <span class="n">widths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">hist</span><span class="o">.</span><span class="n">edges</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">lbrt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">xlims</span> <span class="o">=</span> <span class="n">hist</span><span class="o">.</span><span class="n">xlim</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_individually</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">xlim</span>
+            <span class="n">ylims</span> <span class="o">=</span> <span class="n">hist</span><span class="o">.</span><span class="n">ylim</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">lbrt</span>
+            <span class="n">xlims</span> <span class="o">=</span> <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+            <span class="n">ylims</span> <span class="o">=</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+        <span class="n">lims</span> <span class="o">=</span> <span class="n">xlims</span> <span class="o">+</span> <span class="n">ylims</span>
+        <span class="k">return</span> <span class="n">edges</span><span class="p">,</span> <span class="n">hist_vals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span>
+
+
+    <span class="k">def</span> <span class="nf">_compute_ticks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the ticks either as cyclic values in degrees or as roughly</span>
+<span class="sd">        evenly spaced bin centers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cyclic</span><span class="p">:</span>
+            <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">lims</span>
+            <span class="n">xvals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_ticks</span><span class="p">)</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;</span><span class="si">%.0f</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">np</span><span class="o">.</span><span class="n">rad2deg</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;$^\circ$&#39;</span>
+                      <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xvals</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">edge_inds</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">edges</span><span class="p">)))</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">edges</span><span class="p">)</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_ticks</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">inds</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="n">edge_inds</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="o">*</span><span class="n">step</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_ticks</span><span class="p">)]</span>
+            <span class="n">xvals</span> <span class="o">=</span> <span class="p">[</span><span class="n">edges</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="n">widths</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">/</span><span class="mf">2.</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">inds</span><span class="p">]</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;</span><span class="si">%g</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">round</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">xvals</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">xvals</span><span class="p">,</span> <span class="n">labels</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">_process_axsettings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="n">ticks</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get axis settings options including ticks, x- and y-labels</span>
+<span class="sd">        and limits.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">axis_settings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axis_settings</span><span class="p">,</span> <span class="p">[</span><span class="n">hist</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span> <span class="n">hist</span><span class="o">.</span><span class="n">ylabel</span><span class="p">,</span> <span class="n">ticks</span><span class="p">]))</span>
+        <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">lims</span>
+        <span class="n">axis_settings</span><span class="p">[</span><span class="s">&#39;lbrt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x1</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">orientation</span> <span class="o">==</span> <span class="s">&#39;vertical&#39;</span> <span class="k">else</span> <span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">axis_settings</span>
+
+
+    <span class="k">def</span> <span class="nf">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">bars</span><span class="p">,</span> <span class="n">lims</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process bars is subclasses to manually adjust bars after</span>
+<span class="sd">        being plotted.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">bar</span> <span class="ow">in</span> <span class="n">bars</span><span class="p">:</span>
+            <span class="n">bar</span><span class="o">.</span><span class="n">set_clip_on</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bars</span>
+
+
+    <span class="k">def</span> <span class="nf">_update_artists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update all the artists in the histogram. Subclassable to</span>
+<span class="sd">        allow updating of further artists.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">plot_vals</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;bars&#39;</span><span class="p">],</span> <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">bar</span><span class="p">,</span> <span class="n">edge</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">width</span> <span class="ow">in</span> <span class="n">plot_vals</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">orientation</span> <span class="o">==</span> <span class="s">&#39;vertical&#39;</span><span class="p">:</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">set_y</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">set_width</span><span class="p">(</span><span class="n">height</span><span class="p">)</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">set_height</span><span class="p">(</span><span class="n">width</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">set_x</span><span class="p">(</span><span class="n">edge</span><span class="p">)</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">set_height</span><span class="p">(</span><span class="n">height</span><span class="p">)</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">set_width</span><span class="p">(</span><span class="n">width</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="HistogramPlot.update_frame"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.plotting.html#dataviews.plotting.dataplots.HistogramPlot.update_frame">[docs]</a>    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update the plot for an animation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">hist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span>
+
+        <span class="c"># Process values, axes and style</span>
+        <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_hist</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">lbrt</span><span class="p">)</span>
+
+        <span class="n">ticks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_ticks</span><span class="p">(</span><span class="n">edges</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">)</span>
+        <span class="n">ax_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_axsettings</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="n">ticks</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="n">ax_settings</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_artists</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_title</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+
+
+</div></div>
+<span class="k">class</span> <span class="nc">SideHistogramPlot</span><span class="p">(</span><span class="n">HistogramPlot</span><span class="p">):</span>
+
+    <span class="n">offset</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Histogram value offset for a colorbar.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">show_title</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Titles should be disabled on all SidePlots to avoid clutter.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">show_xlabel</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether to show the x-label of the plot. Disabled by default</span>
+<span class="s">        because plots are often too cramped to fit the title correctly.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;layout&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SideHistogramPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_process_hist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">lbrt</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Subclassed to offset histogram by defined amount.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">SideHistogramPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_process_hist</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">lbrt</span><span class="p">)</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">*</span> <span class="n">lims</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">hvals</span> <span class="o">+=</span> <span class="n">offset</span>
+        <span class="n">lims</span> <span class="o">=</span> <span class="n">lims</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">lims</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,)</span>
+        <span class="k">return</span> <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span>
+
+
+    <span class="k">def</span> <span class="nf">_process_axsettings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="n">ticks</span><span class="p">):</span>
+        <span class="n">axsettings</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">SideHistogramPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_process_axsettings</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="n">ticks</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_xlabel</span><span class="p">:</span>
+            <span class="n">axsettings</span><span class="p">[</span><span class="s">&#39;ylabel&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">orientation</span> <span class="o">==</span> <span class="s">&#39;vertical&#39;</span> <span class="k">else</span> <span class="s">&#39;xlabel&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">axsettings</span>
+
+
+    <span class="k">def</span> <span class="nf">_update_artists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SideHistogramPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_update_artists</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;bars&#39;</span><span class="p">],</span> <span class="n">lims</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">bars</span><span class="p">,</span> <span class="n">lims</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process the bars and draw the offset line as necessary. If a</span>
+<span class="sd">        color map is set in the style of the &#39;main&#39; View object, color</span>
+<span class="sd">        the bars appropriately, respecting the required normalization</span>
+<span class="sd">        settings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">main</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">main</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">*</span> <span class="n">lims</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">)</span>
+        <span class="n">individually</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">plotting</span><span class="p">(</span><span class="n">main</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;normalize_individually&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">main</span><span class="p">,</span> <span class="n">Stack</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">individually</span><span class="p">:</span>
+                    <span class="n">main_range</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">split_stack</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">range</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">main_range</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">last</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">main_layer</span><span class="p">]</span><span class="o">.</span><span class="n">range</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">main_range</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">range</span> <span class="k">if</span> <span class="n">individually</span> <span class="k">else</span> <span class="n">main</span><span class="o">.</span><span class="n">range</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">main</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+            <span class="n">main_range</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">range</span>
+
+        <span class="k">if</span> <span class="n">offset</span> <span class="ow">and</span> <span class="p">(</span><span class="s">&#39;offset_line&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;offset_line&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset_linefn</span><span class="p">(</span><span class="n">offset</span><span class="p">,</span>
+                                                             <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                                                             <span class="n">color</span><span class="o">=</span><span class="s">&#39;k&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">offset</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_separator</span><span class="p">(</span><span class="n">lims</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
+
+
+        <span class="c"># If .main is an Overlay or a Stack of Overlays get the correct style</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">main</span><span class="p">,</span> <span class="n">Stack</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">):</span>
+            <span class="n">style</span> <span class="o">=</span>  <span class="n">main</span><span class="o">.</span><span class="n">last</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">main_layer</span><span class="p">]</span><span class="o">.</span><span class="n">style</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">main</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">):</span>
+            <span class="n">style</span> <span class="o">=</span> <span class="n">main</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">main_layer</span><span class="p">]</span><span class="o">.</span><span class="n">style</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">style</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">style</span>
+
+        <span class="n">cmap</span> <span class="o">=</span> <span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">style</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span><span class="p">[</span><span class="s">&#39;cmap&#39;</span><span class="p">])</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="k">else</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">cmap</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_colorize_bars</span><span class="p">(</span><span class="n">cmap</span><span class="p">,</span> <span class="n">bars</span><span class="p">,</span> <span class="n">main_range</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bars</span>
+
+
+    <span class="k">def</span> <span class="nf">_colorize_bars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cmap</span><span class="p">,</span> <span class="n">bars</span><span class="p">,</span> <span class="n">main_range</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Use the given cmap to color the bars, applying the correct</span>
+<span class="sd">        color ranges as necessary.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vertical</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">orientation</span> <span class="o">==</span> <span class="s">&#39;vertical&#39;</span><span class="p">)</span>
+        <span class="n">cmap_range</span> <span class="o">=</span> <span class="n">main_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">main_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">lower_bound</span> <span class="o">=</span> <span class="n">main_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">bar</span> <span class="ow">in</span> <span class="n">bars</span><span class="p">:</span>
+            <span class="n">bar_bin</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_y</span><span class="p">()</span> <span class="k">if</span> <span class="n">vertical</span> <span class="k">else</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_x</span><span class="p">()</span>
+            <span class="n">width</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_height</span><span class="p">()</span> <span class="k">if</span> <span class="n">vertical</span> <span class="k">else</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_width</span><span class="p">()</span>
+            <span class="n">color_val</span> <span class="o">=</span> <span class="p">(</span><span class="n">bar_bin</span><span class="o">+</span><span class="n">width</span><span class="o">/</span><span class="mf">2.</span><span class="o">-</span><span class="n">lower_bound</span><span class="p">)</span><span class="o">/</span><span class="n">cmap_range</span>
+            <span class="n">bar</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="n">cmap</span><span class="p">(</span><span class="n">color_val</span><span class="p">))</span>
+            <span class="n">bar</span><span class="o">.</span><span class="n">set_clip_on</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+
+
+    <span class="k">def</span> <span class="nf">_update_separator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="n">offset</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute colorbar offset and update separator line</span>
+<span class="sd">        if stack is non-zero.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">lims</span>
+        <span class="n">offset_line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;offset_line&#39;</span><span class="p">]</span>
+        <span class="n">full_range</span> <span class="o">=</span> <span class="n">y1</span> <span class="o">-</span> <span class="n">y0</span>
+        <span class="k">if</span> <span class="n">full_range</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">full_range</span> <span class="o">=</span> <span class="mf">1.</span>
+            <span class="n">y1</span> <span class="o">=</span> <span class="n">y0</span> <span class="o">+</span> <span class="mf">1.</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="n">full_range</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">y1</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">offset_line</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">offset_line</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">orientation</span> <span class="o">==</span> <span class="s">&#39;vertical&#39;</span><span class="p">:</span>
+                <span class="n">offset_line</span><span class="o">.</span><span class="n">set_xdata</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">offset_line</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span>
+
+<span class="n">Plot</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">Matrix</span><span class="p">:</span> <span class="n">MatrixPlot</span><span class="p">,</span>
+                      <span class="n">HeatMap</span><span class="p">:</span> <span class="n">MatrixPlot</span><span class="p">,</span>
+                      <span class="n">Curve</span><span class="p">:</span> <span class="n">CurvePlot</span><span class="p">,</span>
+                      <span class="n">Scatter</span><span class="p">:</span> <span class="n">ScatterPlot</span><span class="p">,</span>
+                      <span class="n">DataOverlay</span><span class="p">:</span> <span class="n">DataPlot</span><span class="p">,</span>
+                      <span class="n">Table</span><span class="p">:</span> <span class="n">TablePlot</span><span class="p">,</span>
+                      <span class="n">Histogram</span><span class="p">:</span> <span class="n">HistogramPlot</span><span class="p">})</span>
+
+<span class="n">Plot</span><span class="o">.</span><span class="n">sideplots</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">Histogram</span><span class="p">:</span> <span class="n">SideHistogramPlot</span><span class="p">})</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div align="center"><h1>DataViews</h1></div>
+<ul class="global-toc">
+
+<li><a href="../../../index.html">Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+<li><a href="http://github.com/ioam/dataviews">Github Source Code</a></li>
+<li><a href="../../../site_map.html">Site Map</a></li>
+</ul>
+<h3><a href="../../../index.html">Table Of Contents</a></h3>
+
+
+
+<h3>This Page</h3>
+<ul class="this-page-menu">
+	<li><a	href="https://github.com/ioam/dataviews/edit/master/doc/_modules/dataviews/plotting/dataplots.rst" rel="nofollow">Edit on GitHub</a></li>
+</ul>
+
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">DataViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../plotting.html" >dataviews.plotting</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, IOAM: Jean-Luc Stevens and Philipp Rudiger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
