@@ -81,13 +81,30 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A simple container class to allow specification of cyclic style</span>
 <span class="sd">    patterns. A typical use would be to cycle styles on a plot with</span>
-<span class="sd">    multiple curves.</span>
+<span class="sd">    multiple curves. Takes either a list of elements or an rckey</span>
+<span class="sd">    string used to look up the elements in the matplotlib rcParams.g</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elements</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">elements</span> <span class="o">=</span> <span class="n">elements</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elements</span><span class="o">=</span><span class="p">[],</span> <span class="n">rckey</span><span class="o">=</span><span class="s">&#39;axes.color_cycle&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rckey</span> <span class="o">=</span> <span class="n">rckey</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">elements</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span> <span class="o">=</span> <span class="n">elements</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span> <span class="o">=</span> <span class="bp">None</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">elements</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">rcParams</span>
+            <span class="k">return</span> <span class="n">rcParams</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">rckey</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span>
+
 
     <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elements</span><span class="p">)</span>
+
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s">&quot;Cycle(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">elements</span>
