@@ -137,6 +137,7 @@
 <span class="s">    adjoined plots when appropriate.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">Stack</span>
+    <span class="n">_view_type</span> <span class="o">=</span> <span class="n">View</span>
 
     <span class="c"># A mapping from View types to their corresponding plot types</span>
     <span class="n">defaults</span> <span class="o">=</span> <span class="p">{}</span>
@@ -144,12 +145,15 @@
     <span class="c"># A mapping from View types to their corresponding side plot types</span>
     <span class="n">sideplots</span> <span class="o">=</span> <span class="p">{}</span>
 
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">view</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Plot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">=</span> <span class="n">zorder</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="c"># List of handles to matplotlib objects for animation update</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;fig&#39;</span><span class="p">:</span><span class="bp">None</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;fig&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">}</span>
+
 
     <span class="k">def</span> <span class="nf">_check_stack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">element_type</span><span class="o">=</span><span class="n">View</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -161,7 +165,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">stack</span> <span class="o">=</span> <span class="n">view</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">stack</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">element_type</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">stack</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_view_type</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;Requires View, Animation or Stack of type </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">element_type</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">stack</span>
 
@@ -309,6 +313,7 @@
 <span class="sd">        Return a matplotlib figure.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
 
 </div>
 <div class="viewcode-block" id="GridPlot"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.plotting.html#dataviews.plotting.viewplots.GridPlot">[docs]</a><span class="k">class</span> <span class="nc">GridPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
@@ -811,6 +816,11 @@
 
     <span class="n">_abstract</span> <span class="o">=</span> <span class="bp">True</span>
 
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plots</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">OverlayPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
     <span class="k">def</span> <span class="nf">_collapse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="n">style_key</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given an overlay object collapse the channels according to</span>
@@ -888,12 +898,12 @@
 <span class="s">     matplotlib line style options. Arrow annotations also accept</span>
 <span class="s">     additional text options.&quot;&quot;&quot;</span><span class="p">)</span>
 
+    <span class="n">_view_type</span> <span class="o">=</span> <span class="n">Annotation</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">annotation</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">annotation</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_annotation</span> <span class="o">=</span> <span class="n">annotation</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="n">Annotation</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AnnotationPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">annotation</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_warn_invalid_intervals</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">AnnotationPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;annotations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="n">line_only</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;linewidth&#39;</span><span class="p">,</span> <span class="s">&#39;linestyle&#39;</span><span class="p">]</span>

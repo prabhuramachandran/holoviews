@@ -79,7 +79,9 @@
 
 <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">DataStack</span><span class="p">,</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">DataLayer</span><span class="p">,</span> <span class="n">HeatMap</span><span class="p">,</span> <span class="n">View</span><span class="p">,</span> <span class="n">DataOverlay</span><span class="p">,</span> \
     <span class="n">Annotation</span><span class="p">,</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">Scatter</span><span class="p">,</span> <span class="n">TableStack</span><span class="p">,</span> <span class="n">Table</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">,</span> <span class="n">Stack</span><span class="p">,</span> <span class="n">Overlay</span>
-<span class="kn">from</span> <span class="nn">.viewplots</span> <span class="kn">import</span> <span class="n">Plot</span>
+<span class="kn">from</span> <span class="nn">.viewplots</span> <span class="kn">import</span> <span class="n">Plot</span><span class="p">,</span> <span class="n">OverlayPlot</span>
+
+
 
 <span class="k">class</span> <span class="nc">MatrixPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
 
@@ -97,11 +99,7 @@
 
 
     <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">DataStack</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="p">(</span><span class="n">Matrix</span><span class="p">,</span> <span class="n">DataLayer</span><span class="p">))</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">MatrixPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
+    <span class="n">_view_type</span> <span class="o">=</span> <span class="p">(</span><span class="n">Matrix</span><span class="p">,</span> <span class="n">DataLayer</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">view</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
@@ -190,7 +188,7 @@
 
 
 
-<div class="viewcode-block" id="DataPlot"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.plotting.html#dataviews.plotting.dataplots.DataPlot">[docs]</a><span class="k">class</span> <span class="nc">DataPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+<div class="viewcode-block" id="DataPlot"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.plotting.html#dataviews.plotting.dataplots.DataPlot">[docs]</a><span class="k">class</span> <span class="nc">DataPlot</span><span class="p">(</span><span class="n">OverlayPlot</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A high-level plot, which will plot any DataView or DataStack type</span>
 <span class="sd">    including DataOverlays.</span>
@@ -200,6 +198,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">DataStack</span>
+    <span class="n">_view_type</span> <span class="o">=</span> <span class="n">DataOverlay</span>
 
     <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">     DataPlot renders overlay layers which individually have style</span>
@@ -207,10 +206,8 @@
 
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">overlays</span><span class="p">,</span> <span class="n">DataOverlay</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">plots</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">rescale</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">DataPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DataPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">overlays</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -285,13 +282,11 @@
 <span class="s">       LineCollection object.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">DataStack</span>
+    <span class="n">_view_type</span> <span class="o">=</span> <span class="n">Curve</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">curves</span><span class="p">,</span> <span class="n">Curve</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CurvePlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">curves</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">cyclic_range</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">None</span>
-
-        <span class="nb">super</span><span class="p">(</span><span class="n">CurvePlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">_format_x_tick_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
@@ -428,13 +423,7 @@
 <span class="s">       PolyCollection object.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">DataStack</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">Scatter</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">None</span>
-
-        <span class="n">Plot</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
+    <span class="n">_view_type</span> <span class="o">=</span> <span class="n">Scatter</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">scatterview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
@@ -524,11 +513,7 @@
 
 
     <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">TableStack</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tables</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">tables</span><span class="p">,</span> <span class="n">Table</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">TablePlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
+    <span class="n">_view_type</span> <span class="o">=</span> <span class="n">Table</span>
 
 <div class="viewcode-block" id="TablePlot.pprint_value"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.plotting.html#dataviews.plotting.dataplots.TablePlot.pprint_value">[docs]</a>    <span class="k">def</span> <span class="nf">pprint_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -626,15 +611,14 @@
 <span class="s">       Disabled by default for clarity.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">_stack_type</span> <span class="o">=</span> <span class="n">DataStack</span>
+    <span class="n">_view_type</span> <span class="o">=</span> <span class="n">Histogram</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">histograms</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">center</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cyclic</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">None</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_stack</span><span class="p">(</span><span class="n">curves</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">HistogramPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">HistogramPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">histograms</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">orientation</span> <span class="o">==</span> <span class="s">&#39;vertical&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">axis_settings</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;ylabel&#39;</span><span class="p">,</span> <span class="s">&#39;xlabel&#39;</span><span class="p">,</span> <span class="s">&#39;yticks&#39;</span><span class="p">]</span>
@@ -865,7 +849,6 @@
             <span class="n">bar</span><span class="o">.</span><span class="n">set_clip_on</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
 
 
-
     <span class="k">def</span> <span class="nf">_update_separator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="n">offset</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Compute colorbar offset and update separator line</span>
@@ -886,6 +869,7 @@
                 <span class="n">offset_line</span><span class="o">.</span><span class="n">set_xdata</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">offset_line</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span>
+
 
 <span class="n">Plot</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">Matrix</span><span class="p">:</span> <span class="n">MatrixPlot</span><span class="p">,</span>
                       <span class="n">HeatMap</span><span class="p">:</span> <span class="n">MatrixPlot</span><span class="p">,</span>
