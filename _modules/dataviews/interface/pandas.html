@@ -84,14 +84,39 @@
 
 <span class="kn">import</span> <span class="nn">param</span>
 
-<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">Dimension</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">NdMapping</span>
 <span class="kn">from</span> <span class="nn">..dataviews</span> <span class="kn">import</span> <span class="n">HeatMap</span><span class="p">,</span> <span class="n">DataStack</span><span class="p">,</span> <span class="n">Table</span><span class="p">,</span> <span class="n">TableStack</span>
 <span class="kn">from</span> <span class="nn">..options</span> <span class="kn">import</span> <span class="n">options</span><span class="p">,</span> <span class="n">PlotOpts</span>
-<span class="kn">from</span> <span class="nn">..views</span> <span class="kn">import</span> <span class="n">View</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">Stack</span><span class="p">,</span> <span class="n">Annotation</span><span class="p">,</span> <span class="n">Grid</span>
+<span class="kn">from</span> <span class="nn">..views</span> <span class="kn">import</span> <span class="n">View</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">Stack</span><span class="p">,</span> <span class="n">Annotation</span><span class="p">,</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">GridLayout</span>
 
 
+<div class="viewcode-block" id="DFrameLayer"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.interface.html#dataviews.interface.pandas.DFrameLayer">[docs]</a><span class="k">class</span> <span class="nc">DFrameLayer</span><span class="p">(</span><span class="n">View</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract class implements common methods for all Pandas dframe</span>
+<span class="sd">    based View types.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="DataFrameView"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.interface.html#dataviews.interface.pandas.DataFrameView">[docs]</a><span class="k">class</span> <span class="nc">DataFrameView</span><span class="p">(</span><span class="n">View</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">DFrameStack</span><span class="p">):</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span> <span class="o">*</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+            <span class="k">return</span> <span class="n">other</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">items</span><span class="o">=</span><span class="n">items</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">DFrameOverlay</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">DFrameOverlay</span><span class="p">):</span>
+                <span class="n">overlays</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">overlays</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="p">[</span><span class="n">other</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">DFrameOverlay</span><span class="p">):</span>
+            <span class="n">overlays</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="p">]</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">DataFrameView</span><span class="p">):</span>
+            <span class="n">overlays</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Can only create an overlay of DFrameLayers.&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">DFrameOverlay</span><span class="p">(</span><span class="n">overlays</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="DataFrameView"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.interface.html#dataviews.interface.pandas.DataFrameView">[docs]</a><span class="k">class</span> <span class="nc">DataFrameView</span><span class="p">(</span><span class="n">DFrameLayer</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    DataFrameView provides a convenient compatibility wrapper around</span>
 <span class="sd">    Pandas DataFrames. It provides several core functions:</span>
@@ -111,10 +136,11 @@
 <span class="sd">                 selecting and slicing the data using NdMapping.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">plot_type</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;plot&#39;</span><span class="p">,</span> <span class="s">&#39;boxplot&#39;</span><span class="p">,</span>
-                                                            <span class="s">&#39;hist&#39;</span><span class="p">,</span> <span class="s">&#39;scatter_matrix&#39;</span><span class="p">,</span>
-                                                            <span class="s">&#39;autocorrelation_plot&#39;</span><span class="p">,</span>
-                                                            <span class="bp">None</span><span class="p">],</span>
+    <span class="n">plot_type</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> 
+                                     <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;plot&#39;</span><span class="p">,</span> <span class="s">&#39;boxplot&#39;</span><span class="p">,</span>
+                                              <span class="s">&#39;hist&#39;</span><span class="p">,</span> <span class="s">&#39;scatter_matrix&#39;</span><span class="p">,</span>
+                                              <span class="s">&#39;autocorrelation_plot&#39;</span><span class="p">,</span>
+                                              <span class="bp">None</span><span class="p">],</span>
                                      <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;Selects which Pandas plot type to use,</span>
 <span class="s">                                            when visualizing the View.&quot;&quot;&quot;</span><span class="p">)</span>
 
@@ -188,7 +214,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
 </div>
-    <span class="k">def</span> <span class="nf">_split_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">ndmapping_type</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_split_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">ndmapping_type</span><span class="o">=</span><span class="n">NdMapping</span><span class="p">):</span>
         <span class="n">invalid_dims</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension_labels</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">invalid_dims</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Following dimensions could not be found </span><span class="si">%s</span><span class="s">.&#39;</span>
@@ -203,12 +229,35 @@
         <span class="k">return</span> <span class="n">ndmapping</span>
 
 
-<div class="viewcode-block" id="DataFrameView.grid"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.interface.html#dataviews.interface.pandas.DataFrameView.grid">[docs]</a>    <span class="k">def</span> <span class="nf">grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="k">def</span> <span class="nf">overlay_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">):</span>
+        <span class="n">ndmapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_dimensions</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span>
+        <span class="n">views</span> <span class="o">=</span> <span class="n">ndmapping</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="n">dimensions</span> <span class="o">=</span> <span class="n">ndmapping</span><span class="o">.</span><span class="n">dimensions</span>
+        <span class="n">overlaid</span> <span class="o">=</span> <span class="n">views</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">keys</span><span class="p">,</span> <span class="n">view</span> <span class="ow">in</span> <span class="n">views</span><span class="p">:</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">pprint_value</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span>
+                               <span class="nb">zip</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">keys</span><span class="p">)])</span>
+            <span class="k">if</span> <span class="n">overlaid</span> <span class="o">==</span> <span class="n">view</span><span class="p">:</span>
+                <span class="n">overlaid</span><span class="o">.</span><span class="n">legend_label</span> <span class="o">=</span> <span class="n">label</span>
+                <span class="k">continue</span>
+            <span class="n">view</span><span class="o">.</span><span class="n">legend_label</span> <span class="o">=</span> <span class="n">label</span>
+            <span class="n">overlaid</span> <span class="o">*=</span> <span class="n">view</span>
+        <span class="k">return</span> <span class="n">overlaid</span>
+
+
+<div class="viewcode-block" id="DataFrameView.grid"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.interface.html#dataviews.interface.pandas.DataFrameView.grid">[docs]</a>    <span class="k">def</span> <span class="nf">grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="p">[],</span> <span class="n">layout</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Splits the supplied the dimensions out into a Grid.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Grids hold a maximum of two dimensions.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">layout</span><span class="p">:</span>
+            <span class="n">ndmapping</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_dimensions</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">keys</span><span class="p">,</span> <span class="n">stack</span> <span class="ow">in</span> <span class="n">ndmapping</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">label</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">pprint_value</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span>
+                                   <span class="nb">zip</span><span class="p">(</span><span class="n">ndmapping</span><span class="o">.</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">keys</span><span class="p">)])</span>
+                <span class="n">stack</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">label</span><span class="p">,</span> <span class="n">stack</span><span class="o">.</span><span class="n">title</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">GridLayout</span><span class="p">(</span><span class="n">ndmapping</span><span class="p">)</span><span class="o">.</span><span class="n">cols</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_dimensions</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">Grid</span><span class="p">)</span>
 
 </div>
@@ -217,27 +266,9 @@
 <span class="sd">        Splits the supplied dimensions out into a DFrameStack.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_dimensions</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">DFrameStack</span><span class="p">)</span>
-</div>
-    <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">DFrameStack</span><span class="p">):</span>
-            <span class="n">items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span> <span class="o">*</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
-            <span class="k">return</span> <span class="n">other</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">items</span><span class="o">=</span><span class="n">items</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">DFrameOverlay</span><span class="p">):</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">DFrameOverlay</span><span class="p">):</span>
-                <span class="n">overlays</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">overlays</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="p">[</span><span class="n">other</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">DFrameOverlay</span><span class="p">):</span>
-            <span class="n">overlays</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="p">]</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">DataFrameView</span><span class="p">):</span>
-            <span class="n">overlays</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Can only create an overlay of DFViews.&#39;</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">DFrameOverlay</span><span class="p">(</span><span class="n">overlays</span><span class="p">)</span>
 
 
-</div>
+</div></div>
 <div class="viewcode-block" id="DFrame"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.interface.html#dataviews.interface.pandas.DFrame">[docs]</a><span class="k">class</span> <span class="nc">DFrame</span><span class="p">(</span><span class="n">DataFrameView</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    DFrame is a DataFrameView type, which additionally provides</span>
@@ -366,7 +397,7 @@
 
 
 </div></div>
-<div class="viewcode-block" id="DFrameOverlay"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.interface.html#dataviews.interface.pandas.DFrameOverlay">[docs]</a><span class="k">class</span> <span class="nc">DFrameOverlay</span><span class="p">(</span><span class="n">Overlay</span><span class="p">):</span>
+<div class="viewcode-block" id="DFrameOverlay"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.interface.html#dataviews.interface.pandas.DFrameOverlay">[docs]</a><span class="k">class</span> <span class="nc">DFrameOverlay</span><span class="p">(</span><span class="n">Overlay</span><span class="p">,</span> <span class="n">DFrameLayer</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    DFrameOverlay provides a compatibility layer to overlay Pandas</span>
 <span class="sd">    Views. Required to allow isinstance checks to work.</span>
