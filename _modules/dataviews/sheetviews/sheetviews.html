@@ -97,6 +97,10 @@
 <span class="s">        The ROI can be specified to select only a sub-region of the bounds to</span>
 <span class="s">        be stored as data.&quot;&quot;&quot;</span><span class="p">)</span>
 
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ClassSelector</span><span class="p">(</span><span class="n">class_</span><span class="o">=</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">),</span>
+                                <span class="n">default</span><span class="o">=</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;Z&#39;</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The default dimension for SheetLayers is the Z-axis.&quot;&quot;&quot;</span><span class="p">)</span>
+
     <span class="n">_abstract</span> <span class="o">=</span> <span class="bp">True</span>
 
 
@@ -353,24 +357,65 @@
 <div class="viewcode-block" id="Points"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.sheetviews.html#dataviews.sheetviews.sheetviews.Points">[docs]</a><span class="k">class</span> <span class="nc">Points</span><span class="p">(</span><span class="n">SheetLayer</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Allows sets of points to be positioned over a sheet coordinate</span>
-<span class="sd">    system.</span>
+<span class="sd">    system. Each points may optionally be associated with a chosen</span>
+<span class="sd">    numeric value.</span>
 
-<span class="sd">    The input data is an Nx2 Numpy array where each point in the numpy</span>
-<span class="sd">    array corresponds to an X,Y coordinate in sheet coordinates,</span>
-<span class="sd">    within the declared bounding region. Otherwise, the input can be a</span>
-<span class="sd">    list that can be cast to a suitable numpy array.</span>
+<span class="sd">    The input data can be a Nx2 or Nx3 Numpy array where the first two</span>
+<span class="sd">    columns corresponds to the X,Y coordinates in sheet coordinates,</span>
+<span class="sd">    within the declared bounding region. For Nx3 arrays, the third</span>
+<span class="sd">    column corresponds to the magnitude values of the points. Any</span>
+<span class="sd">    additional columns will be ignored (use VectorFields instead).</span>
+
+<span class="sd">    The input data may be also be passed as a tuple of elements that</span>
+<span class="sd">    may be numpy arrays or values that can be cast to arrays. When</span>
+<span class="sd">    such a tuple is supplied, the elements are joined column-wise into</span>
+<span class="sd">    a single array, allowing the magnitudes to be easily supplied</span>
+<span class="sd">    separately.</span>
+
+<span class="sd">    Note that if magnitudes are to be rendered correctly by default,</span>
+<span class="sd">    they should lie in the range [0,1].</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_null_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[],</span> <span class="p">[]])</span><span class="o">.</span><span class="n">T</span> <span class="c"># For when data is None</span>
+    <span class="n">_min_dims</span> <span class="o">=</span> <span class="mi">2</span>                      <span class="c"># Minimum number of columns</span>
+    <span class="n">_range_column</span> <span class="o">=</span> <span class="mi">3</span>                 <span class="c"># Column used by range property</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ClassSelector</span><span class="p">(</span><span class="n">class_</span><span class="o">=</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">),</span>
+                                <span class="n">default</span><span class="o">=</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;Magnitude&#39;</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span> <span class="k">if</span> <span class="n">bounds</span> <span class="k">else</span> <span class="n">BoundingBox</span><span class="p">()</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[],</span> <span class="p">[]])</span><span class="o">.</span><span class="n">T</span> <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Points</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">arrays</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span><span class="o">==</span><span class="nb">len</span><span class="p">(</span><span class="n">arrays</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">arr</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All input arrays must have the same length.&quot;</span><span class="p">)</span>
+
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span>
+                                              <span class="k">else</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span> <span class="k">for</span> <span class="n">arr</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span><span class="bp">self</span><span class="o">.</span><span class="n">_min_dims</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> requires a minimum of </span><span class="si">%s</span><span class="s"> columns.&quot;</span>
+                            <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min_dims</span><span class="p">))</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_null_value</span> <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">arr</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Points</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">resize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">Points</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
 
-
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Points.range"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.sheetviews.html#dataviews.sheetviews.sheetviews.Points.range">[docs]</a>    <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The range of magnitudes (if available) otherwise None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">col</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_range_column</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">col</span><span class="p">:</span> <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span><span class="n">col</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span><span class="n">col</span><span class="o">-</span><span class="mi">1</span><span class="p">:</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+</div>
     <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
@@ -380,7 +425,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">roi_bounds</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="bp">self</span>
         <span class="p">(</span><span class="n">N</span><span class="p">,</span><span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">roi_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
-                              <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">n</span><span class="p">,</span> <span class="p">:]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roi_bounds</span><span class="p">]]</span>
+                              <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">n</span><span class="p">,</span><span class="o">...</span><span class="p">][:</span><span class="mi">2</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roi_bounds</span><span class="p">]]</span>
         <span class="n">roi_bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">roi_bounds</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">roi_bounds</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span>
         <span class="k">return</span> <span class="n">Points</span><span class="p">(</span><span class="n">roi_data</span><span class="p">,</span> <span class="n">roi_bounds</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
 
@@ -388,8 +433,44 @@
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-            <span class="k">yield</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span>
+            <span class="k">yield</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span>
             <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+
+</div>
+<div class="viewcode-block" id="VectorField"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.sheetviews.html#dataviews.sheetviews.sheetviews.VectorField">[docs]</a><span class="k">class</span> <span class="nc">VectorField</span><span class="p">(</span><span class="n">Points</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A VectorField contains is a collection of vectors where each</span>
+<span class="sd">    vector has an associated position in sheet coordinates.</span>
+
+<span class="sd">    The constructor of VectorField is the same as the constructor of</span>
+<span class="sd">    Points: the input data can be an NxM Numpy array where the first</span>
+<span class="sd">    two columns corresponds to the X,Y coordinates in sheet</span>
+<span class="sd">    coordinates, within the declared bounding region. As with Points,</span>
+<span class="sd">    the input can be a tuple of array objects or of objects that can</span>
+<span class="sd">    be cast to arrays (the tuple elements are joined column-wise).</span>
+
+<span class="sd">    The third column maps to the vector angle which must be specified</span>
+<span class="sd">    in radians.</span>
+
+<span class="sd">    The visualization of any additional columns is decided by the</span>
+<span class="sd">    plotting code. For instance, the fourth and fifth columns could</span>
+<span class="sd">    correspond to arrow length and colour map value. All that is</span>
+<span class="sd">    assumed is that these additional dimension are normalized between</span>
+<span class="sd">    0.0 and 1.0 for the default visualization to work well.</span>
+
+<span class="sd">    The only restriction is that the final data array is NxM where</span>
+<span class="sd">    M&gt;3. In other words, the vector must have a dimensionality of 2 or</span>
+<span class="sd">    higher.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_null_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]])</span><span class="o">.</span><span class="n">T</span> <span class="c"># For when data is None</span>
+    <span class="n">_min_dims</span> <span class="o">=</span> <span class="mi">3</span>                              <span class="c"># Minimum number of columns</span>
+    <span class="n">_range_column</span> <span class="o">=</span> <span class="mi">4</span>                          <span class="c"># Column used by range property</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ClassSelector</span><span class="p">(</span><span class="n">class_</span><span class="o">=</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">),</span>
+                                <span class="n">default</span><span class="o">=</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;PolarVector&#39;</span><span class="p">,</span> <span class="n">cyclic</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                                                  <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)))</span>
 
 
 </div>
