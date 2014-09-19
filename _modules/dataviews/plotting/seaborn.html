@@ -91,8 +91,20 @@
 <span class="sd">    redraws the plot.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">apply_databounds</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Enables computing the plot bounds from the data itself.</span>
+<span class="s">        Disabled by default since data is often preprocessed,</span>
+<span class="s">        before display, changing the bounds.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">aspect</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;square&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Aspect ratio defaults to square, &#39;equal&#39; or numeric values</span>
+<span class="s">        are also supported.&quot;&quot;&quot;</span><span class="p">)</span>
+
     <span class="n">rescale_individually</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        Whether to use redraw the axes per stack or per view.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">show_grid</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Enables the axis grid.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">_abstract</span> <span class="o">=</span> <span class="bp">True</span>
 
@@ -102,9 +114,8 @@
         <span class="k">if</span> <span class="n">lbrt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">lbrt</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_individually</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">cla</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">view</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span>
-                   <span class="n">view</span><span class="o">.</span><span class="n">ylabel</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
 
 </div>
@@ -131,19 +142,13 @@
     <span class="n">_view_type</span> <span class="o">=</span> <span class="n">Regression</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">scatterview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span> <span class="o">=</span> <span class="n">cyclic_index</span>
 
-        <span class="k">if</span> <span class="n">lbrt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">lbrt</span> <span class="o">=</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_individually</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span>
-                             <span class="n">scatterview</span><span class="o">.</span><span class="n">ylabel</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">])</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="k">if</span> <span class="n">axis</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
         <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
@@ -200,14 +205,11 @@
                  <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Joint plots can&#39;t be animated or &quot;</span>
                                  <span class="s">&quot;laid out in a grid.&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
-                                 <span class="n">kdeview</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span> <span class="n">kdeview</span><span class="o">.</span><span class="n">ylabel</span><span class="p">,</span>
-                                 <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">])</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="k">if</span> <span class="n">axis</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
@@ -221,7 +223,6 @@
             <span class="n">sns</span><span class="o">.</span><span class="n">kdeplot</span><span class="p">(</span><span class="n">kdeview</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span>
                         <span class="n">label</span><span class="o">=</span><span class="n">kdeview</span><span class="o">.</span><span class="n">legend_label</span><span class="p">,</span>
                         <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_adjust_legend</span><span class="p">()</span>
 
 
 </div>
@@ -262,19 +263,15 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span> <span class="o">=</span> <span class="n">cyclic_index</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">curveview</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span><span class="p">]</span>
 
-        <span class="c"># Create xticks and reorder data if cyclic</span>
         <span class="k">if</span> <span class="n">lbrt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">lbrt</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_individually</span> <span class="k">else</span>\
                    <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
-                             <span class="n">curveview</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span> <span class="n">curveview</span><span class="o">.</span><span class="n">ylabel</span><span class="p">,</span>
-                             <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">])</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="k">if</span> <span class="n">axis</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
@@ -282,7 +279,6 @@
         <span class="n">sns</span><span class="o">.</span><span class="n">tsplot</span><span class="p">(</span><span class="n">curveview</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">curveview</span><span class="o">.</span><span class="n">xdata</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span>
                    <span class="n">condition</span><span class="o">=</span><span class="n">curveview</span><span class="o">.</span><span class="n">legend_label</span><span class="p">,</span>
                    <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_adjust_legend</span><span class="p">()</span>
 
 
 </div>
@@ -316,22 +312,17 @@
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">distview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">distview</span><span class="p">)[</span><span class="n">cyclic_index</span><span class="p">]</span>
-
-        <span class="c"># Create xticks and reorder data if cyclic</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
-                             <span class="n">distview</span><span class="o">.</span><span class="n">xlabel</span><span class="p">,</span> <span class="n">distview</span><span class="o">.</span><span class="n">ylabel</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">])</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="k">if</span> <span class="n">axis</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
         <span class="n">distview</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span>
         <span class="n">sns</span><span class="o">.</span><span class="n">distplot</span><span class="p">(</span><span class="n">distview</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span>
                      <span class="n">label</span><span class="o">=</span><span class="n">distview</span><span class="o">.</span><span class="n">legend_label</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_adjust_legend</span><span class="p">()</span>
 
 
 </div>
@@ -376,18 +367,16 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">(</span><span class="n">dfview</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
 
-        <span class="n">title</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">title</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
 
         <span class="c"># Process styles</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_style</span><span class="p">(</span><span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">dfview</span><span class="p">)[</span><span class="n">cyclic_index</span><span class="p">])</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="n">dfview</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s">&#39;fig&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">axis</span><span class="p">:</span>
-            <span class="n">fig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;fig&#39;</span><span class="p">,</span> <span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">())</span>
-            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="k">if</span> <span class="n">axis</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;fig&#39;</span><span class="p">,</span> <span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">())</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">_process_style</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">styles</span><span class="p">):</span>
