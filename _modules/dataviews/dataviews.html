@@ -434,7 +434,7 @@
 
 
 </div>
-<div class="viewcode-block" id="Matrix"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.dataviews.Matrix">[docs]</a><span class="k">class</span> <span class="nc">Matrix</span><span class="p">(</span><span class="n">View</span><span class="p">):</span>
+<div class="viewcode-block" id="Matrix"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.dataviews.Matrix">[docs]</a><span class="k">class</span> <span class="nc">Matrix</span><span class="p">(</span><span class="n">DataLayer</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Matrix is a basic 2D atomic View type.</span>
 
@@ -454,7 +454,14 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">lbrt</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lbrt</span> <span class="o">=</span> <span class="n">lbrt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span> <span class="o">=</span> <span class="n">lbrt</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lbrt</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span> <span class="o">=</span> <span class="n">lbrt</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">lbrt</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Matrix</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slc</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;Slicing Matrix Views currently&#39;</span>
+                                  <span class="s">&#39;not implemented.&#39;</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">norm_factor</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">div_by_zero</span><span class="o">=</span><span class="s">&#39;ignore&#39;</span><span class="p">):</span>
@@ -639,6 +646,11 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
 
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ylabel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">pprint_label</span>
+
+
 </div>
 <div class="viewcode-block" id="HeatMap"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.dataviews.HeatMap">[docs]</a><span class="k">class</span> <span class="nc">HeatMap</span><span class="p">(</span><span class="n">Matrix</span><span class="p">,</span> <span class="n">DataLayer</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -706,9 +718,15 @@
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">lbrt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">dim1_keys</span><span class="p">,</span> <span class="n">dim2_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense_keys</span><span class="p">()</span>
-        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">),</span> <span class="nb">min</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dim1_keys</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense_keys</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">)</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">dim2_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense_keys</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">)</span>
 
 
 </div>
