@@ -556,6 +556,88 @@
                             <span class="n">label</span><span class="o">=</span><span class="n">radians</span><span class="o">.</span><span class="n">label</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
                             <span class="n">value</span><span class="o">=</span><span class="n">value_dimension</span><span class="p">)]</span>
 
+
+</div>
+<div class="viewcode-block" id="threshold"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.operation.threshold">[docs]</a><span class="k">class</span> <span class="nc">threshold</span><span class="p">(</span><span class="n">ViewOperation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Threshold a given SheetView at a given level into the specified</span>
+<span class="sd">    low and high values.  &quot;&quot;&quot;</span>
+
+    <span class="n">level</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The value at which the threshold is applied. Values lower than</span>
+<span class="s">       the threshold map to the &#39;low&#39; value and values above map to</span>
+<span class="s">       the &#39;high&#39; value.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">high</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">      The value given to elements greater than (or equal to) the</span>
+<span class="s">      threshold.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">low</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">      The value given to elements below the threshold.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">label</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Thresholded&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The label suffix used to label the resulting sheetview where</span>
+<span class="s">       the suffix is added to the label of the input SheetView&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">high</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">high</span>
+        <span class="n">low</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">low</span>
+        <span class="n">thresholded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">arr</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">level</span><span class="p">,</span> <span class="n">high</span><span class="p">,</span> <span class="n">low</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">SheetView</span><span class="p">(</span><span class="n">thresholded</span><span class="p">,</span>
+                          <span class="n">label</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">label</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="p">)]</span>
+
+
+</div>
+<div class="viewcode-block" id="roi_table"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.operation.roi_table">[docs]</a><span class="k">class</span> <span class="nc">roi_table</span><span class="p">(</span><span class="n">ViewOperation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute a table of information from a SheetView within the</span>
+<span class="sd">    indicated region-of-interest (ROI). The function applied must</span>
+<span class="sd">    accept a numpy array and return either a single value or a</span>
+<span class="sd">    dictionary of values which is returned as a Table or TableStack.</span>
+
+<span class="sd">    The roi is specified using a boolean SheetView overlay (e.g as</span>
+<span class="sd">    generated by threshold) where zero values are excluded from the</span>
+<span class="sd">    ROI.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">fn</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The function that is applied within the mask area to supply</span>
+<span class="s">        the relevant information. Other valid examples include np.sum,</span>
+<span class="s">        np.median, np.std etc.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">heading</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;result&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       If the output of the function is not a dictionary, this is the</span>
+<span class="s">       label given to the resulting value.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">label</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;ROI&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The label suffix that labels the resulting table where this</span>
+<span class="s">       suffix is added to the label of the input data SheetView&quot;&quot;&quot;</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">SheetOverlay</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">view</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;A SheetOverlay of two SheetViews is required.&quot;</span><span class="p">)</span>
+
+        <span class="n">sview</span><span class="p">,</span> <span class="n">mask</span> <span class="o">=</span> <span class="n">view</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">view</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">sview</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">mask</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;The data array shape of the mask layer&quot;</span>
+                            <span class="s">&quot; must match that of the data layer.&quot;</span><span class="p">)</span>
+
+        <span class="n">bit_mask</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+        <span class="n">roi</span> <span class="o">=</span> <span class="n">sview</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">bit_mask</span><span class="p">]</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">fn</span><span class="p">(</span><span class="n">roi</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">heading</span><span class="p">:</span><span class="n">results</span><span class="p">}</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">Table</span><span class="p">(</span><span class="n">results</span><span class="p">,</span>
+                      <span class="n">label</span><span class="o">=</span><span class="n">sview</span><span class="o">.</span><span class="n">label</span> <span class="o">+</span> <span class="s">&#39; &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="p">)]</span>
+
+
 </div>
 <span class="n">ChannelOpts</span><span class="o">.</span><span class="n">operations</span><span class="p">[</span><span class="s">&#39;RGBA&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">RGBA</span>
 <span class="n">ChannelOpts</span><span class="o">.</span><span class="n">operations</span><span class="p">[</span><span class="s">&#39;HCS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">HCS</span>
