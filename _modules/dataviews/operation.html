@@ -91,11 +91,6 @@
 <span class="n">rgb_to_hsv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">colorsys</span><span class="o">.</span><span class="n">rgb_to_hsv</span><span class="p">)</span>
 <span class="n">hsv_to_rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">colorsys</span><span class="o">.</span><span class="n">hsv_to_rgb</span><span class="p">)</span>
 
-<span class="n">stack_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="n">SheetLayer</span><span class="p">:</span> <span class="n">SheetStack</span><span class="p">,</span>
-                 <span class="n">DataLayer</span><span class="p">:</span> <span class="n">DataStack</span><span class="p">,</span>
-                 <span class="n">Table</span><span class="p">:</span> <span class="n">TableStack</span><span class="p">}</span>
-
-
 
 <div class="viewcode-block" id="ViewOperation"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.operation.ViewOperation">[docs]</a><span class="k">class</span> <span class="nc">ViewOperation</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">ParameterizedFunction</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -154,8 +149,7 @@
             <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">views</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="n">CoordinateGrid</span><span class="p">,</span> <span class="n">DataGrid</span><span class="p">]:</span>
                     <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;CoordinateGrid and DataGrid not yet supported.&quot;</span><span class="p">)</span>
-                <span class="n">stack_type</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">stack_mapping</span> <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">k</span><span class="p">)][</span><span class="mi">0</span><span class="p">]</span>
-                <span class="n">view_signature</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">stack_type</span><span class="p">)</span>
+                <span class="n">view_signature</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">stack_type</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="n">signature</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="n">signature</span> <span class="o">=</span> <span class="n">view_signature</span>
@@ -196,9 +190,7 @@
 
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">Stack</span><span class="p">):</span>
             <span class="n">mapped_items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">key_items</span><span class="p">(</span><span class="n">k</span><span class="p">)))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">view</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
-            <span class="n">signature</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_signature</span><span class="p">(</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">mapped_items</span><span class="p">)</span>
-
-            <span class="n">stack_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">stack_mapping</span><span class="p">[</span><span class="n">tp</span><span class="p">]</span> <span class="k">for</span> <span class="n">tp</span> <span class="ow">in</span> <span class="n">signature</span><span class="p">]</span>
+            <span class="n">stack_types</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_signature</span><span class="p">(</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">mapped_items</span><span class="p">)</span>
             <span class="n">stacks</span> <span class="o">=</span> <span class="p">[</span><span class="n">stack_tp</span><span class="p">(</span><span class="n">dimensions</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span> <span class="k">for</span> <span class="n">stack_tp</span> <span class="ow">in</span> <span class="n">stack_types</span><span class="p">]</span>
 
             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">views</span> <span class="ow">in</span> <span class="n">mapped_items</span><span class="p">:</span>
