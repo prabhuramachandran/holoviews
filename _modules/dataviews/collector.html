@@ -972,14 +972,24 @@
         <span class="k">return</span> <span class="n">attrtree</span>
 
 
-    <span class="k">def</span> <span class="nf">_verify_task_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="Collector.verify_times"><a class="viewcode-back" href="../../Reference_Manual/dataviews.html#dataviews.collector.Collector.verify_times">[docs]</a>    <span class="k">def</span> <span class="nf">verify_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given a set of times this method checks that all</span>
+<span class="sd">        scheduled measurements will actually be carried out.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">times</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_verify_task_times</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">times</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">strict</span><span class="p">)</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">_verify_task_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task_times</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Checks that a given task that is scheduled to be run at</span>
 <span class="sd">        certain times will actually be executed. The strict flag</span>
 <span class="sd">        determines whether to simply warn or raise an Exception.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">times</span><span class="p">:</span>
-            <span class="n">unsatisfied</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">times</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">times</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">task_times</span><span class="p">:</span>
+            <span class="n">unsatisfied</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">task_times</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">times</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">unsatisfied</span><span class="p">:</span>
                 <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Task </span><span class="si">%r</span><span class="s"> has been requested for times </span><span class="si">%s</span><span class="s">, &quot;</span> \
                       <span class="s">&quot;not scheduled for collection.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">unsatisfied</span><span class="p">))</span>
@@ -987,6 +997,7 @@
             <span class="k">if</span> <span class="n">unsatisfied</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">strict</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>      <span class="n">param</span><span class="o">.</span><span class="n">main</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
 
     <span class="k">def</span> <span class="nf">_schedule_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1009,7 +1020,7 @@
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Setting path for Task that is in &#39;merge&#39; mode.&quot;</span><span class="p">)</span>
             <span class="n">task</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
 
-            <span class="bp">self</span><span class="o">.</span><span class="n">_verify_task_times</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">strict</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_verify_task_times</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">times</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">strict</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
 
 
