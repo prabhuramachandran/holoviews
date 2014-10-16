@@ -136,7 +136,7 @@
 <span class="sd">    Usage: %view [png|svg] [webm|h264|gif[:&lt;fps&gt;]] [&lt;percent size&gt;]</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">anim_formats</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;webm&#39;</span><span class="p">,</span><span class="s">&#39;h264&#39;</span><span class="p">,</span><span class="s">&#39;gif&#39;</span><span class="p">,</span><span class="s">&#39;slider&#39;</span><span class="p">,</span><span class="s">&#39;scrubber&#39;</span><span class="p">]</span>
+    <span class="n">anim_formats</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;webm&#39;</span><span class="p">,</span><span class="s">&#39;h264&#39;</span><span class="p">,</span><span class="s">&#39;gif&#39;</span><span class="p">,</span><span class="s">&#39;scrubber&#39;</span><span class="p">,</span><span class="s">&#39;widgets&#39;</span><span class="p">]</span>
     <span class="n">fig_formats</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;svg&#39;</span><span class="p">,</span> <span class="s">&#39;png&#39;</span><span class="p">,</span> <span class="s">&#39;mpld3&#39;</span><span class="p">]</span>
 
     <span class="n">PERCENTAGE_SIZE</span> <span class="o">=</span> <span class="mi">100</span>
@@ -147,7 +147,7 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">ViewMagic</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">usage_info</span> <span class="o">=</span> <span class="s">&quot;Usage: %view [png|svg|mpld3] [webm|h264|gif[:&lt;fps&gt;]|slider|scrubber] [&lt;percent size&gt;]&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">usage_info</span> <span class="o">=</span> <span class="s">&quot;Usage: %view [png|svg|mpld3] [webm|h264|gif[:&lt;fps&gt;]|widgets[:embedded|cached|live]|scrubber] [&lt;percent size&gt;]&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">usage_info</span> <span class="o">+=</span> <span class="s">&quot; (Arguments may be in any order)&quot;</span>
 
     <span class="nd">@classmethod</span>
@@ -158,18 +158,26 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Parse the animation format and fps from the specification string.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">format_choice</span><span class="p">,</span> <span class="n">fps_str</span> <span class="o">=</span> <span class="p">((</span><span class="n">anim_spec</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="s">&#39;:&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">anim_spec</span><span class="p">)</span>
+        <span class="n">format_choice</span><span class="p">,</span> <span class="n">opt_str</span> <span class="o">=</span> <span class="p">((</span><span class="n">anim_spec</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="s">&#39;:&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">anim_spec</span><span class="p">)</span>
                                   <span class="k">else</span> <span class="n">anim_spec</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">format_choice</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">anim_formats</span><span class="p">:</span>
             <span class="k">print</span><span class="p">(</span><span class="s">&quot;Valid animations types: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">anim_formats</span><span class="p">))</span>
             <span class="k">return</span> <span class="bp">False</span>
-        <span class="k">elif</span> <span class="n">fps_str</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="n">format_choice</span> <span class="o">==</span> <span class="s">&#39;widgets&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">opt_str</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;embedded&#39;</span><span class="p">,</span> <span class="s">&#39;cached&#39;</span><span class="p">,</span> <span class="s">&#39;live&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">]:</span>
+                <span class="k">print</span><span class="p">(</span><span class="s">&quot;Valid widget modes are embedded, cached and live.&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ViewMagic</span><span class="o">.</span><span class="n">VIDEO_FORMAT</span> <span class="o">=</span> <span class="p">(</span><span class="n">format_choice</span><span class="p">,</span> <span class="n">opt_str</span> <span class="k">if</span> <span class="n">opt_str</span> <span class="k">else</span> <span class="s">&#39;embedded&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">elif</span> <span class="n">opt_str</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">ViewMagic</span><span class="o">.</span><span class="n">VIDEO_FORMAT</span> <span class="o">=</span> <span class="n">format_choice</span>
             <span class="k">return</span> <span class="bp">True</span>
+
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">fps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fps_str</span><span class="p">)</span>
+            <span class="n">fps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">opt_str</span><span class="p">)</span>
         <span class="k">except</span><span class="p">:</span>
-            <span class="k">print</span><span class="p">(</span><span class="s">&quot;Invalid frame rate: &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span>  <span class="n">fps_str</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;Invalid frame rate: &#39;</span><span class="si">%s</span><span class="s">&#39;&quot;</span> <span class="o">%</span>  <span class="n">opt_str</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">False</span>
 
         <span class="k">global</span> <span class="n">ANIMATION_OPTS</span>
@@ -235,9 +243,12 @@
         <span class="n">success</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_settings</span><span class="p">(</span><span class="n">opts</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">cell</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">success</span><span class="p">:</span>
-            <span class="n">info</span> <span class="o">=</span> <span class="p">(</span><span class="n">ViewMagic</span><span class="o">.</span><span class="n">VIDEO_FORMAT</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">FIGURE_FORMAT</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span>
-                    <span class="n">ViewMagic</span><span class="o">.</span><span class="n">PERCENTAGE_SIZE</span><span class="p">,</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">FPS</span><span class="p">)</span>
-            <span class="k">print</span><span class="p">(</span><span class="s">&quot;Displaying </span><span class="si">%s</span><span class="s"> animation and </span><span class="si">%s</span><span class="s"> figures [</span><span class="si">%d%%</span><span class="s"> size, </span><span class="si">%s</span><span class="s"> FPS]&quot;</span> <span class="o">%</span> <span class="n">info</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ViewMagic</span><span class="o">.</span><span class="n">VIDEO_FORMAT</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Display </span><span class="si">%s</span><span class="s"> widget&quot;</span> <span class="o">%</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">VIDEO_FORMAT</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Displaying </span><span class="si">%s</span><span class="s"> animation [</span><span class="si">%s</span><span class="s"> FPS]&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ViewMagic</span><span class="o">.</span><span class="n">VIDEO_FORMAT</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">FPS</span><span class="p">)</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">FIGURE_FORMAT</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">PERCENTAGE_SIZE</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> and </span><span class="si">%s</span><span class="s"> figures [</span><span class="si">%d%%</span><span class="s"> size]&quot;</span> <span class="o">%</span> <span class="n">info</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">cell</span> <span class="ow">and</span> <span class="n">success</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">shell</span><span class="o">.</span><span class="n">run_cell</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">store_history</span><span class="o">=</span><span class="n">STORE_HISTORY</span><span class="p">)</span>
             <span class="p">[</span><span class="n">ViewMagic</span><span class="o">.</span><span class="n">FIGURE_FORMAT</span><span class="p">,</span>  <span class="n">ViewMagic</span><span class="o">.</span><span class="n">VIDEO_FORMAT</span><span class="p">,</span>
