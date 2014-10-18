@@ -132,9 +132,10 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">HeatMap</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">r</span> <span class="o">-</span> <span class="n">l</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">t</span><span class="o">-</span><span class="n">b</span><span class="p">))</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;annotations&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_annotate_values</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_values</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_annotate_values</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">lbrt</span><span class="o">=</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span>
                                    <span class="n">xticks</span><span class="o">=</span><span class="n">xticks</span><span class="p">,</span> <span class="n">yticks</span><span class="o">=</span><span class="n">yticks</span><span class="p">)</span>
 
 
@@ -168,23 +169,22 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;annotations&#39;</span><span class="p">][</span><span class="n">plot_coord</span><span class="p">]</span> <span class="o">=</span> <span class="n">annotation</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;annotations&#39;</span><span class="p">][</span><span class="n">plot_coord</span><span class="p">]</span><span class="o">.</span><span class="n">set_text</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">old_coords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;annotations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="n">xpos</span><span class="p">,</span> <span class="n">ypos</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">plot_coord</span> <span class="ow">in</span> <span class="n">old_coords</span><span class="p">:</span>
+            <span class="n">annotation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;annotations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">plot_coord</span><span class="p">)</span>
+            <span class="n">annotation</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
 
 
 
-    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="n">n</span>  <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">def</span> <span class="nf">update_handles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">im</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;im&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-
-        <span class="n">view</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span>
         <span class="n">im</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">HeatMap</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">HeatMap</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_values</span><span class="p">:</span>
            <span class="bp">self</span><span class="o">.</span><span class="n">_annotate_values</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize_individually</span><span class="p">:</span>
             <span class="n">im</span><span class="o">.</span><span class="n">set_clim</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">range</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
 
 
 
@@ -231,7 +231,7 @@
                 <span class="n">lbrt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
 
             <span class="n">plotype</span> <span class="o">=</span> <span class="n">Plot</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="n">stack</span><span class="o">.</span><span class="n">type</span><span class="p">]</span>
-            <span class="n">plot</span> <span class="o">=</span> <span class="n">plotype</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+            <span class="n">plot</span> <span class="o">=</span> <span class="n">plotype</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">all_keys</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">,</span>
                            <span class="n">show_xaxis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_xaxis</span><span class="p">,</span> <span class="n">show_yaxis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_yaxis</span><span class="p">,</span>
                            <span class="n">show_legend</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_legend</span><span class="p">,</span> <span class="n">show_title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_title</span><span class="p">,</span>
                            <span class="n">show_grid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">show_grid</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="n">zorder</span><span class="p">,</span>
@@ -246,10 +246,11 @@
 
 
     <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">view</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_view</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">view</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
         <span class="k">for</span> <span class="n">zorder</span><span class="p">,</span> <span class="n">plot</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">plots</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">zorder</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">lbrt</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
+                <span class="n">lbrt</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
             <span class="n">plot</span><span class="o">.</span><span class="n">update_frame</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">lbrt</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
 
@@ -379,19 +380,14 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;line_segment&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">line_segment</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">xticks</span><span class="o">=</span><span class="n">xticks</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">xticks</span><span class="o">=</span><span class="n">xticks</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
 
 
-    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="n">n</span>  <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-        <span class="n">curveview</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span>
-
+    <span class="k">def</span> <span class="nf">update_handles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_cyclic_curves</span><span class="p">(</span><span class="n">curveview</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;line_segment&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_xdata</span><span class="p">(</span><span class="n">curveview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;line_segment&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">(</span><span class="n">curveview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cyclic_curves</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;line_segment&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_xdata</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;line_segment&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
 
 
 </div>
@@ -432,22 +428,18 @@
         <span class="n">xvals</span> <span class="o">=</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
         <span class="n">xticks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reduce_ticks</span><span class="p">(</span><span class="n">xvals</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">xticks</span><span class="o">=</span><span class="n">xticks</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">xticks</span><span class="o">=</span><span class="n">xticks</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
 
 
-    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="n">n</span>  <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-        <span class="n">scatterview</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span>
-
+    <span class="k">def</span> <span class="nf">update_handles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;paths&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
 
-        <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">scatterview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">scatterview</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
-                                <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">scatterview</span><span class="o">.</span><span class="n">legend_label</span><span class="p">,</span>
-                                <span class="o">**</span><span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">scatterview</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span><span class="p">])</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                                <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">legend_label</span><span class="p">,</span>
+                                <span class="o">**</span><span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">view</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span><span class="p">])</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;paths&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">paths</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
 
 
 </div>
@@ -539,24 +531,19 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;table&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 
 
-    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-
-        <span class="n">tableview</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">update_handles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;table&#39;</span><span class="p">]</span>
 
         <span class="k">for</span> <span class="n">coords</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">get_celld</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">value</span> <span class="o">=</span> <span class="n">tableview</span><span class="o">.</span><span class="n">cell_value</span><span class="p">(</span><span class="o">*</span><span class="n">coords</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">cell_value</span><span class="p">(</span><span class="o">*</span><span class="n">coords</span><span class="p">)</span>
             <span class="n">cell</span><span class="o">.</span><span class="n">set_text_props</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pprint_value</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
 
         <span class="c"># Resize fonts across table as necessary</span>
         <span class="n">table</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_font_size</span><span class="p">)</span>
         <span class="n">table</span><span class="o">.</span><span class="n">auto_set_font_size</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
 
 
 </div>
@@ -624,7 +611,7 @@
         <span class="n">ticks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_ticks</span><span class="p">(</span><span class="n">edges</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">)</span>
         <span class="n">ax_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_axsettings</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="n">ticks</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">ax_settings</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="o">**</span><span class="n">ax_settings</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">_process_hist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -684,7 +671,7 @@
         <span class="k">return</span> <span class="n">bars</span>
 
 
-    <span class="k">def</span> <span class="nf">_update_artists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_update_artists</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Update all the artists in the histogram. Subclassable to</span>
 <span class="sd">        allow updating of further artists.</span>
@@ -701,20 +688,17 @@
                 <span class="n">bar</span><span class="o">.</span><span class="n">set_width</span><span class="p">(</span><span class="n">width</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="HistogramPlot.update_frame"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.plotting.html#dataviews.plotting.dataplots.HistogramPlot.update_frame">[docs]</a>    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="HistogramPlot.update_handles"><a class="viewcode-back" href="../../../Reference_Manual/dataviews.plotting.html#dataviews.plotting.dataplots.HistogramPlot.update_handles">[docs]</a>    <span class="k">def</span> <span class="nf">update_handles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Update the plot for an animation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="n">n</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
-        <span class="n">hist</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span>
-
         <span class="c"># Process values, axes and style</span>
-        <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_hist</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">lbrt</span><span class="p">)</span>
+        <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_hist</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">lbrt</span><span class="p">)</span>
 
         <span class="n">ticks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_ticks</span><span class="p">(</span><span class="n">edges</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">)</span>
-        <span class="n">ax_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_axsettings</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="n">ticks</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_update_artists</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="o">**</span><span class="n">ax_settings</span><span class="p">)</span>
+        <span class="n">ax_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_axsettings</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">lims</span><span class="p">,</span> <span class="n">ticks</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_artists</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">lims</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ax_settings</span>
 
 
 </div></div>
@@ -760,7 +744,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;bars&#39;</span><span class="p">],</span> <span class="n">lims</span><span class="p">)</span>
 
 
-    <span class="k">def</span> <span class="nf">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">bars</span><span class="p">,</span> <span class="n">lims</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">bars</span><span class="p">,</span> <span class="n">lims</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Process the bars and draw the offset line as necessary. If a</span>
 <span class="sd">        color map is set in the style of the &#39;main&#39; View object, color</span>
@@ -774,11 +758,11 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">main</span><span class="p">,</span> <span class="n">Stack</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">individually</span><span class="p">:</span>
-                    <span class="n">main_range</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">split_stack</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">range</span>
+                    <span class="n">main_range</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">split_stack</span><span class="p">()[</span><span class="mi">0</span><span class="p">][</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">range</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">main_range</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">last</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">main_layer</span><span class="p">]</span><span class="o">.</span><span class="n">range</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">main_range</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">main</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">range</span> <span class="k">if</span> <span class="n">individually</span> <span class="k">else</span> <span class="n">main</span><span class="o">.</span><span class="n">range</span>
+                <span class="n">main_range</span> <span class="o">=</span> <span class="n">main</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">range</span> <span class="k">if</span> <span class="n">individually</span> <span class="k">else</span> <span class="n">main</span><span class="o">.</span><span class="n">range</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">main</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
             <span class="n">main_range</span> <span class="o">=</span> <span class="n">main</span><span class="o">.</span><span class="n">range</span>
 
