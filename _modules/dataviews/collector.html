@@ -750,6 +750,10 @@
 <span class="sd">    each Stack type contained within the AttrTree objects.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">drop</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        List of dimensions to drop when collating data, specified</span>
+<span class="s">        as strings.&quot;&quot;&quot;</span><span class="p">)</span>
+
     <span class="n">_deep_indexable</span> <span class="o">=</span> <span class="bp">False</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_filters</span><span class="o">=</span><span class="p">[],</span> <span class="n">merge</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
@@ -775,8 +779,7 @@
               <span class="n">constant_keys</span> <span class="o">=</span> <span class="p">[(</span><span class="n">d</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">dim_keys</span>
                                <span class="k">if</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">constant_dims</span><span class="p">]</span>
               <span class="n">attrtree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_dimensions</span><span class="p">(</span><span class="n">attrtree</span><span class="p">,</span> <span class="n">varying_keys</span><span class="p">,</span>
-                                              <span class="nb">dict</span><span class="p">(</span><span class="n">constant_keys</span><span class="p">),</span>
-                                              <span class="n">ignore</span><span class="p">)</span>
+                                              <span class="nb">dict</span><span class="p">(</span><span class="n">constant_keys</span><span class="p">))</span>
            <span class="n">ndmapping</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">attrtree</span>
            <span class="n">progressbar</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">num_elements</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span>
 
@@ -802,8 +805,10 @@
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="n">v</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Stack</span><span class="p">):</span>
-                <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
-                    <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">dimension_labels</span><span class="p">:</span>
+                <span class="n">dim_vals</span> <span class="o">=</span> <span class="p">[(</span><span class="n">dim</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                            <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">dim_vals</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">dim</span><span class="o">.</span><span class="n">capitalize</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">dimension_labels</span><span class="p">:</span>
                         <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">add_dimension</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">constant_keys</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">constant_keys</span> <span class="o">=</span> <span class="n">constant_keys</span>
                 <span class="n">new_item</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
