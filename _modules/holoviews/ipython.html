@@ -1,0 +1,210 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>holoviews.ipython &mdash; holoviews</title>
+    
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2014.05.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/custom.js"></script>
+    <link rel="top" title="holoviews" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../index.html">DataViews Home</a></li>
+<li><a href="../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for holoviews.ipython</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
+<span class="kn">from</span> <span class="nn">..styles</span> <span class="kn">import</span> <span class="n">set_style</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">magics</span>
+<span class="kn">from</span> <span class="nn">.magics</span> <span class="kn">import</span> <span class="n">ViewMagic</span><span class="p">,</span> <span class="n">load_magics</span>
+<span class="kn">from</span> <span class="nn">.display_hooks</span> <span class="kn">import</span> <span class="n">animate</span><span class="p">,</span> <span class="n">set_display_hooks</span>
+
+<span class="kn">from</span> <span class="nn">param</span> <span class="kn">import</span> <span class="n">ipython</span> <span class="k">as</span> <span class="n">param_ext</span>
+
+<span class="k">try</span><span class="p">:</span>    <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">animation</span>
+<span class="k">except</span><span class="p">:</span> <span class="n">animation</span> <span class="o">=</span> <span class="bp">None</span>
+
+
+
+<span class="n">all_line_magics</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="s">&#39;%params&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%o</span><span class="s">pts&#39;</span><span class="p">,</span> <span class="s">&#39;%view&#39;</span><span class="p">])</span>
+<span class="n">all_cell_magics</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="s">&#39;</span><span class="si">%%</span><span class="s">view&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%%</span><span class="s">opts&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%%</span><span class="s">labels&#39;</span><span class="p">])</span>
+<span class="n">message</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Welcome to the holoviews IPython extension! (http://ioam.github.io/imagen/)&quot;&quot;&quot;</span>
+<span class="n">message</span> <span class="o">+=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">Available magics: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">all_line_magics</span> <span class="o">+</span> <span class="n">all_cell_magics</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">select_format</span><span class="p">(</span><span class="n">format_priority</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">fmt</span> <span class="ow">in</span> <span class="n">format_priority</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">anim</span> <span class="o">=</span> <span class="n">animation</span><span class="o">.</span><span class="n">FuncAnimation</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(),</span>
+                                           <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="n">frames</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">animate</span><span class="p">(</span><span class="n">anim</span><span class="p">,</span> <span class="o">*</span><span class="n">magics</span><span class="o">.</span><span class="n">ANIMATION_OPTS</span><span class="p">[</span><span class="n">fmt</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">fmt</span>
+        <span class="k">except</span><span class="p">:</span> <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">format_priority</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="update_matplotlib_rc"><a class="viewcode-back" href="../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.update_matplotlib_rc">[docs]</a><span class="k">def</span> <span class="nf">update_matplotlib_rc</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Default changes to the matplotlib rc used by IPython Notebook.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">matplotlib</span>
+    <span class="n">rc</span><span class="o">=</span> <span class="p">{</span><span class="s">&#39;figure.figsize&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6.0</span><span class="p">,</span><span class="mf">4.0</span><span class="p">),</span>
+         <span class="s">&#39;figure.facecolor&#39;</span><span class="p">:</span> <span class="s">&#39;white&#39;</span><span class="p">,</span>
+         <span class="s">&#39;figure.edgecolor&#39;</span><span class="p">:</span> <span class="s">&#39;white&#39;</span><span class="p">,</span>
+         <span class="s">&#39;font.size&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+         <span class="s">&#39;savefig.dpi&#39;</span><span class="p">:</span> <span class="mi">72</span><span class="p">,</span>
+         <span class="s">&#39;figure.subplot.bottom&#39;</span> <span class="p">:</span> <span class="o">.</span><span class="mi">125</span>
+         <span class="p">}</span>
+    <span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">rc</span><span class="p">)</span>
+
+</div>
+<span class="n">ViewMagic</span><span class="o">.</span><span class="n">VIDEO_FORMAT</span> <span class="o">=</span> <span class="n">select_format</span><span class="p">([</span><span class="s">&#39;webm&#39;</span><span class="p">,</span><span class="s">&#39;h264&#39;</span><span class="p">,</span><span class="s">&#39;gif&#39;</span><span class="p">])</span>
+<span class="c"># HTML_video output by default, but may be set to first_frame,</span>
+<span class="c"># middle_frame or last_frame (e.g. for testing purposes)</span>
+
+<span class="n">_loaded</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="k">def</span> <span class="nf">load_ipython_extension</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+
+    <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span> <span class="k">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+
+    <span class="k">global</span> <span class="n">_loaded</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">_loaded</span><span class="p">:</span>
+        <span class="n">_loaded</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="n">param_ext</span><span class="o">.</span><span class="n">load_ipython_extension</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+        <span class="n">load_magics</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span>
+        <span class="n">set_display_hooks</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span>
+        <span class="n">update_matplotlib_rc</span><span class="p">()</span>
+        <span class="n">set_style</span><span class="p">(</span><span class="s">&#39;default&#39;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">unload_ipython_extension</span><span class="p">(</span><span class="n">ip</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">_loaded</span>
+    <span class="n">_loaded</span> <span class="o">=</span> <span class="bp">False</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div align="center"><h1>DataViews</h1></div>
+<ul class="global-toc">
+
+<li><a href="../../index.html">Home</a></li>
+<li><a href="../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../Reference_Manual/index.html">Reference Manual</a></li>
+<li><a href="http://github.com/ioam/dataviews">Github Source Code</a></li>
+<li><a href="../../site_map.html">Site Map</a></li>
+</ul>
+<h3><a href="../../index.html">Table Of Contents</a></h3>
+
+
+
+<h3>This Page</h3>
+<ul class="this-page-menu">
+	<li><a	href="https://github.com/ioam/dataviews/edit/master/doc/_modules/holoviews/ipython.rst" rel="nofollow">Edit on GitHub</a></li>
+</ul>
+
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../index.html">DataViews Home</a></li>
+<li><a href="../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, IOAM: Jean-Luc Stevens and Philipp Rudiger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

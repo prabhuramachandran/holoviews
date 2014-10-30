@@ -1,0 +1,479 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>holoviews.plotting.seaborn &mdash; holoviews</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2014.05.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/custom.js"></script>
+    <link rel="top" title="holoviews" href="../../../index.html" />
+    <link rel="up" title="holoviews.plotting" href="../plotting.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">DataViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../plotting.html" accesskey="U">holoviews.plotting</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for holoviews.plotting.seaborn</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">seaborn.apionly</span> <span class="kn">as</span> <span class="nn">sns</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="n">sns</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">View</span>
+<span class="kn">from</span> <span class="nn">..interface.seaborn</span> <span class="kn">import</span> <span class="n">Regression</span><span class="p">,</span> <span class="n">TimeSeries</span><span class="p">,</span> <span class="n">Bivariate</span><span class="p">,</span> <span class="n">Distribution</span>
+<span class="kn">from</span> <span class="nn">..interface.seaborn</span> <span class="kn">import</span> <span class="n">DFrame</span> <span class="k">as</span> <span class="n">SNSFrame</span>
+<span class="kn">from</span> <span class="nn">.viewplots</span> <span class="kn">import</span> <span class="n">Plot</span>
+<span class="kn">from</span> <span class="nn">.pandas</span> <span class="kn">import</span> <span class="n">DFrameViewPlot</span>
+
+
+<div class="viewcode-block" id="FullRedrawPlot"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.seaborn.FullRedrawPlot">[docs]</a><span class="k">class</span> <span class="nc">FullRedrawPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    FullRedrawPlot provides an abstract baseclass, defining an</span>
+<span class="sd">    update_frame method, which completely wipes the axis and</span>
+<span class="sd">    redraws the plot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">apply_databounds</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Enables computing the plot bounds from the data itself.</span>
+<span class="s">        Disabled by default since data is often preprocessed,</span>
+<span class="s">        before display, changing the bounds.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">aspect</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;square&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Aspect ratio defaults to square, &#39;equal&#39; or numeric values</span>
+<span class="s">        are also supported.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">rescale_individually</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether to use redraw the axes per stack or per view.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">show_grid</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Enables the axis grid.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">_abstract</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">update_handles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="o">.</span><span class="n">cla</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="RegressionPlot"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.seaborn.RegressionPlot">[docs]</a><span class="k">class</span> <span class="nc">RegressionPlot</span><span class="p">(</span><span class="n">FullRedrawPlot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    RegressionPlot visualizes Regression Views using the seaborn</span>
+<span class="sd">    regplot interface, allowing the user to perform and plot</span>
+<span class="sd">    linear regressions on a set of scatter points. Parameters</span>
+<span class="sd">    to the replot function can be supplied via the opts magic.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;x_estimator&#39;</span><span class="p">,</span> <span class="s">&#39;x_bins&#39;</span><span class="p">,</span> <span class="s">&#39;x_ci&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;scatter&#39;</span><span class="p">,</span> <span class="s">&#39;fit_reg&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;n_boot&#39;</span><span class="p">,</span> <span class="s">&#39;order&#39;</span><span class="p">,</span> <span class="s">&#39;logistic&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;lowess&#39;</span><span class="p">,</span> <span class="s">&#39;robust&#39;</span><span class="p">,</span> <span class="s">&#39;truncate&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;scatter_kws&#39;</span><span class="p">,</span> <span class="s">&#39;line_kws&#39;</span><span class="p">,</span> <span class="s">&#39;ci&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;dropna&#39;</span><span class="p">,</span> <span class="s">&#39;x_jitter&#39;</span><span class="p">,</span> <span class="s">&#39;y_jitter&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;x_partial&#39;</span><span class="p">,</span> <span class="s">&#39;y_partial&#39;</span><span class="p">],</span>
+                            <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The style options for CurvePlot match those of matplotlib&#39;s</span>
+<span class="s">       LineCollection object.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">_view_type</span> <span class="o">=</span> <span class="n">Regression</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span> <span class="o">=</span> <span class="n">cyclic_index</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="n">sns</span><span class="o">.</span><span class="n">regplot</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                    <span class="n">ax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">view</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span><span class="p">])</span>
+
+
+</div>
+<div class="viewcode-block" id="BivariatePlot"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.seaborn.BivariatePlot">[docs]</a><span class="k">class</span> <span class="nc">BivariatePlot</span><span class="p">(</span><span class="n">FullRedrawPlot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Bivariate plot visualizes two-dimensional kernel density</span>
+<span class="sd">    estimates using the Seaborn kdeplot function. Additionally,</span>
+<span class="sd">    by enabling the joint option, the marginals distributions</span>
+<span class="sd">    can be plotted alongside each axis (does not animate or</span>
+<span class="sd">    compose).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">rescale_individually</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">joint</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether to visualize the kernel density estimate with marginal</span>
+<span class="s">        distributions along each axis. Does not animate or compose</span>
+<span class="s">        when enabled.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;err_style&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;interpolate&#39;</span><span class="p">,</span> <span class="s">&#39;ci&#39;</span><span class="p">,</span> <span class="s">&#39;kind&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;bw&#39;</span><span class="p">,</span> <span class="s">&#39;kernel&#39;</span><span class="p">,</span> <span class="s">&#39;cumulative&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;shade&#39;</span><span class="p">,</span> <span class="s">&#39;vertical&#39;</span><span class="p">,</span> <span class="s">&#39;cmap&#39;</span><span class="p">],</span>
+                            <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The style options for BivariatePlot match those of seaborns</span>
+<span class="s">       kdeplot.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">_view_type</span> <span class="o">=</span> <span class="n">Bivariate</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kde</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">BivariatePlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">kde</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">cyclic_range</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">kdeview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">kdeview</span><span class="p">)[</span><span class="n">cyclic_index</span><span class="p">]</span>
+
+        <span class="c"># Create xticks and reorder data if cyclic</span>
+        <span class="k">if</span> <span class="n">lbrt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">lbrt</span> <span class="o">=</span> <span class="n">kdeview</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_individually</span> <span class="k">else</span>\
+                   <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Joint plots can&#39;t be animated or &quot;</span>
+                                 <span class="s">&quot;laid out in a grid.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="n">kdeview</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">joint</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;cmap&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sns</span><span class="o">.</span><span class="n">jointplot</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span>
+                                                <span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span>
+                                                <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span><span class="o">.</span><span class="n">fig</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sns</span><span class="o">.</span><span class="n">kdeplot</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+                        <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="TimeSeriesPlot"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.seaborn.TimeSeriesPlot">[docs]</a><span class="k">class</span> <span class="nc">TimeSeriesPlot</span><span class="p">(</span><span class="n">FullRedrawPlot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    TimeSeries visualizes sets of curves using the Seaborn</span>
+<span class="sd">    tsplot function. This provides functionality to plot</span>
+<span class="sd">    error bars with various styles alongside the averaged</span>
+<span class="sd">    curve.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">rescale_individually</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">show_frame</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Disabled by default for clarity.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">show_legend</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">      Whether to show legend for the plot.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;color&#39;</span><span class="p">,</span> <span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;err_style&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;interpolate&#39;</span><span class="p">,</span> <span class="s">&#39;ci&#39;</span><span class="p">,</span> <span class="s">&#39;n_boot&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;err_kws&#39;</span><span class="p">,</span> <span class="s">&#39;err_palette&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;estimator&#39;</span><span class="p">,</span> <span class="s">&#39;kwargs&#39;</span><span class="p">],</span>
+                            <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The style options for TimeSeriesPlot match those of seaborns</span>
+<span class="s">       tsplot.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">_view_type</span> <span class="o">=</span> <span class="n">TimeSeries</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">curves</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">TimeSeriesPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">curves</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">cyclic_range</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">curveview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span> <span class="o">=</span> <span class="n">cyclic_index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">curveview</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">lbrt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">lbrt</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_individually</span> <span class="k">else</span>\
+                   <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">lbrt</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="n">curveview</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="n">sns</span><span class="o">.</span><span class="n">tsplot</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">view</span><span class="o">.</span><span class="n">xdata</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span>
+                   <span class="n">condition</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+                   <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="DistributionPlot"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.seaborn.DistributionPlot">[docs]</a><span class="k">class</span> <span class="nc">DistributionPlot</span><span class="p">(</span><span class="n">FullRedrawPlot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    DistributionPlot visualizes Distribution Views using the</span>
+<span class="sd">    Seaborn distplot function. This allows visualizing a 1D</span>
+<span class="sd">    array as a histogram, kernel density estimate, or rugplot.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">rescale_individually</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="n">show_frame</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Disabled by default for clarity.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;bins&#39;</span><span class="p">,</span> <span class="s">&#39;hist&#39;</span><span class="p">,</span> <span class="s">&#39;kde&#39;</span><span class="p">,</span> <span class="s">&#39;rug&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;fit&#39;</span><span class="p">,</span> <span class="s">&#39;hist_kws&#39;</span><span class="p">,</span> <span class="s">&#39;kde_kws&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;rug_kws&#39;</span><span class="p">,</span> <span class="s">&#39;fit_kws&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">],</span>
+                            <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The style options for CurvePlot match those of matplotlib&#39;s</span>
+<span class="s">       LineCollection object.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">_view_type</span> <span class="o">=</span> <span class="n">Distribution</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">DistributionPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">cyclic_range</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">distview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">distview</span><span class="p">)[</span><span class="n">cyclic_index</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="n">distview</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="n">sns</span><span class="o">.</span><span class="n">distplot</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+                     <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="SNSFramePlot"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.seaborn.SNSFramePlot">[docs]</a><span class="k">class</span> <span class="nc">SNSFramePlot</span><span class="p">(</span><span class="n">DFrameViewPlot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    SNSFramePlot takes an SNSFrame as input and plots the</span>
+<span class="sd">    contained data using the set plot_type. This largely mirrors</span>
+<span class="sd">    the way DFramePlot works, however, since most Seaborn plot</span>
+<span class="sd">    types plot one dimension against another it uses the x and y</span>
+<span class="sd">    parameters, which can be set on the SNSFrame.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_view_type</span> <span class="o">=</span> <span class="n">SNSFrame</span>
+
+    <span class="n">plot_type</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;scatter_matrix&#39;</span><span class="p">,</span>
+                                     <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;interact&#39;</span><span class="p">,</span> <span class="s">&#39;regplot&#39;</span><span class="p">,</span>
+                                              <span class="s">&#39;lmplot&#39;</span><span class="p">,</span> <span class="s">&#39;corrplot&#39;</span><span class="p">,</span>
+                                              <span class="s">&#39;plot&#39;</span><span class="p">,</span> <span class="s">&#39;boxplot&#39;</span><span class="p">,</span>
+                                              <span class="s">&#39;hist&#39;</span><span class="p">,</span> <span class="s">&#39;scatter_matrix&#39;</span><span class="p">,</span>
+                                              <span class="s">&#39;autocorrelation_plot&#39;</span><span class="p">],</span>
+                                     <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Selects which Seaborn plot type to use, when visualizing the</span>
+<span class="s">        SNSFrame. The options that can be passed to the plot_type are</span>
+<span class="s">        defined in dframe_options.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">dframe_options</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">DFrameViewPlot</span><span class="o">.</span><span class="n">dframe_options</span><span class="p">,</span>
+                          <span class="o">**</span><span class="p">{</span><span class="s">&#39;regplot&#39;</span><span class="p">:</span>  <span class="n">RegressionPlot</span><span class="o">.</span><span class="n">style_opts</span><span class="p">,</span>
+                             <span class="s">&#39;lmplot&#39;</span><span class="p">:</span>   <span class="p">[</span><span class="s">&#39;hue&#39;</span><span class="p">,</span> <span class="s">&#39;col&#39;</span><span class="p">,</span> <span class="s">&#39;row&#39;</span><span class="p">,</span> <span class="s">&#39;palette&#39;</span><span class="p">,</span>
+                                          <span class="s">&#39;sharex&#39;</span><span class="p">,</span> <span class="s">&#39;dropna&#39;</span><span class="p">,</span> <span class="s">&#39;legend&#39;</span><span class="p">],</span>
+                             <span class="s">&#39;corrplot&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;annot&#39;</span><span class="p">,</span> <span class="s">&#39;sig_stars&#39;</span><span class="p">,</span> <span class="s">&#39;sig_tail&#39;</span><span class="p">,</span>
+                                          <span class="s">&#39;sig_corr&#39;</span><span class="p">,</span> <span class="s">&#39;cmap&#39;</span><span class="p">,</span> <span class="s">&#39;cmap_range&#39;</span><span class="p">,</span>
+                                          <span class="s">&#39;cbar&#39;</span><span class="p">],</span>
+                             <span class="s">&#39;interact&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s">&#39;filled&#39;</span><span class="p">,</span> <span class="s">&#39;cmap&#39;</span><span class="p">,</span> <span class="s">&#39;colorbar&#39;</span><span class="p">,</span>
+                                          <span class="s">&#39;levels&#39;</span><span class="p">,</span> <span class="s">&#39;logistic&#39;</span><span class="p">,</span> <span class="s">&#39;contour_kws&#39;</span><span class="p">,</span>
+                                          <span class="s">&#39;scatter_kws&#39;</span><span class="p">]</span>
+                          <span class="p">})</span>
+
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">({</span><span class="n">opt</span> <span class="k">for</span> <span class="n">opts</span> <span class="ow">in</span> <span class="n">dframe_options</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">opt</span> <span class="ow">in</span> <span class="n">opts</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lbrt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">dfview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stack</span><span class="o">.</span><span class="n">last</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">(</span><span class="n">dfview</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_axis</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
+
+        <span class="c"># Process styles</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_style</span><span class="p">(</span><span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">style</span><span class="p">(</span><span class="n">dfview</span><span class="p">)[</span><span class="n">cyclic_index</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="n">dfview</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s">&#39;fig&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">gcf</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">lbrt</span><span class="o">=</span><span class="n">lbrt</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_process_style</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">styles</span><span class="p">):</span>
+        <span class="n">styles</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">SNSFramePlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_process_style</span><span class="p">(</span><span class="n">styles</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">DFrameViewPlot</span><span class="o">.</span><span class="n">params</span><span class="p">()[</span><span class="s">&#39;plot_type&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">objects</span><span class="p">:</span>
+            <span class="n">styles</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;figsize&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">styles</span>
+
+
+    <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dfview</span><span class="p">,</span> <span class="n">axis</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SNSFramePlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_validate</span><span class="p">(</span><span class="n">dfview</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+
+        <span class="n">composed</span> <span class="o">=</span> <span class="n">axis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+        <span class="n">multi_dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dfview</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">composed</span> <span class="ow">and</span> <span class="n">multi_dim</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">==</span> <span class="s">&#39;lmplot&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Multiple </span><span class="si">%s</span><span class="s"> plots cannot be composed.&quot;</span>
+                            <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_type</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">==</span> <span class="s">&#39;regplot&#39;</span><span class="p">:</span>
+            <span class="n">sns</span><span class="o">.</span><span class="n">regplot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                        <span class="n">ax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">==</span> <span class="s">&#39;interact&#39;</span><span class="p">:</span>
+            <span class="n">sns</span><span class="o">.</span><span class="n">interactplot</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">view</span><span class="o">.</span><span class="n">x2</span><span class="p">,</span> <span class="n">view</span><span class="o">.</span><span class="n">y</span><span class="p">,</span>
+                             <span class="n">data</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">==</span> <span class="s">&#39;corrplot&#39;</span><span class="p">:</span>
+            <span class="n">sns</span><span class="o">.</span><span class="n">corrplot</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot_type</span> <span class="o">==</span> <span class="s">&#39;lmplot&#39;</span><span class="p">:</span>
+            <span class="n">sns</span><span class="o">.</span><span class="n">lmplot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">y</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                       <span class="n">ax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ax</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">SNSFramePlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
+
+</div>
+<span class="n">Plot</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">TimeSeries</span><span class="p">:</span> <span class="n">TimeSeriesPlot</span><span class="p">,</span>
+                      <span class="n">Bivariate</span><span class="p">:</span> <span class="n">BivariatePlot</span><span class="p">,</span>
+                      <span class="n">Distribution</span><span class="p">:</span> <span class="n">DistributionPlot</span><span class="p">,</span>
+                      <span class="n">Regression</span><span class="p">:</span> <span class="n">RegressionPlot</span><span class="p">,</span>
+                      <span class="n">SNSFrame</span><span class="p">:</span> <span class="n">SNSFramePlot</span><span class="p">})</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div align="center"><h1>DataViews</h1></div>
+<ul class="global-toc">
+
+<li><a href="../../../index.html">Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+<li><a href="http://github.com/ioam/dataviews">Github Source Code</a></li>
+<li><a href="../../../site_map.html">Site Map</a></li>
+</ul>
+<h3><a href="../../../index.html">Table Of Contents</a></h3>
+
+
+
+<h3>This Page</h3>
+<ul class="this-page-menu">
+	<li><a	href="https://github.com/ioam/dataviews/edit/master/doc/_modules/holoviews/plotting/seaborn.rst" rel="nofollow">Edit on GitHub</a></li>
+</ul>
+
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">DataViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../plotting.html" >holoviews.plotting</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, IOAM: Jean-Luc Stevens and Philipp Rudiger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

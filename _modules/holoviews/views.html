@@ -1,0 +1,286 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>holoviews.views &mdash; holoviews</title>
+    
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '2014.05.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../_static/custom.js"></script>
+    <link rel="top" title="holoviews" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../index.html">DataViews Home</a></li>
+<li><a href="../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../index.html" accesskey="U">Module code</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for holoviews.views</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">..core.view</span> <span class="kn">import</span> <span class="n">View</span>
+
+<span class="kn">from</span> <span class="nn">.dataviews</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
+<span class="kn">from</span> <span class="nn">.sheetviews</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
+<span class="kn">from</span> <span class="nn">.tabular</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
+
+
+<div class="viewcode-block" id="Annotation"><a class="viewcode-back" href="../../Reference_Manual/holoviews.views.html#holoviews.views.Annotation">[docs]</a><span class="k">class</span> <span class="nc">Annotation</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An annotation is a type of View that is displayed on the top of an</span>
+<span class="sd">    overlay. Annotations elements do not depend on the details of the</span>
+<span class="sd">    data displayed and are generally for the convenience of the user</span>
+<span class="sd">    (e.g. to draw attention to specific areas of the figure using</span>
+<span class="sd">    arrows, boxes or labels).</span>
+
+<span class="sd">    All annotations have an optional interval argument that indicates</span>
+<span class="sd">    which stack elements they apply to. For instance, this allows</span>
+<span class="sd">    annotations for a specific time interval when overlaid over a</span>
+<span class="sd">    ViewMap or ViewMap with a &#39;Time&#39; dimension. The interval</span>
+<span class="sd">    argument is a dictionary of dimension keys and tuples containing</span>
+<span class="sd">    (start, end) values. A value of None, indicates an unspecified</span>
+<span class="sd">    constraint.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">xlim</span><span class="p">,</span> <span class="n">ylim</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+    <span class="n">xlabel</span><span class="p">,</span> <span class="n">ylabel</span> <span class="o">=</span> <span class="s">&quot;&quot;</span><span class="p">,</span> <span class="s">&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">boxes</span><span class="o">=</span><span class="p">[],</span> <span class="n">vlines</span><span class="o">=</span><span class="p">[],</span> <span class="n">hlines</span><span class="o">=</span><span class="p">[],</span> <span class="n">arrows</span><span class="o">=</span><span class="p">[],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Annotations may be added via method calls or supplied directly</span>
+<span class="sd">        to the constructor using lists of specification elements or</span>
+<span class="sd">        (specification, interval) tuples. The specification element</span>
+<span class="sd">        formats are listed below:</span>
+
+<span class="sd">        box: A BoundingBox or ((left, bottom), (right, top)) tuple.</span>
+
+<span class="sd">        hline/vline specification: The vertical/horizontal coordinate.</span>
+
+<span class="sd">        arrow: An (xy, kwargs) tuple where xy is a coordinate tuple</span>
+<span class="sd">        and kwargs is a dictionary of the optional arguments accepted</span>
+<span class="sd">        by the arrow method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Annotation</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">([],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">box</span> <span class="ow">in</span> <span class="n">boxes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="s">&#39;lbrt&#39;</span><span class="p">):</span>         <span class="bp">self</span><span class="o">.</span><span class="n">box</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">box</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">dict</span><span class="p">):</span>   <span class="bp">self</span><span class="o">.</span><span class="n">box</span><span class="p">(</span><span class="o">*</span><span class="n">box</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>                            <span class="bp">self</span><span class="o">.</span><span class="n">box</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">vline</span> <span class="ow">in</span> <span class="n">vlines</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vline</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">vline</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vline</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">vline</span><span class="p">,</span> <span class="bp">None</span><span class="p">)))</span>
+
+        <span class="k">for</span> <span class="n">hline</span> <span class="ow">in</span> <span class="n">hlines</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">hline</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">hline</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">hline</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">hline</span><span class="p">,</span> <span class="bp">None</span><span class="p">)))</span>
+
+        <span class="k">for</span> <span class="n">arrow</span> <span class="ow">in</span> <span class="n">arrows</span><span class="p">:</span>
+            <span class="n">spec</span><span class="p">,</span> <span class="n">interval</span> <span class="o">=</span> <span class="p">(</span><span class="n">arrow</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arrow</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="n">arrow</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">arrow</span><span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">interval</span><span class="o">=</span><span class="n">interval</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="Annotation.arrow"><a class="viewcode-back" href="../../Reference_Manual/holoviews.views.html#holoviews.views.Annotation.arrow">[docs]</a>    <span class="k">def</span> <span class="nf">arrow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xy</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">direction</span><span class="o">=</span><span class="s">&#39;&lt;&#39;</span><span class="p">,</span> <span class="n">points</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
+              <span class="n">arrowstyle</span><span class="o">=</span><span class="s">&#39;-&gt;&#39;</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Draw an arrow along one of the cardinal directions with option</span>
+<span class="sd">        text. The direction indicates the direction the arrow is</span>
+<span class="sd">        pointing and the points argument defines the length of the</span>
+<span class="sd">        arrow in points. Different arrow head styles are supported via</span>
+<span class="sd">        the arrowstyle argument.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">directions</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;&lt;&#39;</span><span class="p">,</span> <span class="s">&#39;^&#39;</span><span class="p">,</span> <span class="s">&#39;&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;v&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">direction</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">directions</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Valid arrow directions are: </span><span class="si">%s</span><span class="s">&quot;</span>
+                            <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">directions</span><span class="p">))</span>
+
+        <span class="n">arrowstyles</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;-&#39;</span><span class="p">,</span> <span class="s">&#39;-&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;-[&#39;</span><span class="p">,</span> <span class="s">&#39;-|&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;&lt;-&gt;&#39;</span><span class="p">,</span> <span class="s">&#39;&lt;|-|&gt;&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">arrowstyle</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arrowstyles</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Valid arrow styles are: </span><span class="si">%s</span><span class="s">&quot;</span>
+                            <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arrowstyles</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">direction</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">text</span><span class="p">,</span> <span class="n">xy</span><span class="p">,</span> <span class="n">points</span><span class="p">,</span> <span class="n">arrowstyle</span><span class="p">,</span> <span class="n">interval</span><span class="p">))</span>
+
+</div>
+<div class="viewcode-block" id="Annotation.line"><a class="viewcode-back" href="../../Reference_Manual/holoviews.views.html#holoviews.views.Annotation.line">[docs]</a>    <span class="k">def</span> <span class="nf">line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Draw an arbitrary polyline that goes through the listed</span>
+<span class="sd">        coordinates.  Coordinates are specified using a list of (x,y)</span>
+<span class="sd">        tuples.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;line&#39;</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">interval</span><span class="p">))</span>
+
+</div>
+<div class="viewcode-block" id="Annotation.spline"><a class="viewcode-back" href="../../Reference_Manual/holoviews.views.html#holoviews.views.Annotation.spline">[docs]</a>    <span class="k">def</span> <span class="nf">spline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">codes</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Draw a spline using the given handle coordinates and handle</span>
+<span class="sd">        codes. Follows matplotlib spline definitions as used in</span>
+<span class="sd">        matplotlib.path.Path with the following codes:</span>
+
+<span class="sd">        Path.STOP     : 0</span>
+<span class="sd">        Path.MOVETO   : 1</span>
+<span class="sd">        Path.LINETO   : 2</span>
+<span class="sd">        Path.CURVE3   : 3</span>
+<span class="sd">        Path.CURVE4   : 4</span>
+<span class="sd">        Path.CLOSEPLOY: 79</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;spline&#39;</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span> <span class="n">codes</span><span class="p">,</span> <span class="n">interval</span><span class="p">))</span>
+
+</div>
+<div class="viewcode-block" id="Annotation.box"><a class="viewcode-back" href="../../Reference_Manual/holoviews.views.html#holoviews.views.Annotation.box">[docs]</a>    <span class="k">def</span> <span class="nf">box</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">box</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Draw a box with corners specified in the positions specified</span>
+<span class="sd">        by ((left, bottom), (right, top)). Alternatively, a</span>
+<span class="sd">        BoundingBox may be supplied.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">box</span><span class="p">,</span> <span class="s">&#39;lbrt&#39;</span><span class="p">):</span>
+            <span class="p">(</span><span class="n">l</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">r</span><span class="p">,</span><span class="n">t</span><span class="p">)</span> <span class="o">=</span> <span class="n">box</span><span class="o">.</span><span class="n">lbrt</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="p">((</span><span class="n">l</span><span class="p">,</span><span class="n">b</span><span class="p">),</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span><span class="n">t</span><span class="p">))</span> <span class="o">=</span> <span class="n">box</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="p">(((</span><span class="n">t</span><span class="p">,</span><span class="n">l</span><span class="p">),</span> <span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span><span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span><span class="n">l</span><span class="p">),</span> <span class="p">(</span><span class="n">t</span><span class="p">,</span><span class="n">l</span><span class="p">)),</span>
+                  <span class="n">interval</span><span class="o">=</span><span class="n">interval</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Annotation.vline"><a class="viewcode-back" href="../../Reference_Manual/holoviews.views.html#holoviews.views.Annotation.vline">[docs]</a>    <span class="k">def</span> <span class="nf">vline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Draw an axis vline (vertical line) at the given x value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;vline&#39;</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">interval</span><span class="p">))</span>
+
+</div>
+<div class="viewcode-block" id="Annotation.hline"><a class="viewcode-back" href="../../Reference_Manual/holoviews.views.html#holoviews.views.Annotation.hline">[docs]</a>    <span class="k">def</span> <span class="nf">hline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Draw an axis hline (horizontal line) at the given y value.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;hline&#39;</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">interval</span><span class="p">))</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;An annotation can only be overlaid over a different View type.&quot;</span><span class="p">)</span>
+
+</div>
+<span class="k">def</span> <span class="nf">public</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span> <span class="k">return</span> <span class="bp">False</span>
+    <span class="k">return</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">View</span><span class="p">)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">_k</span> <span class="k">for</span> <span class="n">_k</span><span class="p">,</span> <span class="n">_v</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">public</span><span class="p">(</span><span class="n">_v</span><span class="p">)]))</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div align="center"><h1>DataViews</h1></div>
+<ul class="global-toc">
+
+<li><a href="../../index.html">Home</a></li>
+<li><a href="../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../Reference_Manual/index.html">Reference Manual</a></li>
+<li><a href="http://github.com/ioam/dataviews">Github Source Code</a></li>
+<li><a href="../../site_map.html">Site Map</a></li>
+</ul>
+<h3><a href="../../index.html">Table Of Contents</a></h3>
+
+
+
+<h3>This Page</h3>
+<ul class="this-page-menu">
+	<li><a	href="https://github.com/ioam/dataviews/edit/master/doc/_modules/holoviews/views.rst" rel="nofollow">Edit on GitHub</a></li>
+</ul>
+
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../index.html">DataViews Home</a></li>
+<li><a href="../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../index.html" >Module code</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, IOAM: Jean-Luc Stevens and Philipp Rudiger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
