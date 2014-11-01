@@ -322,8 +322,6 @@
 <span class="sd">    and keys.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_figure_display_mode</span> <span class="o">=</span> <span class="s">&#39;print_figure&#39;</span>
-
     <span class="k">def</span> <span class="nf">_process_view</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Determine the dimensions and keys to be turned into widgets and</span>
@@ -367,15 +365,12 @@
             <span class="kn">import</span> <span class="nn">mpld3</span>
             <span class="n">mpld3</span><span class="o">.</span><span class="n">plugins</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">mpld3</span><span class="o">.</span><span class="n">plugins</span><span class="o">.</span><span class="n">MousePosition</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">))</span>
             <span class="k">return</span> <span class="n">mpld3</span><span class="o">.</span><span class="n">fig_to_html</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_figure_display_mode</span> <span class="o">==</span> <span class="s">&#39;print_figure&#39;</span><span class="p">:</span>
+        <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">print_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_figure_display_mode</span> <span class="o">==</span> <span class="s">&#39;figure_display&#39;</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">.display_hooks</span> <span class="kn">import</span> <span class="n">figure_display</span>
-            <span class="k">return</span> <span class="n">figure_display</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
 
 
 </div>
-<div class="viewcode-block" id="ViewSelector"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.widgets.ViewSelector">[docs]</a><span class="k">class</span> <span class="nc">ViewSelector</span><span class="p">(</span><span class="n">NdWidget</span><span class="p">):</span>
+<div class="viewcode-block" id="IPySelectionWidget"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.widgets.IPySelectionWidget">[docs]</a><span class="k">class</span> <span class="nc">IPySelectionWidget</span><span class="p">(</span><span class="n">NdWidget</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Interactive widget to select and view View objects contained</span>
 <span class="sd">    in an NdMapping. ViewSelector creates Slider and Dropdown widgets</span>
@@ -464,7 +459,7 @@
         <span class="k">return</span> <span class="n">vals</span>
 
 
-<div class="viewcode-block" id="ViewSelector.update_widgets"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.widgets.ViewSelector.update_widgets">[docs]</a>    <span class="k">def</span> <span class="nf">update_widgets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="IPySelectionWidget.update_widgets"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.widgets.IPySelectionWidget.update_widgets">[docs]</a>    <span class="k">def</span> <span class="nf">update_widgets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Callback method to process the new keys, find the closest matching</span>
 <span class="sd">        View and update all the widgets.</span>
@@ -504,35 +499,58 @@
 
 
 </div></div>
-<div class="viewcode-block" id="JSSelector"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.widgets.JSSelector">[docs]</a><span class="k">class</span> <span class="nc">JSSelector</span><span class="p">(</span><span class="n">NdWidget</span><span class="p">):</span>
+<div class="viewcode-block" id="SelectionWidget"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.widgets.SelectionWidget">[docs]</a><span class="k">class</span> <span class="nc">SelectionWidget</span><span class="p">(</span><span class="n">NdWidget</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Javascript based widget to select and view View objects contained</span>
 <span class="sd">    in an NdMapping. For each dimension in the NdMapping a slider or</span>
-<span class="sd">    dropdown selection widget is created and can be used to select</span>
-<span class="sd">    the html output associated with the selected View type. Supports</span>
+<span class="sd">    dropdown selection widget is created and can be used to select the</span>
+<span class="sd">    html output associated with the selected View type. Supports</span>
 <span class="sd">    selection of any holoviews static output type including png, svg</span>
-<span class="sd">    and mpld3 output.</span>
+<span class="sd">    and mpld3 output. Unlike the IPSelectionWidget, this widget type</span>
+<span class="sd">    is exportable to a static html.</span>
+
+<span class="sd">    Optionally the individual plots can be exported to json, which can</span>
+<span class="sd">    be dynamically loaded by serving the data the data for each frame</span>
+<span class="sd">    on a simple server.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">export_json</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">template</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s">&#39;jsslider.jinja&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The jinja2 template used to generate the html output.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">server_url</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+    <span class="c">#######################</span>
+    <span class="c"># JSON export options #</span>
+    <span class="c">#######################</span>
 
-    <span class="n">json_path</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;./json_figures&#39;</span><span class="p">)</span>
+    <span class="n">export_json</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;Whether to export</span>
+<span class="s">         plots as json files, which can be dynamically loaded through</span>
+<span class="s">         a callback from the slider.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">_figure_display_mode</span> <span class="o">=</span> <span class="s">&#39;figure_display&#39;</span>
+    <span class="n">json_path</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;./json_figures&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">         If export_json is True the json files will be written to this</span>
+<span class="s">         directory.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">server_url</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;If export_json is</span>
+<span class="s">         True the slider widget will expect to be served the plot data</span>
+<span class="s">         from this URL. Data should be served from:</span>
+<span class="s">         server_url/fig_{id}/{frame}.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="c">##############################</span>
+    <span class="c"># Javascript include options #</span>
+    <span class="c">##############################</span>
+
+    <span class="n">jqueryui_url</span> <span class="o">=</span> <span class="s">&#39;https://code.jquery.com/ui/1.10.4/jquery-ui.min.js&#39;</span>
+    <span class="n">mpld3_url</span> <span class="o">=</span> <span class="s">&#39;//mpld3.github.io/js/mpld3.v0.3git.js&#39;</span>
+    <span class="n">d3_url</span> <span class="o">=</span> <span class="s">&#39;//cdnjs.cloudflare.com/ajax/libs/d3/3.4.13/d3.js&#39;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">JSSelector</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SelectionWidget</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">view</span> <span class="o">=</span> <span class="n">view</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_process_view</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">frames</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_plot_figure</span><span class="p">(</span><span class="n">idx</span><span class="p">))</span>
                                   <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">))</span>
 
 
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="nb">id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span>
-
+    <span class="k">def</span> <span class="nf">get_widgets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c"># Generate widget data</span>
         <span class="n">widgets</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">dimensions</span> <span class="o">=</span> <span class="p">[]</span>
@@ -549,41 +567,80 @@
             <span class="n">widgets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="n">dim_str</span><span class="p">,</span> <span class="n">dim_idx</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span> <span class="n">vals</span><span class="o">=</span><span class="nb">repr</span><span class="p">(</span><span class="n">dim_vals</span><span class="p">),</span>
                                 <span class="nb">type</span><span class="o">=</span><span class="n">widget_type</span><span class="p">))</span>
             <span class="n">dimensions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dim_str</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">widgets</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">init_dim_vals</span>
 
+
+    <span class="k">def</span> <span class="nf">get_key_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="c"># Generate key data</span>
         <span class="n">key_data</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mock_obj</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
             <span class="n">key</span> <span class="o">=</span> <span class="p">[(</span><span class="s">&quot;</span><span class="si">%.1f</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">v</span> <span class="k">if</span> <span class="n">v</span> <span class="o">%</span> <span class="mi">1</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s">&quot;</span><span class="si">%.10f</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">v</span><span class="p">)</span>
                    <span class="k">if</span> <span class="n">isnumeric</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">k</span><span class="p">]</span>
             <span class="n">key_data</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">key</span><span class="p">))]</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">return</span> <span class="n">key_data</span>
 
-        <span class="n">frames</span> <span class="o">=</span> <span class="p">{</span><span class="n">idx</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="o">.</span><span class="n">values</span><span class="p">())}</span>
+
+    <span class="k">def</span> <span class="nf">get_frames</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">):</span>
+        <span class="n">use_mpld3</span> <span class="o">=</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">FIGURE_FORMAT</span> <span class="o">==</span> <span class="s">&#39;mpld3&#39;</span>
+        <span class="n">frames</span> <span class="o">=</span> <span class="p">{</span><span class="n">idx</span><span class="p">:</span> <span class="n">frame</span> <span class="k">if</span> <span class="n">use_mpld3</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">export_json</span> <span class="k">else</span>
+                  <span class="nb">str</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">frames</span><span class="o">.</span><span class="n">values</span><span class="p">())}</span>
+        <span class="n">encoder</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">use_mpld3</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">mpld3</span>
+            <span class="n">encoder</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">cls</span><span class="o">=</span><span class="n">mpld3</span><span class="o">.</span><span class="n">_display</span><span class="o">.</span><span class="n">NumpyEncoder</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">export_json</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">json_path</span><span class="p">):</span>
                 <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">json_path</span><span class="p">)</span>
-            <span class="n">json_data</span> <span class="o">=</span> <span class="p">{</span><span class="n">idx</span><span class="p">:</span> <span class="n">frame</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">frames</span><span class="p">)}</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">json_path</span><span class="o">+</span><span class="s">&#39;/fig_</span><span class="si">%s</span><span class="s">.json&#39;</span> <span class="o">%</span> <span class="nb">id</span><span class="p">,</span> <span class="s">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-                <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">json_data</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
-            <span class="n">frames</span> <span class="o">=</span> <span class="p">{</span><span class="n">frame</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">frames</span><span class="p">))}</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">encoder</span><span class="p">)</span>
+            <span class="n">frames</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">elif</span> <span class="n">use_mpld3</span><span class="p">:</span>
+            <span class="n">frames</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">frames</span><span class="p">,</span> <span class="o">**</span><span class="n">encoder</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">frames</span>
 
 
+    <span class="k">def</span> <span class="nf">render_html</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
         <span class="c"># Set up jinja2 templating</span>
         <span class="kn">import</span> <span class="nn">jinja2</span>
         <span class="n">path</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">__file__</span><span class="p">))</span>
         <span class="n">templateLoader</span> <span class="o">=</span> <span class="n">jinja2</span><span class="o">.</span><span class="n">FileSystemLoader</span><span class="p">(</span><span class="n">searchpath</span><span class="o">=</span><span class="n">path</span><span class="p">)</span>
         <span class="n">templateEnv</span> <span class="o">=</span> <span class="n">jinja2</span><span class="o">.</span><span class="n">Environment</span><span class="p">(</span><span class="n">loader</span><span class="o">=</span><span class="n">templateLoader</span><span class="p">)</span>
-        <span class="n">templateEnv</span><span class="o">.</span><span class="n">filters</span><span class="p">[</span><span class="s">&#39;escapejs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">jinja2_escapejs_filter</span>
         <span class="n">template</span> <span class="o">=</span> <span class="n">templateEnv</span><span class="o">.</span><span class="n">get_template</span><span class="p">(</span><span class="s">&#39;jsslider.jinja&#39;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">template</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span> <span class="n">Nframes</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mock_obj</span><span class="p">),</span>
-                               <span class="n">Nwidget</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mock_obj</span><span class="o">.</span><span class="n">ndims</span><span class="p">,</span>
-                               <span class="n">frames</span><span class="o">=</span><span class="n">frames</span><span class="p">,</span>
-                               <span class="n">dimensions</span><span class="o">=</span><span class="n">dimensions</span><span class="p">,</span>
-                               <span class="n">key_data</span><span class="o">=</span><span class="nb">repr</span><span class="p">(</span><span class="n">key_data</span><span class="p">),</span>
-                               <span class="n">widgets</span><span class="o">=</span><span class="n">widgets</span><span class="p">,</span>
-                               <span class="n">init_dim_vals</span><span class="o">=</span><span class="n">init_dim_vals</span><span class="p">,</span>
-                               <span class="n">load_json</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">export_json</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
-                               <span class="n">server</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">server_url</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">template</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span>
+        <span class="n">widgets</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">init_dim_vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_widgets</span><span class="p">()</span>
+        <span class="n">key_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_key_data</span><span class="p">()</span>
+        <span class="n">frames</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_frames</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;id&#39;</span><span class="p">:</span> <span class="nb">id</span><span class="p">,</span> <span class="s">&#39;Nframes&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mock_obj</span><span class="p">),</span>
+                <span class="s">&#39;Nwidget&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mock_obj</span><span class="o">.</span><span class="n">ndims</span><span class="p">,</span>
+                <span class="s">&#39;frames&#39;</span><span class="p">:</span> <span class="n">frames</span><span class="p">,</span> <span class="s">&#39;dimensions&#39;</span><span class="p">:</span> <span class="n">dimensions</span><span class="p">,</span>
+                <span class="s">&#39;key_data&#39;</span><span class="p">:</span> <span class="nb">repr</span><span class="p">(</span><span class="n">key_data</span><span class="p">),</span> <span class="s">&#39;widgets&#39;</span><span class="p">:</span> <span class="n">widgets</span><span class="p">,</span>
+                <span class="s">&#39;init_dim_vals&#39;</span><span class="p">:</span> <span class="n">init_dim_vals</span><span class="p">,</span>
+                <span class="s">&#39;load_json&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">export_json</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+                <span class="s">&#39;server&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">server_url</span><span class="p">,</span>
+                <span class="s">&#39;mpld3_url&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mpld3_url</span><span class="p">,</span>
+                <span class="s">&#39;jqueryui_url&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">jqueryui_url</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">],</span>
+                <span class="s">&#39;d3_url&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">d3_url</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">],</span>
+                <span class="s">&#39;mpld3&#39;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">ViewMagic</span><span class="o">.</span><span class="n">FIGURE_FORMAT</span> <span class="o">==</span> <span class="s">&#39;mpld3&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()}</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">render_html</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_plot_figure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plot</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">FIGURE_FORMAT</span> <span class="o">==</span> <span class="s">&#39;mpld3&#39;</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">mpld3</span>
+            <span class="n">mpld3</span><span class="o">.</span><span class="n">plugins</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">mpld3</span><span class="o">.</span><span class="n">plugins</span><span class="o">.</span><span class="n">MousePosition</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">mpld3</span><span class="o">.</span><span class="n">fig_to_dict</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">.display_hooks</span> <span class="kn">import</span> <span class="n">figure_display</span>
+            <span class="k">return</span> <span class="n">figure_display</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
 
 
 </div>
