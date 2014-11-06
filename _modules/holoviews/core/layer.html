@@ -218,9 +218,9 @@
 <span class="sd">    over the contained layers.</span>
 
 <span class="sd">    A SheetOverlay may be used to overlay lines or points over a</span>
-<span class="sd">    SheetMatrix. In addition, if an overlay consists of three or four</span>
+<span class="sd">    Matrix. In addition, if an overlay consists of three or four</span>
 <span class="sd">    SheetViews of depth 1, the overlay may be converted to an RGB(A)</span>
-<span class="sd">    SheetMatrix via the rgb property.</span>
+<span class="sd">    Matrix via the rgb property.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;Layer&#39;</span><span class="p">)],</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;List</span>
@@ -484,14 +484,14 @@
             <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">inner</span><span class="p">(</span><span class="n">q</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">q</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
                              <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">q</span><span class="o">-</span><span class="n">x</span><span class="p">)</span>
                              <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">])</span>
-            <span class="k">return</span> <span class="n">keys</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">keys</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
         <span class="k">elif</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="nb">slice</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">key</span><span class="p">):</span>
             <span class="n">index_ind</span> <span class="o">=</span> <span class="p">[</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="nb">slice</span><span class="p">)][</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">temp_key</span> <span class="o">=</span> <span class="p">[</span><span class="n">el</span><span class="o">.</span><span class="n">start</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="nb">slice</span><span class="p">)</span> <span class="k">else</span> <span class="n">el</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">key</span><span class="p">]</span>
-            <span class="n">snapped_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform_indices</span><span class="p">(</span><span class="n">temp_key</span><span class="p">)</span>
+            <span class="n">dim_keys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">k</span><span class="p">[</span><span class="n">index_ind</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()])</span>
+            <span class="n">snapped_val</span> <span class="o">=</span> <span class="n">dim_keys</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">dim_keys</span><span class="o">-</span><span class="n">key</span><span class="p">[</span><span class="n">index_ind</span><span class="p">])]</span>
             <span class="n">key</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="n">key</span><span class="p">[</span><span class="n">index_ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">snapped_key</span><span class="p">[</span><span class="n">index_ind</span><span class="p">]</span>
-            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">key</span><span class="p">[</span><span class="n">index_ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">snapped_val</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">key</span>
 
 
@@ -549,8 +549,8 @@
     <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The maximum depth of all the elements. Matches the semantics</span>
-<span class="sd">        of __len__ used by Stacks. For the total number of</span>
-<span class="sd">        elements, count the full set of keys.</span>
+<span class="sd">        of __len__ used by Maps. For the total number of elements,</span>
+<span class="sd">        count the full set of keys.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="nb">max</span><span class="p">([(</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s">&#39;__len__&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
@@ -615,6 +615,12 @@
         <span class="k">if</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="n">ylim</span> <span class="o">=</span> <span class="p">(</span><span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mf">1.</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">ylim</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">lbrt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span>
+        <span class="n">l</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span>
+        <span class="n">b</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">l</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">grid_lbrt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -734,8 +740,8 @@
 
 <div class="viewcode-block" id="ViewMap.overlay_dimensions"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.layer.ViewMap.overlay_dimensions">[docs]</a>    <span class="k">def</span> <span class="nf">overlay_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Splits the Map along a specified number of dimensions and overlays</span>
-<span class="sd">        items in the split out Stacks.</span>
+<span class="sd">        Splits the Map along a specified number of dimensions and</span>
+<span class="sd">        overlays items in the split out Maps.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="n">split_map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
@@ -788,8 +794,8 @@
 </div>
 <div class="viewcode-block" id="ViewMap.split_overlays"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.layer.ViewMap.split_overlays">[docs]</a>    <span class="k">def</span> <span class="nf">split_overlays</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Given a Map of Overlays of N layers, split out the layers</span>
-<span class="sd">        into N separate Stacks.</span>
+<span class="sd">        Given a Map of Overlays of N layers, split out the layers into</span>
+<span class="sd">        N separate Maps.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Overlay</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
@@ -808,12 +814,12 @@
     <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The mul (*) operator implements overlaying of different Views.</span>
-<span class="sd">        This method tries to intelligently overlay Stacks with differing</span>
+<span class="sd">        This method tries to intelligently overlay Maps with differing</span>
 <span class="sd">        keys. If the Map is mulled with a simple View each element in</span>
 <span class="sd">        the Map is overlaid with the View. If the element the Map is</span>
-<span class="sd">        mulled with is another Map it will try to match up the dimensions,</span>
-<span class="sd">        making sure that items with completely different dimensions aren&#39;t</span>
-<span class="sd">        overlaid.</span>
+<span class="sd">        mulled with is another Map it will try to match up the</span>
+<span class="sd">        dimensions, making sure that items with completely different</span>
+<span class="sd">        dimensions aren&#39;t overlaid.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">):</span>
             <span class="n">self_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension_labels</span><span class="p">)</span>
@@ -899,12 +905,44 @@
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Cannot append {0} to a AdjointLayout&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">))</span>
 
 
-<div class="viewcode-block" id="ViewMap.sample"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.layer.ViewMap.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="p">[],</span> <span class="o">**</span><span class="n">sample_values</span><span class="p">):</span>
+<div class="viewcode-block" id="ViewMap.sample"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.layer.ViewMap.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">sample_values</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Sample each Layer in the Map by passing either a list</span>
-<span class="sd">        of samples or request a single sample using dimension-value</span>
-<span class="sd">        pairs.</span>
+<span class="sd">        Sample each Layer in the Map by passing either a list of</span>
+<span class="sd">        samples or a tuple specifying the number of regularly spaced</span>
+<span class="sd">        samples per dimension. Alternatively, a single sample may be</span>
+<span class="sd">        requested using dimension-value pairs. Optionally, the bounds</span>
+<span class="sd">        argument can be used to specify the bounding extent from which</span>
+<span class="sd">        the coordinates are to regularly sampled. Regular sampling</span>
+<span class="sd">        assumes homogenous and regularly sampled data.</span>
+
+<span class="sd">        For 1D sampling, the shape is simply as the desired number of</span>
+<span class="sd">        samples (and not a tuple). The bounds format for 1D sampling</span>
+<span class="sd">        is the tuple (lower, upper) and the tuple (left, bottom,</span>
+<span class="sd">        right, top) for 2D sampling.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">ndims</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">samples</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">dims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xlims</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="bp">self</span><span class="o">.</span><span class="n">xlims</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">bounds</span>
+                <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">shape</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">linsamples</span> <span class="o">=</span> <span class="p">[(</span><span class="n">l</span><span class="o">+</span><span class="n">u</span><span class="p">)</span><span class="o">/</span><span class="mf">2.0</span> <span class="k">for</span> <span class="n">l</span><span class="p">,</span><span class="n">u</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:])]</span>
+            <span class="k">elif</span> <span class="n">dims</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)</span> <span class="o">=</span> <span class="n">shape</span>
+                <span class="p">(</span><span class="n">l</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">r</span><span class="p">,</span><span class="n">t</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">lbrt</span> <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">bounds</span>
+
+                <span class="n">xedges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">cols</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">yedges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">rows</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">xsamples</span> <span class="o">=</span> <span class="p">[(</span><span class="n">l</span><span class="o">+</span><span class="n">u</span><span class="p">)</span><span class="o">/</span><span class="mf">2.0</span> <span class="k">for</span> <span class="n">l</span><span class="p">,</span><span class="n">u</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">xedges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">xedges</span><span class="p">[</span><span class="mi">1</span><span class="p">:])]</span>
+                <span class="n">ysamples</span> <span class="o">=</span> <span class="p">[(</span><span class="n">l</span><span class="o">+</span><span class="n">u</span><span class="p">)</span><span class="o">/</span><span class="mf">2.0</span> <span class="k">for</span> <span class="n">l</span><span class="p">,</span><span class="n">u</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">yedges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">yedges</span><span class="p">[</span><span class="mi">1</span><span class="p">:])]</span>
+
+                <span class="n">X</span><span class="p">,</span><span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">xsamples</span><span class="p">,</span> <span class="n">ysamples</span><span class="p">)</span>
+                <span class="n">linsamples</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">flat</span><span class="p">,</span> <span class="n">Y</span><span class="o">.</span><span class="n">flat</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Regular sampling not implented&quot;</span>
+                                          <span class="s">&quot;for high-dimensional Views.&quot;</span><span class="p">)</span>
+
+            <span class="n">samples</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">closest</span><span class="p">(</span><span class="n">linsamples</span><span class="p">))</span>
+
         <span class="n">sampled_items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">view</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="o">**</span><span class="n">sample_values</span><span class="p">))</span>
                          <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">view</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">sampled_items</span><span class="p">)</span>
@@ -912,7 +950,7 @@
 </div>
 <div class="viewcode-block" id="ViewMap.reduce"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.layer.ViewMap.reduce">[docs]</a>    <span class="k">def</span> <span class="nf">reduce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label_prefix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">reduce_map</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Reduce each SheetMatrix in the Map using a function supplied</span>
+<span class="sd">        Reduce each Matrix in the Map using a function supplied</span>
 <span class="sd">        via the kwargs, where the keyword has to match a particular</span>
 <span class="sd">        dimension in the View.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -923,9 +961,10 @@
 </div>
 <div class="viewcode-block" id="ViewMap.collate"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.layer.ViewMap.collate">[docs]</a>    <span class="k">def</span> <span class="nf">collate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collate_dim</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Collate splits out the specified dimension and joins the samples</span>
-<span class="sd">        in each of the split out Stacks into Curves. If there are multiple</span>
-<span class="sd">        entries in the ItemTable it will lay them out into a Grid.</span>
+<span class="sd">        Collate splits out the specified dimension and joins the</span>
+<span class="sd">        samples in each of the split out Maps into Curves. If there</span>
+<span class="sd">        are multiple entries in the ItemTable it will lay them out</span>
+<span class="sd">        into a Grid.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span> <span class="nn">..operation</span> <span class="kn">import</span> <span class="n">table_collate</span>
         <span class="k">return</span> <span class="n">table_collate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collation_dim</span><span class="o">=</span><span class="n">collate_dim</span><span class="p">)</span>

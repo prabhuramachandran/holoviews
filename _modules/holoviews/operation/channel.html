@@ -75,7 +75,7 @@
 <span class="kn">from</span> <span class="nn">..core.operation</span> <span class="kn">import</span> <span class="n">ViewOperation</span>
 <span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">options</span><span class="p">,</span> <span class="n">StyleOpts</span><span class="p">,</span> <span class="n">ChannelOpts</span><span class="p">,</span> <span class="n">Cycle</span>
 <span class="kn">from</span> <span class="nn">..styles</span> <span class="kn">import</span> <span class="n">GrayNearest</span>
-<span class="kn">from</span> <span class="nn">..view</span> <span class="kn">import</span> <span class="n">SheetMatrix</span>
+<span class="kn">from</span> <span class="nn">..view</span> <span class="kn">import</span> <span class="n">Matrix</span>
 
 <span class="n">rgb_to_hsv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">colorsys</span><span class="o">.</span><span class="n">rgb_to_hsv</span><span class="p">)</span>
 <span class="n">hsv_to_rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">colorsys</span><span class="o">.</span><span class="n">hsv_to_rgb</span><span class="p">)</span>
@@ -89,13 +89,13 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">label</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;RGBA&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">        The label to use for the resulting RGBA SheetMatrix.&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">        The label to use for the resulting RGBA Matrix.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Requires 3 or 4 layers to convert to RGB(A)&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">SheetMatrix</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All layers must be SheetMatrix to convert&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">Matrix</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All layers must be Matrix to convert&quot;</span>
                             <span class="s">&quot; to RGB(A) format&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All SheetViews must have a depth of one for&quot;</span>
@@ -109,14 +109,14 @@
             <span class="n">arrays</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
 
 
-        <span class="k">return</span> <span class="p">[</span><span class="n">SheetMatrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">(</span><span class="n">arrays</span><span class="p">),</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">(</span><span class="n">arrays</span><span class="p">),</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
                             <span class="n">roi_bounds</span><span class="o">=</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">roi_bounds</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)]</span>
 
 </div>
 <div class="viewcode-block" id="alpha_overlay"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.channel.alpha_overlay">[docs]</a><span class="k">class</span> <span class="nc">alpha_overlay</span><span class="p">(</span><span class="n">ViewOperation</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Accepts an overlay of a SheetMatrix defined with a cmap and converts</span>
-<span class="sd">    it to an RGBA SheetMatrix. The alpha channel of the result is</span>
+<span class="sd">    Accepts an overlay of a Matrix defined with a cmap and converts</span>
+<span class="sd">    it to an RGBA Matrix. The alpha channel of the result is</span>
 <span class="sd">    defined by the second layer of the overlay.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -126,7 +126,7 @@
 
     <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">R</span><span class="p">,</span><span class="n">G</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">_</span> <span class="o">=</span> <span class="n">split</span><span class="p">(</span><span class="n">cmap2rgb</span><span class="p">(</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">SheetMatrix</span><span class="p">(</span><span class="n">RGBA</span><span class="p">(</span><span class="n">R</span><span class="o">*</span><span class="n">G</span><span class="o">*</span><span class="n">B</span><span class="o">*</span><span class="n">overlay</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Matrix</span><span class="p">(</span><span class="n">RGBA</span><span class="p">(</span><span class="n">R</span><span class="o">*</span><span class="n">G</span><span class="o">*</span><span class="n">B</span><span class="o">*</span><span class="n">overlay</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
                           <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span><span class="p">)]</span>
 
 </div>
@@ -170,7 +170,7 @@
 
         <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="n">hsv_to_rgb</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
         <span class="n">rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">([</span><span class="n">r</span><span class="p">,</span><span class="n">g</span><span class="p">,</span><span class="n">b</span><span class="p">])</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">SheetMatrix</span><span class="p">(</span><span class="n">rgb</span><span class="p">,</span> <span class="n">hue</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">roi_bounds</span><span class="o">=</span><span class="n">hue</span><span class="o">.</span><span class="n">roi_bounds</span><span class="p">,</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Matrix</span><span class="p">(</span><span class="n">rgb</span><span class="p">,</span> <span class="n">hue</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">roi_bounds</span><span class="o">=</span><span class="n">hue</span><span class="o">.</span><span class="n">roi_bounds</span><span class="p">,</span>
                           <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">hue</span><span class="o">.</span><span class="n">value</span><span class="p">)]</span>
 
 </div>
@@ -199,11 +199,11 @@
              <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Shapes don&#39;t match.&quot;</span><span class="p">)</span>
 
          <span class="c"># Needs a general approach which works with any color map</span>
-         <span class="n">C</span> <span class="o">=</span> <span class="n">SheetMatrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>
+         <span class="n">C</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>
                        <span class="n">bounds</span><span class="o">=</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bounds</span><span class="p">)</span>
          <span class="n">hcs</span> <span class="o">=</span> <span class="n">HCS</span><span class="p">(</span><span class="n">overlay</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">C</span> <span class="o">*</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">N</span><span class="p">)</span>
 
-         <span class="k">return</span> <span class="p">[</span><span class="n">SheetMatrix</span><span class="p">(</span><span class="n">hcs</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">hcs</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">roi_bounds</span><span class="o">=</span><span class="n">hcs</span><span class="o">.</span><span class="n">roi_bounds</span><span class="p">,</span>
+         <span class="k">return</span> <span class="p">[</span><span class="n">Matrix</span><span class="p">(</span><span class="n">hcs</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">hcs</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">roi_bounds</span><span class="o">=</span><span class="n">hcs</span><span class="o">.</span><span class="n">roi_bounds</span><span class="p">,</span>
                              <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">hcs</span><span class="o">.</span><span class="n">value</span><span class="p">)]</span>
 
 </div>
@@ -219,8 +219,8 @@
 <span class="s">          property of the applicable style is used.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">label</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;RGB&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">        The label suffix to use for the resulting RGB SheetMatrix where</span>
-<span class="s">        the suffix is added to the label of the SheetMatrix to be</span>
+<span class="s">        The label suffix to use for the resulting RGB Matrix where</span>
+<span class="s">        the suffix is added to the label of the Matrix to be</span>
 <span class="s">        colored.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sheetview</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
