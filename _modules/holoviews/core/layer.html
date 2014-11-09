@@ -168,9 +168,11 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_range</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
             <span class="n">x_vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
             <span class="k">return</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">x_vals</span><span class="p">)),</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">x_vals</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
 
     <span class="nd">@xlim.setter</span>
     <span class="k">def</span> <span class="nf">xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limits</span><span class="p">):</span>
@@ -186,9 +188,11 @@
     <span class="k">def</span> <span class="nf">ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
             <span class="n">y_vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
             <span class="k">return</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">y_vals</span><span class="p">)),</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">y_vals</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
 
     <span class="nd">@ylim.setter</span>
     <span class="k">def</span> <span class="nf">ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limits</span><span class="p">):</span>
@@ -733,7 +737,7 @@
 
 
 
-<div class="viewcode-block" id="ViewMap.overlay_dimensions"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.layer.ViewMap.overlay_dimensions">[docs]</a>    <span class="k">def</span> <span class="nf">overlay_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">):</span>
+<div class="viewcode-block" id="ViewMap.overlay"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.layer.ViewMap.overlay">[docs]</a>    <span class="k">def</span> <span class="nf">overlay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Splits the Map along a specified number of dimensions and</span>
 <span class="sd">        overlays items in the split out Maps.</span>
@@ -746,14 +750,7 @@
             <span class="n">new_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">dimensions</span><span class="o">=</span><span class="n">split_map</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">outer</span><span class="p">,</span> <span class="n">vmap</span> <span class="ow">in</span> <span class="n">split_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">key</span><span class="p">,</span> <span class="n">overlay</span> <span class="o">=</span> <span class="n">vmap</span><span class="o">.</span><span class="n">items</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">overlay</span><span class="o">.</span><span class="n">constant_dimensions</span> <span class="o">=</span> <span class="n">vmap</span><span class="o">.</span><span class="n">dimensions</span>
-            <span class="n">overlay</span><span class="o">.</span><span class="n">constant_values</span> <span class="o">=</span> <span class="n">key</span>
-            <span class="k">for</span> <span class="n">inner</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">vmap</span><span class="o">.</span><span class="n">items</span><span class="p">())[</span><span class="mi">1</span><span class="p">:]:</span>
-                <span class="n">v</span><span class="o">.</span><span class="n">constant_dimensions</span> <span class="o">=</span> <span class="n">vmap</span><span class="o">.</span><span class="n">dimensions</span>
-                <span class="n">v</span><span class="o">.</span><span class="n">constant_values</span> <span class="o">=</span> <span class="n">inner</span>
-                <span class="n">overlay</span> <span class="o">=</span> <span class="n">overlay</span> <span class="o">*</span> <span class="n">v</span>
-            <span class="n">new_map</span><span class="p">[</span><span class="n">outer</span><span class="p">]</span> <span class="o">=</span> <span class="n">overlay</span>
+            <span class="n">new_map</span><span class="p">[</span><span class="n">outer</span><span class="p">]</span> <span class="o">=</span> <span class="n">Overlay</span><span class="p">(</span><span class="n">vmap</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">new_map</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
