@@ -279,7 +279,7 @@
                 <span class="k">return</span> <span class="bp">None</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                 <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">dim</span><span class="o">.</span><span class="n">pprint_value</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span>
                                         <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">key</span><span class="p">)]))</span>
             <span class="k">return</span> <span class="n">labels</span>
@@ -759,7 +759,7 @@
             <span class="k">return</span> <span class="n">new_map</span>
 
 </div>
-<div class="viewcode-block" id="ViewMap.grid"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.layer.ViewMap.grid">[docs]</a>    <span class="k">def</span> <span class="nf">grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">constant_dims</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<div class="viewcode-block" id="ViewMap.grid"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.layer.ViewMap.grid">[docs]</a>    <span class="k">def</span> <span class="nf">grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">set_title</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Grid takes a list of one or two dimensions, and lays out the containing</span>
 <span class="sd">        Views along these axes in a Grid.</span>
@@ -777,13 +777,17 @@
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;ViewMap does not have supplied dimensions.&#39;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">layout</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">keys</span><span class="p">,</span> <span class="n">vmap</span> <span class="ow">in</span> <span class="n">split_map</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="n">constant_dims</span><span class="p">:</span>
-                    <span class="n">vmap</span><span class="o">.</span><span class="n">constant_dimensions</span> <span class="o">=</span> <span class="n">split_map</span><span class="o">.</span><span class="n">dimensions</span>
-                    <span class="n">vmap</span><span class="o">.</span><span class="n">constant_values</span> <span class="o">=</span> <span class="n">keys</span>
+            <span class="k">if</span> <span class="n">set_title</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">keys</span><span class="p">,</span> <span class="n">vmap</span> <span class="ow">in</span> <span class="n">split_map</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">dim_labels</span> <span class="o">=</span> <span class="n">split_map</span><span class="o">.</span><span class="n">pprint_dimkey</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vmap</span><span class="p">,</span> <span class="n">ViewMap</span><span class="p">):</span> <span class="n">vmap</span> <span class="o">=</span> <span class="p">[</span><span class="n">vmap</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">vm</span> <span class="ow">in</span> <span class="n">vmap</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">dim_labels</span> <span class="ow">and</span> <span class="n">dim_labels</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">vm</span><span class="o">.</span><span class="n">title</span><span class="p">:</span>
+                            <span class="n">vm</span><span class="o">.</span><span class="n">title</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">vm</span><span class="o">.</span><span class="n">title</span><span class="p">,</span> <span class="n">dim_labels</span><span class="p">])</span>
             <span class="k">return</span> <span class="n">GridLayout</span><span class="p">(</span><span class="n">split_map</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">Grid</span><span class="p">(</span><span class="n">split_map</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">split_map</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span>
+
 </div>
 <div class="viewcode-block" id="ViewMap.split_overlays"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.layer.ViewMap.split_overlays">[docs]</a>    <span class="k">def</span> <span class="nf">split_overlays</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
