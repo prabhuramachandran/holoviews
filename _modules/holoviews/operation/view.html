@@ -98,23 +98,32 @@
 <div class="viewcode-block" id="operator"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.view.operator">[docs]</a><span class="k">class</span> <span class="nc">operator</span><span class="p">(</span><span class="n">ViewOperation</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Applies any arbitrary operator on the data (currently only</span>
-<span class="sd">    supports SheetViews) and returns the result.</span>
+<span class="sd">    supports Matrix views) and returns the result.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">operator</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">        The binary operator to apply between the data attributes of</span>
-<span class="s">        the supplied Views. By default, performs elementwise addition</span>
-<span class="s">        across the Matrix arrays.&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">        The commutative operator to apply between the data attributes</span>
+<span class="s">        of the supplied Views. By default, performs elementwise</span>
+<span class="s">        addition across the Matrix arrays.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">unpack</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot; Whether the operator</span>
+<span class="s">       is supplied the .data attributes as an unpack collection of</span>
+<span class="s">       arguments or as a list.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">label</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Operation&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        The label for the result after having applied the operator.&quot;&quot;&quot;</span><span class="p">)</span>
+
 
     <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Operation requires an Overlay as input&quot;</span><span class="p">)</span>
 
-        <span class="n">new_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">operator</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">el</span><span class="o">.</span><span class="n">data</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">unpack</span><span class="p">:</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">operator</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">el</span><span class="o">.</span><span class="n">data</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">new_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">operator</span><span class="p">([</span><span class="n">el</span><span class="o">.</span><span class="n">data</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">])</span>
+
         <span class="k">return</span> <span class="p">[</span><span class="n">Matrix</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
                             <span class="n">roi_bounds</span><span class="o">=</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">roi_bounds</span><span class="p">)]</span>
 
@@ -318,6 +327,9 @@
 
         <span class="n">bit_mask</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
         <span class="n">roi</span> <span class="o">=</span> <span class="n">mview</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">bit_mask</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">roi</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;No region of interest defined in ROI mask&quot;</span> <span class="p">)</span>
 
         <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">fn</span><span class="p">(</span><span class="n">roi</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
