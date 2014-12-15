@@ -27,7 +27,7 @@
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../../../_static/custom.js"></script>
     <link rel="top" title="holoviews" href="../../../index.html" />
-    <link rel="up" title="Module code" href="../../index.html" /> 
+    <link rel="up" title="holoviews.interface" href="../interface.html" /> 
   </head>
   <body>
     <div class="related">
@@ -50,7 +50,8 @@
 
 
 
-          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../interface.html" accesskey="U">holoviews.interface</a> &raquo;</li>
 
 </ul></li>
 
@@ -69,12 +70,12 @@
 <span class="sd">for holding and collecting DataView objects.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">uuid</span>
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
-<span class="kn">import</span> <span class="nn">param</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
-<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">GridLayout</span><span class="p">,</span> <span class="n">Map</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">View</span><span class="p">,</span> <span class="n">ViewMap</span>
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Map</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">View</span><span class="p">,</span> <span class="n">ViewMap</span><span class="p">,</span> <span class="n">AttrTree</span>
 <span class="kn">from</span> <span class="nn">..ipython.widgets</span> <span class="kn">import</span> <span class="n">RunProgress</span><span class="p">,</span> <span class="n">ProgressBar</span>
 <span class="kn">from</span> <span class="nn">..view</span> <span class="kn">import</span> <span class="n">Matrix</span>
 
@@ -90,267 +91,6 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">AttrDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span> <span class="o">=</span> <span class="bp">self</span>
-
-</div>
-<div class="viewcode-block" id="AttrTree"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.AttrTree">[docs]</a><span class="k">class</span> <span class="nc">AttrTree</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    An AttrTree offers convenient, multi-level attribute access for</span>
-<span class="sd">    collections of objects. AttrTree objects may also be combined</span>
-<span class="sd">    together using the update method or merge classmethod. Here is an</span>
-<span class="sd">    example of adding a View to an AttrTree and accessing it:</span>
-
-<span class="sd">    &gt;&gt;&gt; t = AttrTree()</span>
-<span class="sd">    &gt;&gt;&gt; t.Example.Path = View(&#39;data1&#39;)</span>
-<span class="sd">    &gt;&gt;&gt; t.Example.Path                             #doctest: +ELLIPSIS</span>
-<span class="sd">    View(&#39;data1&#39;, ...)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="AttrTree.merge"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.AttrTree.merge">[docs]</a>    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">trees</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Merge a collection of AttrTree objects.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">first</span> <span class="o">=</span> <span class="n">trees</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">tree</span> <span class="ow">in</span> <span class="n">trees</span><span class="p">:</span>
-            <span class="n">first</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">first</span>
-</div>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">path_items</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;parent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;children&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c"># Path items will only be populated at root node</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;path_items&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path_items</span> <span class="k">if</span> <span class="n">path_items</span> <span class="k">else</span> <span class="n">OrderedDict</span><span class="p">()</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_fixed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
-
-        <span class="n">fixed_error</span> <span class="o">=</span> <span class="s">&#39;No attribute </span><span class="si">%r</span><span class="s"> in this AttrTree, and none can be added because fixed=True&#39;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_fixed_error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fixed_error</span>
-
-    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="s">&quot;If fixed, no new paths can be created via attribute access&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_fixed&#39;</span><span class="p">]</span>
-
-    <span class="nd">@fixed.setter</span>
-<div class="viewcode-block" id="AttrTree.fixed"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.AttrTree.fixed">[docs]</a>    <span class="k">def</span> <span class="nf">fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_fixed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
-</div>
-<div class="viewcode-block" id="AttrTree.grid"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.AttrTree.grid">[docs]</a>    <span class="k">def</span> <span class="nf">grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ordering</span><span class="o">=</span><span class="s">&#39;alphanumeric&#39;</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Turn the AttrTree into a GridLayout with the available View</span>
-<span class="sd">        objects ordering specified by a list of labels or by the</span>
-<span class="sd">        specified ordering mode (&#39;alphanumeric&#39; or &#39;insertion&#39;).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">ordering</span> <span class="o">==</span> <span class="s">&#39;alphanumeric&#39;</span><span class="p">:</span>
-            <span class="n">child_ordering</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">ordering</span> <span class="o">==</span> <span class="s">&#39;insertion&#39;</span><span class="p">:</span>
-            <span class="n">child_ordering</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">child_ordering</span> <span class="o">=</span> <span class="n">ordering</span>
-
-        <span class="n">children</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">child_ordering</span><span class="p">]</span>
-        <span class="n">dataview_types</span> <span class="o">=</span> <span class="p">(</span><span class="n">View</span><span class="p">,</span> <span class="n">Map</span><span class="p">,</span> <span class="n">GridLayout</span><span class="p">,</span> <span class="n">Grid</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">GridLayout</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">child</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span>
-                               <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">dataview_types</span><span class="p">)))</span>
-
-</div>
-<div class="viewcode-block" id="AttrTree.update"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.AttrTree.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Updated the contents of the current AttrTree with the</span>
-<span class="sd">        contents of a second AttrTree.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">fixed_status</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">fixed</span><span class="p">)</span>
-        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">fixed</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">path_items</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
-            <span class="n">item</span> <span class="o">=</span> <span class="n">other</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">label</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
-                <span class="bp">self</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">fixed</span><span class="p">)</span> <span class="o">=</span>  <span class="n">fixed_status</span>
-
-</div>
-<div class="viewcode-block" id="AttrTree.set_path"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.AttrTree.set_path">[docs]</a>    <span class="k">def</span> <span class="nf">set_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Set the given value at the supplied path where path is either</span>
-<span class="sd">        a tuple of strings or a string in A.B.C format.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">path</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span> <span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isupper</span><span class="p">()</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">path</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All paths elements must be capitalized.&quot;</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">attrtree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getattr__</span><span class="p">(</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">attrtree</span><span class="o">.</span><span class="n">set_path</span><span class="p">(</span><span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">val</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">val</span><span class="p">)</span>
-
-</div>
-<div class="viewcode-block" id="AttrTree.filter"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.AttrTree.filter">[docs]</a>    <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_filters</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Filters the loaded AttrTree using the supplied path_filters.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">path_filters</span><span class="p">:</span> <span class="k">return</span> <span class="bp">self</span>
-
-        <span class="c"># Convert string path filters</span>
-        <span class="n">path_filters</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">pf</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">))</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pf</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span>
-                        <span class="k">else</span> <span class="n">pf</span> <span class="k">for</span> <span class="n">pf</span> <span class="ow">in</span> <span class="n">path_filters</span><span class="p">]</span>
-
-        <span class="c"># Search for substring matches between paths and path filters</span>
-        <span class="n">new_attrtree</span> <span class="o">=</span> <span class="n">AttrTree</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="nb">any</span><span class="p">([</span><span class="nb">all</span><span class="p">([</span><span class="n">subpath</span> <span class="ow">in</span> <span class="n">path</span> <span class="k">for</span> <span class="n">subpath</span> <span class="ow">in</span> <span class="n">pf</span><span class="p">])</span> <span class="k">for</span> <span class="n">pf</span> <span class="ow">in</span> <span class="n">path_filters</span><span class="p">]):</span>
-                <span class="n">new_attrtree</span><span class="o">.</span><span class="n">set_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">new_attrtree</span>
-
-</div>
-    <span class="k">def</span> <span class="nf">_propagate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Propagate the value to the root node.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="c"># Root</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="p">[</span><span class="n">path</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_propagate</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,)</span><span class="o">+</span><span class="n">path</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
-
-
-    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Set a value at a child node with given label. If at a root</span>
-<span class="sd">        node, multi-level path specifications is allowed (i.e. &#39;A.B.C&#39;</span>
-<span class="sd">        format or tuple format) in which case the behaviour matches</span>
-<span class="sd">        that of set_path.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="s">&#39;.&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">label</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_path</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">label</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)),</span> <span class="n">val</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_path</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Multi-level item setting only allowed from root node.&quot;</span><span class="p">)</span>
-
-
-    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        For a given non-root node, access a child element by label.</span>
-
-<span class="sd">        If the node is a root node, you may also access elements using</span>
-<span class="sd">        either tuple format or the &#39;A.B.C&#39; string format.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">keyerror_msg</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
-        <span class="n">split_label</span> <span class="o">=</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">label</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">))</span>
-                       <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">label</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">split_label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="p">[</span><span class="n">split_label</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="s">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">label</span><span class="p">:</span>
-            <span class="n">keyerror_msg</span> <span class="o">=</span> <span class="s">&quot;Dotted string format only applicable to root nodes&quot;</span>
-
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">label</span> <span class="o">+</span> <span class="p">((</span><span class="s">&#39; : </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">keyerror_msg</span><span class="p">)</span> <span class="k">if</span> <span class="n">keyerror_msg</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">))</span>
-
-
-    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
-
-
-    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[:]</span>
-
-
-    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
-            <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">__delitem__</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">item</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">default</span>
-
-
-    <span class="k">def</span> <span class="nf">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
-            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
-            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">label</span><span class="p">)]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">label</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
-
-
-    <span class="k">def</span> <span class="nf">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-        <span class="c"># Getattr is skipped for root and first set of children</span>
-        <span class="n">shallow</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">label</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isupper</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed</span> <span class="ow">and</span> <span class="n">shallow</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fixed_error</span> <span class="o">%</span> <span class="n">label</span><span class="p">)</span>
-
-        <span class="nb">super</span><span class="p">(</span><span class="n">AttrTree</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span> <span class="k">pass</span>
-        <span class="k">elif</span> <span class="n">label</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_propagate</span><span class="p">((</span><span class="n">label</span><span class="p">,),</span> <span class="n">val</span><span class="p">)</span>
-
-
-    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Access a label from the AttrTree or generate a new AttrTree</span>
-<span class="sd">        with the chosen attribute path.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">AttrTree</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__getattr__</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span> <span class="k">pass</span>
-
-        <span class="k">if</span> <span class="n">label</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>   <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">label</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="o">==</span><span class="bp">True</span><span class="p">:</span>      <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fixed_error</span> <span class="o">%</span> <span class="n">label</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
-
-        <span class="k">if</span> <span class="n">label</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
-            <span class="n">child_tree</span> <span class="o">=</span> <span class="n">AttrTree</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">child_tree</span>
-            <span class="k">return</span> <span class="n">child_tree</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">: Custom paths elements must be capitalized.&quot;</span> <span class="o">%</span> <span class="n">label</span><span class="p">)</span>
-
-
-    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        A useful summary of the contents of the AttrTree node that</span>
-<span class="sd">        works for any node in the tree. Note that this is not a repr</span>
-<span class="sd">        that can be evaluated.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">path</span><span class="p">,</span> <span class="n">node</span> <span class="o">=</span> <span class="p">[],</span> <span class="bp">self</span>
-        <span class="k">while</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">path</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">label</span><span class="p">]</span> <span class="o">+</span> <span class="n">path</span>
-            <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span>
-
-        <span class="n">filtered</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                               <span class="k">if</span> <span class="n">k</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)]</span><span class="o">==</span><span class="nb">tuple</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">filtered</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&quot;Dangling AttrTree node with no leaf items.&quot;</span>
-
-        <span class="n">path_strs</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">filtered</span><span class="p">]</span>
-        <span class="n">max_chars</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">el</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">path_strs</span><span class="p">)</span>
-
-        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;AttrTree with </span><span class="si">%d</span><span class="s"> leaf nodes of type:</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">filtered</span><span class="p">)]</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">path_str</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">path_strs</span><span class="p">,</span> <span class="n">filtered</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
-            <span class="n">val_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&quot;   </span><span class="si">%s</span><span class="s"> : </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">path_str</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">max_chars</span><span class="p">),</span> <span class="n">val_type</span><span class="p">))</span>
-        <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
-
-
-    <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="ow">or</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span>
-
 
 </div>
 <div class="viewcode-block" id="Reference"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Reference">[docs]</a><span class="k">class</span> <span class="nc">Reference</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -1142,6 +882,7 @@
 
 
           <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../interface.html" >holoviews.interface</a> &raquo;</li>
 
 </ul></li>
 
