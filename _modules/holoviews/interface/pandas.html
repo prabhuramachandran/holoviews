@@ -76,7 +76,9 @@
 
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
 
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
@@ -87,7 +89,7 @@
 
 <span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">View</span><span class="p">,</span> <span class="n">Layer</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">ViewMap</span><span class="p">,</span> <span class="n">GridLayout</span><span class="p">,</span> <span class="n">Grid</span>
 <span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">options</span><span class="p">,</span> <span class="n">PlotOpts</span>
-<span class="kn">from</span> <span class="nn">..view</span> <span class="kn">import</span> <span class="n">HeatMap</span><span class="p">,</span> <span class="n">ItemTable</span>
+<span class="kn">from</span> <span class="nn">..view</span> <span class="kn">import</span> <span class="n">HeatMap</span><span class="p">,</span> <span class="n">Table</span><span class="p">,</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">Scatter</span><span class="p">,</span> <span class="n">Bars</span><span class="p">,</span> <span class="n">Points</span><span class="p">,</span> <span class="n">VectorField</span>
 
 
 <div class="viewcode-block" id="DataFrameView"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.pandas.DataFrameView">[docs]</a><span class="k">class</span> <span class="nc">DataFrameView</span><span class="p">(</span><span class="n">Layer</span><span class="p">):</span>
@@ -174,6 +176,10 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
 
 </div>
+    <span class="k">def</span> <span class="nf">dim_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">dim</span><span class="p">])</span>
+
+
 <div class="viewcode-block" id="DataFrameView.apply"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.pandas.DataFrameView.apply">[docs]</a>    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Applies the Pandas dframe method corresponding to the supplied</span>
@@ -265,126 +271,55 @@
 <span class="sd">    DFrame is a DataFrameView type, which additionally provides</span>
 <span class="sd">    methods to convert Pandas DataFrames to different View types,</span>
 <span class="sd">    currently including Tables and HeatMaps.</span>
+
+<span class="sd">    The View conversion methods all share a common signature:</span>
+
+<span class="sd">      * The value dimension (string).</span>
+<span class="sd">      * The index dimensions (list of strings).</span>
+<span class="sd">      * An optional reduce_fn.</span>
+<span class="sd">      * Optional map_dims (list of strings).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">_create_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">temp_dict</span><span class="p">,</span> <span class="n">value_dim</span><span class="p">,</span> <span class="n">dims</span><span class="p">):</span>
-        <span class="n">dimensions</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dim_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">]</span> <span class="k">if</span> <span class="n">dims</span> <span class="k">else</span> <span class="p">{}</span>
-        <span class="n">label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">+</span> <span class="p">(</span><span class="s">&#39; - &#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">value_dim</span>
-        <span class="k">return</span> <span class="n">ItemTable</span><span class="p">(</span><span class="n">temp_dict</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value_dim</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">dimensions</span><span class="p">,</span>
-                     <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">bars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">view_type</span><span class="o">=</span><span class="n">Bars</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
 
+    <span class="k">def</span> <span class="nf">curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">view_type</span><span class="o">=</span><span class="n">Curve</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">_create_heatmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">temp_dict</span><span class="p">,</span> <span class="n">value_dim</span><span class="p">,</span> <span class="n">dims</span><span class="p">):</span>
-        <span class="n">label</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">+</span> <span class="p">(</span><span class="s">&#39; - &#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">value_dim</span>
-        <span class="n">dimensions</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dim_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">HeatMap</span><span class="p">(</span><span class="n">temp_dict</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">dimensions</span><span class="p">,</span>
-                       <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim_dict</span><span class="p">[</span><span class="n">value_dim</span><span class="p">])</span>
+    <span class="k">def</span> <span class="nf">heatmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">view_type</span><span class="o">=</span><span class="n">HeatMap</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
 
+    <span class="k">def</span> <span class="nf">points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">view_type</span><span class="o">=</span><span class="n">Points</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
 
-    <span class="k">def</span> <span class="nf">_export_dataview</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_dim</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">indices</span><span class="o">=</span><span class="p">[],</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                         <span class="n">view_dims</span><span class="o">=</span><span class="p">[],</span> <span class="n">map_dims</span><span class="o">=</span><span class="p">[],</span> <span class="n">view_method</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The core conversion method from the Pandas DataFrame to a View</span>
-<span class="sd">        or Map type. The value_dim specifies the column in the</span>
-<span class="sd">        DataFrame to select, additionally indices or a reduce_fn can</span>
-<span class="sd">        be supplied to select or reduce multiple entries in the</span>
-<span class="sd">        DataFrame. Further, the view_dims and map_dims determine</span>
-<span class="sd">        which Dimensions will be grouped and supplied to the appropriate</span>
-<span class="sd">        view_method and ViewMap respectively.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">scatter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">view_type</span><span class="o">=</span><span class="n">Scatter</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
 
-        <span class="c"># User error checking</span>
-        <span class="n">selected_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">value_dim</span><span class="p">]</span><span class="o">+</span><span class="n">view_dims</span><span class="o">+</span><span class="n">map_dims</span>
-        <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">selected_dims</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_labels</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;DataFrameView has no Dimension </span><span class="si">%s</span><span class="s">.&quot;</span> <span class="o">%</span> <span class="n">dim</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">vectorfield</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">view_type</span><span class="o">=</span><span class="n">VectorField</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
 
-        <span class="c"># Filtering out unselected dimensions</span>
-        <span class="n">filter_dims</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension_labels</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">selected_dims</span><span class="p">))</span>        
-        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">selected_dims</span><span class="p">)</span> <span class="k">if</span> <span class="n">filter_dims</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span>
-
-        <span class="c"># Set up for View and Map dimension splitting operations</span>
-        <span class="n">view_dimensions</span> <span class="o">=</span> <span class="n">view_dims</span>
+    <span class="k">def</span> <span class="nf">table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_dim</span><span class="p">,</span> <span class="n">view_dims</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">map_dims</span><span class="o">=</span><span class="p">[],</span> <span class="n">view_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">map_dims</span><span class="p">:</span>
-            <span class="n">map_dfs</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">map_dims</span><span class="p">)</span>
-            <span class="n">vmap</span> <span class="o">=</span> <span class="n">ViewMap</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dim_dict</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">map_dims</span><span class="p">])</span>
+            <span class="n">map_groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">map_dims</span><span class="p">)</span>
+            <span class="n">vm_dims</span> <span class="o">=</span> <span class="n">map_dims</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">map_dfs</span> <span class="o">=</span> <span class="p">[(</span><span class="bp">None</span><span class="p">,</span> <span class="n">df</span><span class="p">)]</span>
-            <span class="n">vmap</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">map_groups</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)]</span>
+            <span class="n">vm_dims</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;None&#39;</span><span class="p">]</span>
 
-        <span class="c"># Iterating over vmap elements</span>
-        <span class="k">for</span> <span class="n">map_key</span><span class="p">,</span> <span class="n">map_group</span> <span class="ow">in</span> <span class="n">map_dfs</span><span class="p">:</span>
-            <span class="c"># Apply reduction function</span>
-            <span class="k">if</span> <span class="n">reduce_fn</span><span class="p">:</span>
-                <span class="c"># Find indices for value and View dimensions</span>
-                <span class="n">cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">map_group</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
-                <span class="n">val_idx</span> <span class="o">=</span> <span class="n">cols</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">value_dim</span><span class="p">)</span>
-                <span class="n">vdim_inds</span> <span class="o">=</span> <span class="p">[</span><span class="n">cols</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">view_dims</span><span class="p">]</span>
+        <span class="n">vmap</span> <span class="o">=</span> <span class="n">ViewMap</span><span class="p">(</span><span class="n">dimensions</span><span class="o">=</span><span class="n">vm_dims</span><span class="p">)</span>
+        <span class="n">vdims</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dim_dict</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">view_dims</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">map_key</span><span class="p">,</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">map_groups</span><span class="p">:</span>
+            <span class="n">table_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">group</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">view_dims</span><span class="p">):</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="n">value_dim</span><span class="p">])</span>
+                <span class="n">table_data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">reduce_fn</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">if</span> <span class="n">reduce_fn</span> <span class="k">else</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">view</span> <span class="o">=</span> <span class="n">Table</span><span class="p">(</span><span class="n">table_data</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">vdims</span><span class="p">,</span>
+                             <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dim_dict</span><span class="p">[</span><span class="n">value_dim</span><span class="p">])</span>
+            <span class="n">vmap</span><span class="p">[</span><span class="n">map_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">view_type</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">if</span> <span class="n">view_type</span> <span class="k">else</span> <span class="n">view</span>
 
-                <span class="c"># Iterate over rows and collate the result.</span>
-                <span class="n">temp_dict</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">map_group</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">view_dims</span><span class="p">:</span>
-                        <span class="n">key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">row</span><span class="p">[</span><span class="n">ind</span><span class="p">]</span> <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">vdim_inds</span><span class="p">))</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="n">key</span> <span class="o">=</span> <span class="n">value_dim</span>
-                    <span class="n">temp_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">val_idx</span><span class="p">])</span>
-                <span class="n">temp_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">reduce_fn</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">temp_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-            <span class="c"># Select values by indices</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">temp_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
-                <span class="c"># If the selected dimensions values are not unique add Index</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="n">indices</span> <span class="o">=</span> <span class="n">indices</span> <span class="k">if</span> <span class="n">indices</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">map_group</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
-                    <span class="n">view_dimensions</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Index&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">view_dims</span>
-                
-                <span class="c"># Get data from the DataFrame</span>
-                <span class="n">view_groups</span> <span class="o">=</span> <span class="n">map_group</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">view_dims</span><span class="p">)</span> <span class="k">if</span> <span class="n">view_dims</span> <span class="k">else</span> <span class="p">[((),</span> <span class="n">map_group</span><span class="p">)]</span>
-                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">view_group</span> <span class="ow">in</span> <span class="n">view_groups</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
-                        <span class="k">if</span> <span class="n">view_dims</span><span class="p">:</span>
-                            <span class="n">key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
-                            <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">indices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                                <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">ind</span><span class="p">,)</span> <span class="o">+</span> <span class="n">key</span>
-                            <span class="n">key</span> <span class="o">=</span> <span class="n">key</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                        <span class="k">else</span><span class="p">:</span>
-                            <span class="n">key</span> <span class="o">=</span> <span class="s">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">ind</span><span class="p">,</span> <span class="n">value_dim</span><span class="p">])</span>
-                        <span class="n">temp_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">view_group</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">ind</span><span class="p">,</span> <span class="n">value_dim</span><span class="p">]</span>
-            <span class="n">vmap</span><span class="p">[</span><span class="n">map_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">view_method</span><span class="p">(</span><span class="n">temp_dict</span><span class="p">,</span> <span class="n">value_dim</span><span class="p">,</span> <span class="n">view_dimensions</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">map_dims</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">vmap</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">vmap</span><span class="p">[</span><span class="bp">None</span><span class="p">]</span>
-
-
-<div class="viewcode-block" id="DFrame.table"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.pandas.DFrame.table">[docs]</a>    <span class="k">def</span> <span class="nf">table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_dim</span><span class="p">,</span> <span class="n">indices</span><span class="o">=</span><span class="p">[],</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="p">[],</span> <span class="n">map_dims</span><span class="o">=</span><span class="p">[]):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Conversion method from DataFrame to holoviews table. Requires</span>
-<span class="sd">        a value_dimension to be specified. Optionally a list indices</span>
-<span class="sd">        or a reduce_fn can be specified to select or reduce multiple</span>
-<span class="sd">        entries. Finally view_dims and map_dims can be specified to</span>
-<span class="sd">        be inserted into the ItemTable and ViewMap respectively.  If</span>
-<span class="sd">        not map_dims are specified a single ItemTable will be returned.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_export_dataview</span><span class="p">(</span><span class="n">value_dim</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="p">,</span>
-                                     <span class="n">dims</span><span class="p">,</span> <span class="n">map_dims</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_table</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">vmap</span> <span class="k">if</span> <span class="n">map_dims</span> <span class="k">else</span> <span class="n">vmap</span><span class="o">.</span><span class="n">last</span>
 
 </div>
-<div class="viewcode-block" id="DFrame.heatmap"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.pandas.DFrame.heatmap">[docs]</a>    <span class="k">def</span> <span class="nf">heatmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_dim</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">map_dims</span><span class="o">=</span><span class="p">[]):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Conversion method from DataFrame to holoviews</span>
-<span class="sd">        HeatMap. Requires a value_dim, the HeatMap dims and either a</span>
-<span class="sd">        single index or a reduce_fn, to ensure there&#39;s only one value</span>
-<span class="sd">        returned. Optionally map_dims can be specified to map the</span>
-<span class="sd">        HeatMap over.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="k">if</span> <span class="n">index</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="mi">1</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;HeatMap supports either one or two dimensions&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_export_dataview</span><span class="p">(</span><span class="n">value_dim</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span>
-                                     <span class="n">map_dims</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_heatmap</span><span class="p">)</span>
-
-</div></div>
 <span class="n">options</span><span class="o">.</span><span class="n">DFrameView</span> <span class="o">=</span> <span class="n">PlotOpts</span><span class="p">()</span>
 </pre></div>
 
