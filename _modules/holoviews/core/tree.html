@@ -99,13 +99,16 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;parent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">label</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;children&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c"># Path items will only be populated at root node</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;path_items&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">path_items</span> <span class="k">if</span> <span class="n">path_items</span> <span class="k">else</span> <span class="n">OrderedDict</span><span class="p">()</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_fixed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
 
         <span class="n">fixed_error</span> <span class="o">=</span> <span class="s">&#39;No attribute </span><span class="si">%r</span><span class="s"> in this AttrTree, and none can be added because fixed=True&#39;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_fixed_error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fixed_error</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;path_items&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">path_items</span><span class="p">:</span>
+            <span class="n">path_items</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="n">path_items</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+
 
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
@@ -153,7 +156,7 @@
                 <span class="bp">self</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">item</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="bp">self</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">fixed</span><span class="p">)</span> <span class="o">=</span>  <span class="n">fixed_status</span>
+        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">fixed</span><span class="p">)</span> <span class="o">=</span> <span class="n">fixed_status</span>
 
 </div>
 <div class="viewcode-block" id="AttrTree.set_path"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.tree.AttrTree.set_path">[docs]</a>    <span class="k">def</span> <span class="nf">set_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
@@ -183,7 +186,7 @@
                         <span class="k">else</span> <span class="n">pf</span> <span class="k">for</span> <span class="n">pf</span> <span class="ow">in</span> <span class="n">path_filters</span><span class="p">]</span>
 
         <span class="c"># Search for substring matches between paths and path filters</span>
-        <span class="n">new_attrtree</span> <span class="o">=</span> <span class="n">AttrTree</span><span class="p">()</span>
+        <span class="n">new_attrtree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="nb">any</span><span class="p">([</span><span class="nb">all</span><span class="p">([</span><span class="n">subpath</span> <span class="ow">in</span> <span class="n">path</span> <span class="k">for</span> <span class="n">subpath</span> <span class="ow">in</span> <span class="n">pf</span><span class="p">])</span> <span class="k">for</span> <span class="n">pf</span> <span class="ow">in</span> <span class="n">path_filters</span><span class="p">]):</span>
                 <span class="n">new_attrtree</span><span class="o">.</span><span class="n">set_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
@@ -193,11 +196,10 @@
 </div>
     <span class="k">def</span> <span class="nf">_propagate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Propagate the value to the root node.</span>
+<span class="sd">        Propagate the value up to the root node.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="c"># Root</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="p">[</span><span class="n">path</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="p">[</span><span class="n">path</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">_propagate</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,)</span><span class="o">+</span><span class="n">path</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
 
 
@@ -227,15 +229,17 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">keyerror_msg</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
         <span class="n">split_label</span> <span class="o">=</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">label</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">))</span>
-                       <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">label</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">split_label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="p">[</span><span class="n">split_label</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="s">&#39;.&#39;</span> <span class="ow">in</span> <span class="n">label</span><span class="p">:</span>
-            <span class="n">keyerror_msg</span> <span class="o">=</span> <span class="s">&quot;Dotted string format only applicable to root nodes&quot;</span>
-
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">label</span> <span class="o">+</span> <span class="p">((</span><span class="s">&#39; : </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">keyerror_msg</span><span class="p">)</span> <span class="k">if</span> <span class="n">keyerror_msg</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">))</span>
+                       <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">label</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">split_label</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">split_label</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">label</span> <span class="o">+</span> <span class="p">((</span><span class="s">&#39; : </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">keyerror_msg</span><span class="p">)</span> <span class="k">if</span> <span class="n">keyerror_msg</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">))</span>
+        <span class="n">path_item</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">split_label</span><span class="p">:</span>
+            <span class="n">path_item</span> <span class="o">=</span> <span class="n">path_item</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">path_item</span>
 
 
     <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -253,15 +257,6 @@
             <span class="k">return</span> <span class="n">item</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">default</span>
-
-
-    <span class="k">def</span> <span class="nf">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
-            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
-            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">label</span><span class="p">)]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">label</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
@@ -295,7 +290,7 @@
 
         <span class="k">if</span> <span class="n">label</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
-            <span class="n">child_tree</span> <span class="o">=</span> <span class="n">AttrTree</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+            <span class="n">child_tree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">child_tree</span>
             <span class="k">return</span> <span class="n">child_tree</span>
         <span class="k">else</span><span class="p">:</span>
