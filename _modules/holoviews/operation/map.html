@@ -67,11 +67,14 @@
   <h1>Source code for holoviews.operation.map</h1><div class="highlight"><pre>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
 <span class="kn">import</span> <span class="nn">param</span>
 
-<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">ViewMap</span><span class="p">,</span> <span class="n">NdMapping</span>
+<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">NdMapping</span>
+<span class="kn">from</span> <span class="nn">holoviews.core.element</span> <span class="kn">import</span> <span class="n">HoloMap</span>
 <span class="kn">from</span> <span class="nn">..core.operation</span> <span class="kn">import</span> <span class="n">MapOperation</span>
-<span class="kn">from</span> <span class="nn">..view</span> <span class="kn">import</span> <span class="n">Table</span><span class="p">,</span> <span class="n">Curve</span>
+<span class="kn">from</span> <span class="nn">..element</span> <span class="kn">import</span> <span class="n">Table</span><span class="p">,</span> <span class="n">Curve</span>
 
 
 <div class="viewcode-block" id="table_collate"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.map.table_collate">[docs]</a><span class="k">class</span> <span class="nc">table_collate</span><span class="p">(</span><span class="n">MapOperation</span><span class="p">):</span>
@@ -80,12 +83,12 @@
 
     <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vmap</span><span class="p">):</span>
         <span class="n">collate_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">collation_dim</span>
-        <span class="n">new_dimensions</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">vmap</span><span class="o">.</span><span class="n">dimensions</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">collate_dim</span><span class="p">]</span>
-        <span class="n">nested_map</span> <span class="o">=</span> <span class="n">vmap</span><span class="o">.</span><span class="n">split_dimensions</span><span class="p">([</span><span class="n">collate_dim</span><span class="p">])</span> <span class="k">if</span> <span class="n">new_dimensions</span> <span class="k">else</span> <span class="p">{():</span> <span class="n">vmap</span><span class="p">}</span>
-        <span class="n">collate_dim</span> <span class="o">=</span> <span class="n">vmap</span><span class="o">.</span><span class="n">dim_dict</span><span class="p">[</span><span class="n">collate_dim</span><span class="p">]</span>
+        <span class="n">new_dimensions</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">vmap</span><span class="o">.</span><span class="n">key_dimensions</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">collate_dim</span><span class="p">]</span>
+        <span class="n">nested_map</span> <span class="o">=</span> <span class="n">vmap</span><span class="o">.</span><span class="n">groupby</span><span class="p">([</span><span class="n">collate_dim</span><span class="p">])</span> <span class="k">if</span> <span class="n">new_dimensions</span> <span class="k">else</span> <span class="p">{():</span> <span class="n">vmap</span><span class="p">}</span>
+        <span class="n">collate_dim</span> <span class="o">=</span> <span class="n">vmap</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="n">collate_dim</span><span class="p">)</span>
 
         <span class="n">table</span> <span class="o">=</span> <span class="n">vmap</span><span class="o">.</span><span class="n">last</span>
-        <span class="n">table_dims</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">dimensions</span>
+        <span class="n">table_dims</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">key_dimensions</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vmap</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="n">Table</span><span class="p">):</span>
             <span class="n">outer_dims</span> <span class="o">=</span> <span class="n">table_dims</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
             <span class="n">new_dimensions</span> <span class="o">+=</span> <span class="p">[</span><span class="n">td</span> <span class="k">for</span> <span class="n">td</span> <span class="ow">in</span> <span class="n">table_dims</span> <span class="k">if</span> <span class="n">td</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">outer_dims</span><span class="p">]</span>
@@ -94,10 +97,10 @@
             <span class="n">outer_dims</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Label&#39;</span><span class="p">]</span>
             <span class="n">entry_keys</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
 
-        <span class="c"># Generate a ViewMap for every entry in the table</span>
-        <span class="n">map_fn</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">ViewMap</span><span class="p">(</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">vmap</span><span class="o">.</span><span class="n">get_param_values</span><span class="p">(),</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">new_dimensions</span><span class="p">))</span>
+        <span class="c"># Generate a HoloMap for every entry in the table</span>
+        <span class="n">map_fn</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">HoloMap</span><span class="p">(</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">vmap</span><span class="o">.</span><span class="n">get_param_values</span><span class="p">(),</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="n">new_dimensions</span><span class="p">))</span>
         <span class="n">entries</span> <span class="o">=</span> <span class="p">[(</span><span class="n">entry</span><span class="p">,</span> <span class="n">map_fn</span><span class="p">()</span> <span class="k">if</span> <span class="n">new_dimensions</span> <span class="k">else</span> <span class="bp">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">entry_keys</span><span class="p">]</span>
-        <span class="n">maps</span> <span class="o">=</span> <span class="n">NdMapping</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">outer_dims</span><span class="p">)</span>
+        <span class="n">maps</span> <span class="o">=</span> <span class="n">NdMapping</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="n">outer_dims</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">collate_map</span> <span class="ow">in</span> <span class="n">nested_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">curve_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="p">[])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">entry_keys</span><span class="p">)</span>
             <span class="c"># Get the x- and y-values for each entry in the ItemTable</span>
@@ -109,19 +112,19 @@
 
             <span class="c"># Generate curves with correct dimensions</span>
             <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">yvalues</span> <span class="ow">in</span> <span class="n">curve_data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">settings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="n">collate_dim</span><span class="p">])</span>
+                <span class="n">settings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">key_dimensions</span><span class="o">=</span><span class="p">[</span><span class="n">collate_dim</span><span class="p">])</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">Table</span><span class="p">):</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span> <span class="n">label</span> <span class="o">=</span> <span class="p">(</span><span class="n">label</span><span class="p">,)</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span> <span class="n">new_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">new_key</span><span class="p">,)</span>
                     <span class="n">settings</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">table</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">table</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
-                                    <span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="n">collate_dim</span><span class="p">])</span>
+                                    <span class="n">key_dimensions</span><span class="o">=</span><span class="p">[</span><span class="n">collate_dim</span><span class="p">])</span>
                     <span class="n">key</span> <span class="o">=</span> <span class="n">new_key</span> <span class="o">+</span> <span class="n">label</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">label</span><span class="p">)</span><span class="o">-</span><span class="mi">2</span><span class="p">)]</span>
                     <span class="n">label</span> <span class="o">=</span> <span class="n">label</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">key</span> <span class="o">=</span> <span class="n">new_key</span>
-                    <span class="n">value</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">dim_dict</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
-                    <span class="n">settings</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">table</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
-                                    <span class="n">title</span><span class="o">=</span><span class="n">table</span><span class="o">.</span><span class="n">title</span><span class="p">)</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+                    <span class="n">settings</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">value_dimensions</span><span class="o">=</span><span class="p">[</span><span class="n">value</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="n">table</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+                                    <span class="n">value</span><span class="o">=</span><span class="n">table</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
                 <span class="n">curve</span> <span class="o">=</span> <span class="n">Curve</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">xvalues</span><span class="p">,</span> <span class="n">yvalues</span><span class="p">),</span> <span class="o">**</span><span class="n">settings</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">new_dimensions</span><span class="p">:</span>
                     <span class="n">maps</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">curve</span>
@@ -129,18 +132,20 @@
                     <span class="n">maps</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="o">=</span> <span class="n">curve</span>
 
         <span class="c"># If there are multiple table entries, generate grid</span>
-        <span class="n">maps</span> <span class="o">=</span> <span class="n">ViewMap</span><span class="p">(</span><span class="n">maps</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">maps</span><span class="o">.</span><span class="n">get_param_values</span><span class="p">()))</span>
+        <span class="n">maps</span> <span class="o">=</span> <span class="n">HoloMap</span><span class="p">(</span><span class="n">maps</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">maps</span><span class="o">.</span><span class="n">get_param_values</span><span class="p">()))</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">table</span><span class="p">,</span> <span class="n">Table</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">maps</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">grid</span> <span class="o">=</span> <span class="n">maps</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">maps</span><span class="o">.</span><span class="n">dimension_labels</span><span class="p">)</span>
+                <span class="n">grid</span> <span class="o">=</span> <span class="n">maps</span><span class="o">.</span><span class="n">grid</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">maps</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">])</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">grid</span> <span class="o">=</span> <span class="n">maps</span><span class="o">.</span><span class="n">last</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">maps</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">grid</span> <span class="o">=</span> <span class="n">maps</span><span class="o">.</span><span class="n">grid</span><span class="p">([</span><span class="s">&#39;Label&#39;</span><span class="p">],</span> <span class="n">layout</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">set_title</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+                <span class="n">grid</span> <span class="o">=</span> <span class="n">maps</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">maps</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">1</span><span class="p">:]:</span>
+                    <span class="n">grid</span> <span class="o">+=</span> <span class="n">item</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">grid</span> <span class="o">=</span> <span class="n">maps</span><span class="o">.</span><span class="n">last</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">grid</span><span class="p">]</span></div>
+        <span class="k">return</span> <span class="n">grid</span></div>
 </pre></div>
 
           </div>

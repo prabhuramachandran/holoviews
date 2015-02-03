@@ -67,35 +67,38 @@
 <span class="kn">import</span> <span class="nn">unittest</span>
 <span class="kn">from</span> <span class="nn">unittest</span> <span class="kn">import</span> <span class="n">SkipTest</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">numpy.testing</span> <span class="kn">import</span> <span class="n">assert_array_almost_equal</span>
 <span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">HTML</span><span class="p">,</span> <span class="n">SVG</span>
 
-<span class="kn">from</span> <span class="nn">.core</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">GridLayout</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">ViewMap</span>
-<span class="kn">from</span> <span class="nn">.core.options</span> <span class="kn">import</span> <span class="n">ChannelOpts</span><span class="p">,</span> <span class="n">PlotOpts</span><span class="p">,</span> <span class="n">StyleOpts</span>
+<span class="kn">from</span> <span class="nn">.core</span> <span class="kn">import</span> <span class="n">AdjointLayout</span><span class="p">,</span> <span class="n">Overlay</span>
+<span class="kn">from</span> <span class="nn">.core.options</span> <span class="kn">import</span> <span class="n">Options</span>
+<span class="kn">from</span> <span class="nn">.element</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">holoviews</span> <span class="kn">import</span> <span class="n">Matrix</span>
+<span class="kn">from</span> <span class="nn">holoviews.element.annotation</span> <span class="kn">import</span> <span class="n">Annotation</span><span class="p">,</span> <span class="n">Contours</span>
+<span class="kn">from</span> <span class="nn">holoviews.element.raster</span> <span class="kn">import</span> <span class="n">Raster</span>
 <span class="kn">from</span> <span class="nn">.interface.pandas</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">.interface.seaborn</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">.view</span> <span class="kn">import</span> <span class="o">*</span>
 
 
 <div class="viewcode-block" id="ViewTestCase"><a class="viewcode-back" href="../../Reference_Manual/holoviews.html#holoviews.testing.ViewTestCase">[docs]</a><span class="k">class</span> <span class="nc">ViewTestCase</span><span class="p">(</span><span class="n">unittest</span><span class="o">.</span><span class="n">TestCase</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    The class implements comparisons between View objects for the</span>
+<span class="sd">    The class implements comparisons between ViewableElement objects for the</span>
 <span class="sd">    purposes of testing. The most important attribute that needs to be</span>
 <span class="sd">    compared is the data attribute as this contains the raw data held</span>
-<span class="sd">    by the View object.</span>
+<span class="sd">    by the ViewableElement object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">ViewTestCase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="c"># General view classes</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">GridLayout</span><span class="p">,</span>    <span class="bp">self</span><span class="o">.</span><span class="n">compare_gridlayout</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">NdLayout</span><span class="p">,</span>    <span class="bp">self</span><span class="o">.</span><span class="n">compare_gridlayout</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">AdjointLayout</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compare_layouts</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">Overlay</span><span class="p">,</span>       <span class="bp">self</span><span class="o">.</span><span class="n">compare_overlays</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">NdOverlay</span><span class="p">,</span>     <span class="bp">self</span><span class="o">.</span><span class="n">compare_layers</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">Overlay</span><span class="p">,</span>       <span class="bp">self</span><span class="o">.</span><span class="n">compare_layers</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">Annotation</span><span class="p">,</span>    <span class="bp">self</span><span class="o">.</span><span class="n">compare_annotations</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">Grid</span><span class="p">,</span>          <span class="bp">self</span><span class="o">.</span><span class="n">compare_grids</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">AxisLayout</span><span class="p">,</span>    <span class="bp">self</span><span class="o">.</span><span class="n">compare_grids</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">HoloMap</span><span class="p">,</span>       <span class="bp">self</span><span class="o">.</span><span class="n">compare_viewmap</span><span class="p">)</span>
 
         <span class="c"># DataLayers</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">ViewMap</span><span class="p">,</span>      <span class="bp">self</span><span class="o">.</span><span class="n">compare_viewmap</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">Curve</span><span class="p">,</span>        <span class="bp">self</span><span class="o">.</span><span class="n">compare_curve</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">Histogram</span><span class="p">,</span>    <span class="bp">self</span><span class="o">.</span><span class="n">compare_histogram</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">Raster</span><span class="p">,</span>       <span class="bp">self</span><span class="o">.</span><span class="n">compare_raster</span><span class="p">)</span>
@@ -121,9 +124,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">TimeSeries</span><span class="p">,</span>   <span class="bp">self</span><span class="o">.</span><span class="n">compare_timeseries</span><span class="p">)</span>
 
         <span class="c"># Option objects</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">StyleOpts</span><span class="p">,</span>    <span class="bp">self</span><span class="o">.</span><span class="n">compare_opts</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">PlotOpts</span><span class="p">,</span>     <span class="bp">self</span><span class="o">.</span><span class="n">compare_opts</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">ChannelOpts</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">compare_channelopts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">Options</span><span class="p">,</span>     <span class="bp">self</span><span class="o">.</span><span class="n">compare_options</span><span class="p">)</span>
         <span class="c"># Dimension objects</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">Dimension</span><span class="p">,</span>    <span class="bp">self</span><span class="o">.</span><span class="n">compare_dims</span><span class="p">)</span>
 
@@ -157,7 +158,7 @@
         <span class="k">if</span> <span class="n">view1</span><span class="o">.</span><span class="n">ndims</span> <span class="o">!=</span> <span class="n">view2</span><span class="o">.</span><span class="n">ndims</span><span class="p">:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;Maps have different numbers of dimensions.&quot;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">view1</span><span class="o">.</span><span class="n">dimension_labels</span> <span class="o">!=</span> <span class="n">view2</span><span class="o">.</span><span class="n">dimension_labels</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">view1</span><span class="o">.</span><span class="n">dimensions</span><span class="p">()]</span> <span class="o">!=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">view2</span><span class="o">.</span><span class="n">dimensions</span><span class="p">()]:</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;Maps have different dimension labels.&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">view1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">view2</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
@@ -190,7 +191,7 @@
         <span class="k">for</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">view1</span><span class="p">,</span> <span class="n">view1</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">compare_overlays</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view1</span><span class="p">,</span> <span class="n">view2</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">compare_layers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view1</span><span class="p">,</span> <span class="n">view2</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">view1</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">view2</span><span class="p">):</span>
             <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;Overlays have different lengths.&quot;</span><span class="p">)</span>
 
@@ -248,16 +249,10 @@
 
 </div>
     <span class="k">def</span> <span class="nf">compare_curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view1</span><span class="p">,</span> <span class="n">view2</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">view1</span><span class="o">.</span><span class="n">cyclic_range</span> <span class="o">!=</span> <span class="n">view2</span><span class="o">.</span><span class="n">cyclic_range</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;Curves do not have matching cyclic_range.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compare_arrays</span><span class="p">(</span><span class="n">view1</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">view2</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s">&#39;Curve data&#39;</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">compare_histogram</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view1</span><span class="p">,</span> <span class="n">view2</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
-
-        <span class="k">if</span> <span class="n">view1</span><span class="o">.</span><span class="n">cyclic_range</span> <span class="o">!=</span> <span class="n">view2</span><span class="o">.</span><span class="n">cyclic_range</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;Histograms do not have matching cyclic_range.&quot;</span><span class="p">)</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">compare_arrays</span><span class="p">(</span><span class="n">view1</span><span class="o">.</span><span class="n">edges</span><span class="p">,</span> <span class="n">view2</span><span class="o">.</span><span class="n">edges</span><span class="p">,</span> <span class="s">&quot;Histogram edges&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">compare_arrays</span><span class="p">(</span><span class="n">view1</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="n">view2</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="s">&quot;Histogram values&quot;</span><span class="p">)</span>
 
@@ -277,13 +272,13 @@
     <span class="k">def</span> <span class="nf">compare_itemtables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view1</span><span class="p">,</span> <span class="n">view2</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
 
         <span class="k">if</span> <span class="n">view1</span><span class="o">.</span><span class="n">rows</span> <span class="o">!=</span> <span class="n">view2</span><span class="o">.</span><span class="n">rows</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;Tables have different numbers of rows.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;ItemTables have different numbers of rows.&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">view1</span><span class="o">.</span><span class="n">cols</span> <span class="o">!=</span> <span class="n">view2</span><span class="o">.</span><span class="n">cols</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;Tables have different numbers of columns.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;ItemTables have different numbers of columns.&quot;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">view1</span><span class="o">.</span><span class="n">dimension_labels</span> <span class="o">!=</span> <span class="n">view2</span><span class="o">.</span><span class="n">dimension_labels</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;Tables have different Dimensions.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">view1</span><span class="o">.</span><span class="n">dimensions</span><span class="p">()]</span> <span class="o">!=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">view2</span><span class="o">.</span><span class="n">dimensions</span><span class="p">()]:</span>
+            <span class="k">raise</span> <span class="bp">self</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;ItemTables have different Dimensions.&quot;</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">compare_tables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view1</span><span class="p">,</span> <span class="n">view2</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
@@ -374,14 +369,14 @@
 
 
     <span class="k">def</span> <span class="nf">compare_grids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view1</span><span class="p">,</span> <span class="n">view2</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_compare_grids</span><span class="p">(</span><span class="n">view1</span><span class="p">,</span> <span class="n">view2</span><span class="p">,</span> <span class="s">&#39;Grid&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compare_grids</span><span class="p">(</span><span class="n">view1</span><span class="p">,</span> <span class="n">view2</span><span class="p">,</span> <span class="s">&#39;AxisLayout&#39;</span><span class="p">)</span>
 
     <span class="c">#=========#</span>
     <span class="c"># Options #</span>
     <span class="c">#=========#</span>
 
-    <span class="k">def</span> <span class="nf">compare_opts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">opt1</span><span class="p">,</span> <span class="n">opt2</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">opt1</span><span class="o">.</span><span class="n">items</span><span class="p">,</span> <span class="n">opt2</span><span class="o">.</span><span class="n">items</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">compare_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options1</span><span class="p">,</span> <span class="n">options2</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">options1</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">options2</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">compare_channelopts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">opt1</span><span class="p">,</span> <span class="n">opt2</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>

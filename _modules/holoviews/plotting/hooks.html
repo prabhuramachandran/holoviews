@@ -1,0 +1,370 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>holoviews.plotting.hooks &mdash; holoviews</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2014.05.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/custom.js"></script>
+    <link rel="top" title="holoviews" href="../../../index.html" />
+    <link rel="up" title="holoviews.plotting" href="../plotting.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../plotting.html" accesskey="U">holoviews.plotting</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for holoviews.plotting.hooks</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">mpld3</span> <span class="kn">import</span> <span class="n">plugins</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="n">plugins</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Store</span>
+<span class="kn">from</span> <span class="nn">..ipython.magics</span> <span class="kn">import</span> <span class="n">ViewMagic</span>
+<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">NdOverlay</span><span class="p">,</span> <span class="n">Overlay</span>
+<span class="kn">from</span> <span class="nn">..element</span> <span class="kn">import</span> <span class="n">HeatMap</span><span class="p">,</span> <span class="n">Raster</span><span class="p">,</span> <span class="n">Scatter</span><span class="p">,</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">Points</span><span class="p">,</span> <span class="n">Bars</span><span class="p">,</span> <span class="n">Histogram</span>
+<span class="kn">from</span> <span class="nn">..plotting</span> <span class="kn">import</span> <span class="n">Plot</span><span class="p">,</span> <span class="n">CurvePlot</span><span class="p">,</span> <span class="n">PointPlot</span><span class="p">,</span> <span class="n">OverlayPlot</span><span class="p">,</span> <span class="n">MatrixPlot</span><span class="p">,</span> <span class="n">HistogramPlot</span>
+
+
+<div class="viewcode-block" id="PlottingHook"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.hooks.PlottingHook">[docs]</a><span class="k">class</span> <span class="nc">PlottingHook</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">ParameterizedFunction</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    PlottingHooks can be used to extend the default functionality</span>
+<span class="sd">    of HoloViews. Each ElementPlot type can be provided with a list of</span>
+<span class="sd">    hooks to apply at the end of plotting. The PlottingHook is provided</span>
+<span class="sd">    with ElementPlot instance, which gives access to the figure, axis</span>
+<span class="sd">    and artists via the handles, and the Element currently displayed</span>
+<span class="sd">    by the Plot. Since each Plot can be associated with multiple</span>
+<span class="sd">    Element plot types the Element types are validated against the</span>
+<span class="sd">    Elements in the types parameter.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">types</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">([],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;List of types processed by the hook.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">__abstract</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">_applies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">view</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">types</span>
+
+</div>
+<div class="viewcode-block" id="MplD3Plugin"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.hooks.MplD3Plugin">[docs]</a><span class="k">class</span> <span class="nc">MplD3Plugin</span><span class="p">(</span><span class="n">PlottingHook</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The mpld3 library available as an optional backend</span>
+<span class="sd">    for HoloViews provides the option of adding</span>
+<span class="sd">    interactivity to the plot through various plugins.</span>
+<span class="sd">    Subclasses of this PlottingHook can enable</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">css</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;CSS applied to HTML mpld3 Plugins.&quot;&quot;&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">          table {border-collapse: collapse;}</span>
+<span class="s">          th {color: #ffffff; background-color: #000000;}</span>
+<span class="s">          td {background-color: #cccccc;}</span>
+<span class="s">          table, th, td {font-family:Arial, Helvetica, sans-serif;</span>
+<span class="s">                         border: 1px solid black; text-align: right;}&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">hoffset</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;Vertical offset of the labels.&quot;</span><span class="p">)</span>
+
+    <span class="n">voffset</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;Horizontal offset of the labels.&quot;</span><span class="p">)</span>
+
+    <span class="n">__abstract</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">def</span> <span class="nf">_applies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="n">types_match</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">MplD3Plugin</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_applies</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">plot</span><span class="o">.</span><span class="n">projection</span> <span class="o">==</span> <span class="s">&#39;3d&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="n">plot</span><span class="o">.</span><span class="n">subplots</span><span class="p">:</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">projection</span> <span class="o">==</span> <span class="s">&#39;3d&#39;</span> <span class="k">for</span> <span class="n">sp</span> <span class="ow">in</span> <span class="n">plot</span><span class="o">.</span><span class="n">subplots</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">mpld3_backend</span> <span class="o">=</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;backend&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;d3&#39;</span>
+        <span class="k">return</span> <span class="n">types_match</span> <span class="ow">and</span> <span class="n">mpld3_backend</span>
+
+
+</div>
+<div class="viewcode-block" id="PointPlugin"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.hooks.PointPlugin">[docs]</a><span class="k">class</span> <span class="nc">PointPlugin</span><span class="p">(</span><span class="n">MplD3Plugin</span><span class="p">):</span>
+    <span class="s">&quot;Labels each point with a table of its values.&quot;</span>
+
+    <span class="n">types</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">([</span><span class="n">Points</span><span class="p">,</span> <span class="n">Scatter</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applies</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span> <span class="k">return</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)):</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">ix</span><span class="p">[[</span><span class="n">i</span><span class="p">],</span> <span class="p">:]</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">label</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">]</span>
+            <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">label</span><span class="o">.</span><span class="n">to_html</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)))</span>
+        <span class="n">tooltip</span> <span class="o">=</span> <span class="n">plugins</span><span class="o">.</span><span class="n">PointHTMLTooltip</span><span class="p">(</span><span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;paths&#39;</span><span class="p">],</span> <span class="n">labels</span><span class="p">,</span>
+                                           <span class="n">voffset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">voffset</span><span class="p">,</span> <span class="n">hoffset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hoffset</span><span class="p">,</span>
+                                           <span class="n">css</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">css</span><span class="p">)</span>
+        <span class="n">plugins</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">tooltip</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="CurvePlugin"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.hooks.CurvePlugin">[docs]</a><span class="k">class</span> <span class="nc">CurvePlugin</span><span class="p">(</span><span class="n">MplD3Plugin</span><span class="p">):</span>
+    <span class="s">&quot;Labels each line with the Curve objects label&quot;</span>
+
+    <span class="n">format_string</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;&lt;h4&gt;{label}&lt;/h4&gt;&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Defines the HTML representation of the Element label&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">types</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">([</span><span class="n">Curve</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applies</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span> <span class="k">return</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">format_string</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">)]</span>
+        <span class="n">tooltip</span> <span class="o">=</span> <span class="n">plugins</span><span class="o">.</span><span class="n">LineHTMLTooltip</span><span class="p">(</span><span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;line_segment&#39;</span><span class="p">],</span> <span class="n">labels</span><span class="p">,</span>
+                                          <span class="n">voffset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">voffset</span><span class="p">,</span> <span class="n">hoffset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hoffset</span><span class="p">,</span>
+                                          <span class="n">css</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">css</span><span class="p">)</span>
+        <span class="n">plugins</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">tooltip</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="BarPlugin"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.hooks.BarPlugin">[docs]</a><span class="k">class</span> <span class="nc">BarPlugin</span><span class="p">(</span><span class="n">MplD3Plugin</span><span class="p">):</span>
+    <span class="s">&quot;Labels each bar with a table of its values.&quot;</span>
+
+    <span class="n">types</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">([</span><span class="n">Bars</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applies</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span> <span class="k">return</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+
+        <span class="n">df</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)):</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">ix</span><span class="p">[[</span><span class="n">i</span><span class="p">],</span> <span class="p">:]</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">label</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">]</span>
+            <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">label</span><span class="o">.</span><span class="n">to_html</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)))</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">bar</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;bars&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get_children</span><span class="p">(),</span> <span class="n">labels</span><span class="p">)):</span>
+            <span class="n">tooltip</span> <span class="o">=</span> <span class="n">plugins</span><span class="o">.</span><span class="n">LineHTMLTooltip</span><span class="p">(</span><span class="n">bar</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">voffset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">voffset</span><span class="p">,</span>
+                                              <span class="n">hoffset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hoffset</span><span class="p">,</span> <span class="n">css</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">css</span><span class="p">)</span>
+            <span class="n">plugins</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">tooltip</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="RasterPlugin"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.hooks.RasterPlugin">[docs]</a><span class="k">class</span> <span class="nc">RasterPlugin</span><span class="p">(</span><span class="n">MplD3Plugin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Replaces the imshow based Raster image with a</span>
+<span class="sd">    pcolormesh, allowing each pixel to be labelled.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">types</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="n">Raster</span><span class="p">,</span> <span class="n">HeatMap</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applies</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span> <span class="k">return</span>
+
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+        <span class="n">ax</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;axis&#39;</span><span class="p">]</span>
+        <span class="n">valid_opts</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;cmap&#39;</span><span class="p">]</span>
+
+        <span class="n">opts</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">,</span> <span class="ow">in</span> <span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="s">&#39;style&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">valid_opts</span><span class="p">}</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">HeatMap</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+            <span class="n">cmap</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="n">opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;cmap&#39;</span><span class="p">,</span> <span class="s">&#39;gray&#39;</span><span class="p">)))</span>
+            <span class="n">cmap</span><span class="o">.</span><span class="n">set_bad</span><span class="p">(</span><span class="s">&#39;w&#39;</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">ann</span> <span class="ow">in</span> <span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;annotations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="n">ann</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">dframe</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sort</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">view</span><span class="o">.</span><span class="n">dimensions</span><span class="p">()[</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span><span class="o">.</span><span class="n">sort</span><span class="p">([</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">view</span><span class="o">.</span><span class="n">dimensions</span><span class="p">()[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]][::</span><span class="o">-</span><span class="mi">1</span><span class="p">])[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c"># Generate color mesh to label each point</span>
+        <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">extents</span>
+        <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">cmin</span><span class="p">,</span> <span class="n">cmax</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">cols</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">rows</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;im&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="n">mesh</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">data</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,:],</span> <span class="n">vmin</span><span class="o">=</span><span class="n">cmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">cmax</span><span class="p">,</span> <span class="o">**</span><span class="n">opts</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">invert_yaxis</span><span class="p">()</span> <span class="c"># Doesn&#39;t work uninverted</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">))</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)):</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">ix</span><span class="p">[[</span><span class="n">i</span><span class="p">],</span> <span class="p">:]</span><span class="o">.</span><span class="n">T</span>
+            <span class="n">label</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">]</span>
+            <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">label</span><span class="o">.</span><span class="n">to_html</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)))</span>
+
+        <span class="n">tooltip</span> <span class="o">=</span> <span class="n">plugins</span><span class="o">.</span><span class="n">PointHTMLTooltip</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">labels</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">hoffset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hoffset</span><span class="p">,</span>
+                                           <span class="n">voffset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">voffset</span><span class="p">,</span> <span class="n">css</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">css</span><span class="p">)</span>
+        <span class="n">plugins</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">tooltip</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="LegendPlugin"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.hooks.LegendPlugin">[docs]</a><span class="k">class</span> <span class="nc">LegendPlugin</span><span class="p">(</span><span class="n">MplD3Plugin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Provides an interactive legend allowing selecting</span>
+<span class="sd">    and unselecting of different elements.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">alpha_unsel</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The alpha level of the unselected elements&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">alpha_sel</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The alpha level of the unselected elements&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">types</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">([</span><span class="n">Overlay</span><span class="p">,</span> <span class="n">NdOverlay</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applies</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span> <span class="k">return</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+        <span class="n">line_segments</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">subplot</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">plot</span><span class="o">.</span><span class="n">subplots</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subplot</span><span class="p">,</span> <span class="n">PointPlot</span><span class="p">):</span>
+                <span class="n">line_segments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subplot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;paths&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">NdOverlay</span><span class="p">):</span>
+                    <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">keys</span><span class="p">[</span><span class="n">idx</span><span class="p">]))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subplot</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">subplot</span><span class="p">,</span> <span class="n">CurvePlot</span><span class="p">):</span>
+                <span class="n">line_segments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subplot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;line_segment&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">NdOverlay</span><span class="p">):</span>
+                    <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">keys</span><span class="p">[</span><span class="n">idx</span><span class="p">]))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subplot</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+
+        <span class="n">tooltip</span> <span class="o">=</span> <span class="n">plugins</span><span class="o">.</span><span class="n">InteractiveLegendPlugin</span><span class="p">(</span><span class="n">line_segments</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span>
+                                                  <span class="n">alpha_sel</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha_sel</span><span class="p">,</span>
+                                                  <span class="n">alpha_unsel</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha_unsel</span><span class="p">)</span>
+        <span class="n">plugins</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">tooltip</span><span class="p">)</span>
+
+</div>
+<span class="k">if</span> <span class="n">plugins</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="n">OverlayPlot</span><span class="o">.</span><span class="n">finalize_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="n">LegendPlugin</span><span class="p">]</span>
+    <span class="n">MatrixPlot</span><span class="o">.</span><span class="n">finalize_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="n">RasterPlugin</span><span class="p">]</span>
+    <span class="n">CurvePlot</span><span class="o">.</span><span class="n">finalize_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="n">CurvePlugin</span><span class="p">]</span>
+    <span class="n">PointPlot</span><span class="o">.</span><span class="n">finalize_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="n">PointPlugin</span><span class="p">]</span>
+    <span class="n">HistogramPlot</span><span class="o">.</span><span class="n">finalize_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="n">BarPlugin</span><span class="p">]</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div align="center"><h1>HoloViews</h1></div>
+<ul class="global-toc">
+
+<li><a href="../../../index.html">Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+<li><a href="http://github.com/ioam/holoviews">Github Source Code</a></li>
+<li><a href="../../../site_map.html">Site Map</a></li>
+</ul>
+<h3><a href="../../../index.html">Table Of Contents</a></h3>
+
+
+
+<h3>This Page</h3>
+<ul class="this-page-menu">
+	<li><a	href="https://github.com/ioam/dataviews/edit/master/doc/_modules/holoviews/plotting/hooks.rst" rel="nofollow">Edit on GitHub</a></li>
+</ul>
+
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../plotting.html" >holoviews.plotting</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, IOAM: Jean-Luc Stevens and Philipp Rudiger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

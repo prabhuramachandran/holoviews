@@ -1,0 +1,590 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>holoviews.element.raster &mdash; holoviews</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2014.05.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/custom.js"></script>
+    <link rel="top" title="holoviews" href="../../../index.html" />
+    <link rel="up" title="holoviews.element" href="../element.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../element.html" accesskey="U">holoviews.element</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for holoviews.element.raster</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">Element2D</span>
+<span class="kn">from</span> <span class="nn">..core.boundingregion</span> <span class="kn">import</span> <span class="n">BoundingRegion</span><span class="p">,</span> <span class="n">BoundingBox</span>
+<span class="kn">from</span> <span class="nn">..core.sheetcoords</span> <span class="kn">import</span> <span class="n">SheetCoordinateSystem</span><span class="p">,</span> <span class="n">Slice</span>
+<span class="kn">from</span> <span class="nn">.chart</span> <span class="kn">import</span> <span class="n">Curve</span>
+<span class="kn">from</span> <span class="nn">.tabular</span> <span class="kn">import</span> <span class="n">Table</span>
+
+
+<div class="viewcode-block" id="Raster"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.Raster">[docs]</a><span class="k">class</span> <span class="nc">Raster</span><span class="p">(</span><span class="n">Element2D</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Raster is a basic 2D atomic Element type.</span>
+
+<span class="sd">    Arrays with a shape of (N,M) are valid inputs for Raster wheras</span>
+<span class="sd">    subclasses of Raster (e.g. RGB) may also accept 3D arrays</span>
+<span class="sd">    containing channel information.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">key_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">),</span> <span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;y&#39;</span><span class="p">)],</span>
+                                  <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The label of the x- and y-dimension of the Raster in form</span>
+<span class="s">        of a string or dimension object.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Raster&#39;</span><span class="p">)</span>
+
+    <span class="n">value_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;z&#39;</span><span class="p">)],</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The dimension description of the data held in the data array.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">extents</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Raster</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">extents</span><span class="o">=</span><span class="n">extents</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slc</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&#39;Slicing Raster Views currently&#39;</span>
+                                  <span class="s">&#39; not implemented.&#39;</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">norm_factor</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">div_by_zero</span><span class="o">=</span><span class="s">&#39;ignore&#39;</span><span class="p">):</span>
+        <span class="n">norm_factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">norm_factor</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">norm_factor</span>
+        <span class="k">if</span> <span class="n">norm_factor</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">norm_factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">min</span><span class="p">,</span> <span class="nb">max</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">div_by_zero</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;ignore&#39;</span><span class="p">,</span> <span class="s">&#39;warn&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">norm_factor</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">)</span> <span class="ow">and</span> <span class="n">div_by_zero</span> <span class="o">==</span> <span class="s">&#39;warn&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Ignoring divide by zero in normalization.&quot;</span><span class="p">)</span>
+            <span class="n">norm_factor</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="p">(</span><span class="n">norm_factor</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">else</span> <span class="n">norm_factor</span>
+
+        <span class="n">norm_data</span> <span class="o">=</span> <span class="p">(((</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="n">norm_factor</span><span class="p">)</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span>
+            <span class="p">(</span><span class="nb">max</span> <span class="o">-</span> <span class="nb">min</span><span class="p">)))</span> <span class="o">+</span> <span class="nb">min</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">norm_data</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_coord2matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="p">):</span>
+        <span class="n">xd</span><span class="p">,</span> <span class="n">yd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extents</span>
+        <span class="n">xvals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">xd</span><span class="p">)</span>
+        <span class="n">yvals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">yd</span><span class="p">)</span>
+        <span class="n">xidx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">xvals</span><span class="o">-</span><span class="n">coord</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+        <span class="n">yidx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">yvals</span><span class="o">-</span><span class="n">coord</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">xidx</span><span class="p">,</span> <span class="n">yidx</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Raster.sample"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.Raster.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="o">=</span><span class="p">[],</span> <span class="o">**</span><span class="n">sample_values</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sample the Raster along one or both of its dimensions,</span>
+<span class="sd">        returning a reduced dimensionality type, which is either</span>
+<span class="sd">        a ItemTable, Curve or Scatter. If two dimension samples</span>
+<span class="sd">        and a new_xaxis is provided the sample will be the value</span>
+<span class="sd">        of the sampled unit indexed by the value in the new_xaxis</span>
+<span class="sd">        tuple.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">samples</span>
+            <span class="n">samples</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_values</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">):</span>
+                <span class="n">samples</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">c</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">didx</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span>
+                               <span class="nb">sorted</span><span class="p">([(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span>
+                                       <span class="n">sample_values</span><span class="o">.</span><span class="n">items</span><span class="p">()])])</span>
+            <span class="n">table_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">:</span>
+                <span class="n">table_data</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_coord2matrix</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span>
+            <span class="k">return</span> <span class="n">Table</span><span class="p">(</span><span class="n">table_data</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">,</span>
+                         <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dimension</span><span class="p">,</span> <span class="n">sample_coord</span> <span class="o">=</span> <span class="n">sample_values</span><span class="o">.</span><span class="n">items</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_coord</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s">&#39;Raster sampling requires coordinates not slices,&#39;</span>
+                    <span class="s">&#39;use regular slicing syntax.&#39;</span><span class="p">)</span>
+            <span class="n">other_dimension</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_dimensions</span> <span class="k">if</span>
+                               <span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">dimension</span><span class="p">]</span>
+            <span class="c"># Indices inverted for indexing</span>
+            <span class="n">sample_ind</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">other_dimension</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+            <span class="c"># Generate sample slice</span>
+            <span class="n">sample</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ndims</span><span class="p">)]</span>
+            <span class="n">coord_fn</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="k">if</span> <span class="n">sample_ind</span> <span class="k">else</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+            <span class="n">sample</span><span class="p">[</span><span class="n">sample_ind</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_coord2matrix</span><span class="p">(</span><span class="n">coord_fn</span><span class="p">(</span><span class="n">sample_coord</span><span class="p">))[</span><span class="n">sample_ind</span><span class="p">]</span>
+
+            <span class="c"># Sample data</span>
+            <span class="n">x_vals</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dimension</span><span class="p">)))</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x_vals</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sample</span><span class="p">])</span>
+            <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="n">other_dimension</span><span class="p">,</span>
+                         <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Raster.reduce"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.Raster.reduce">[docs]</a>    <span class="k">def</span> <span class="nf">reduce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label_prefix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">dimreduce_map</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reduces the Raster using functions provided via the</span>
+<span class="sd">        kwargs, where the keyword is the dimension to be reduced.</span>
+<span class="sd">        Optionally a label_prefix can be provided to prepend to</span>
+<span class="sd">        the result Element label.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">label_prefix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">])</span> <span class="k">if</span> <span class="n">label_prefix</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dimreduce_map</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span><span class="p">:</span>
+            <span class="n">reduced_view</span> <span class="o">=</span> <span class="bp">self</span>
+            <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">reduce_fn</span> <span class="ow">in</span> <span class="n">dimreduce_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">reduced_view</span> <span class="o">=</span> <span class="n">reduced_view</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">label_prefix</span><span class="o">=</span><span class="n">label_prefix</span><span class="p">,</span>
+                                                   <span class="o">**</span><span class="p">{</span><span class="n">dim</span><span class="p">:</span> <span class="n">reduce_fn</span><span class="p">})</span>
+                <span class="n">label_prefix</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+            <span class="k">return</span> <span class="n">reduced_view</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dimension</span><span class="p">,</span> <span class="n">reduce_fn</span> <span class="o">=</span> <span class="n">dimreduce_map</span><span class="o">.</span><span class="n">items</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">other_dimension</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_dimensions</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">dimension</span><span class="p">]</span>
+            <span class="n">x_vals</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dimension</span><span class="p">)))</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">x_vals</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">dimension</span><span class="p">)))</span>
+            <span class="k">return</span> <span class="n">Curve</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="n">other_dimension</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+                         <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">depth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Raster.mode"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.Raster.mode">[docs]</a>    <span class="k">def</span> <span class="nf">mode</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Mode specifying the color space for visualizing the array data</span>
+<span class="sd">        and is a function of the depth. For a depth of one, a colormap</span>
+<span class="sd">        is used as determined by the style. If the depth is 3 or 4,</span>
+<span class="sd">        the mode is &#39;rgb&#39; or &#39;rgba&#39; respectively.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span>   <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="k">return</span> <span class="s">&#39;cmap&#39;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>  <span class="k">return</span> <span class="s">&#39;rgb&#39;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>  <span class="k">return</span> <span class="s">&#39;rgba&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Mode cannot be determined from the depth&quot;</span><span class="p">)</span>
+
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">N</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="Raster.dimension_values"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.Raster.dimension_values">[docs]</a>    <span class="k">def</span> <span class="nf">dimension_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The set of samples available along a particular dimension.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dim_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dim_idx</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">dim_idx</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+            <span class="n">dim_min</span><span class="p">,</span> <span class="n">dim_max</span> <span class="o">=</span> <span class="p">[(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)][</span><span class="n">dim_idx</span><span class="p">]</span>
+            <span class="n">dim_len</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">dim_idx</span><span class="p">]</span>
+            <span class="n">half_unit</span> <span class="o">=</span> <span class="p">(</span><span class="n">dim_max</span> <span class="o">-</span> <span class="n">dim_min</span><span class="p">)</span><span class="o">/</span><span class="n">dim_len</span><span class="o">/</span><span class="mf">2.</span>
+            <span class="n">coord_fn</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span> <span class="k">if</span> <span class="n">dim_idx</span> <span class="k">else</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">linspace</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">dim_min</span><span class="o">+</span><span class="n">half_unit</span><span class="p">,</span> <span class="n">dim_max</span><span class="o">-</span><span class="n">half_unit</span><span class="p">,</span> <span class="n">dim_len</span><span class="p">)</span>
+            <span class="n">coords</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">closest</span><span class="p">(</span><span class="n">coord_fn</span><span class="p">(</span><span class="n">v</span><span class="p">))[</span><span class="n">dim_idx</span><span class="p">]</span>
+                      <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">linspace</span><span class="p">]</span> <span class="o">*</span> <span class="n">shape</span>
+            <span class="k">return</span> <span class="n">coords</span> <span class="k">if</span> <span class="n">dim_idx</span> <span class="k">else</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">dim_idx</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Dimension not found.&quot;</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="HeatMap"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.HeatMap">[docs]</a><span class="k">class</span> <span class="nc">HeatMap</span><span class="p">(</span><span class="n">Raster</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    HeatMap is an atomic Element used to visualize two dimensional</span>
+<span class="sd">    parameter spaces. It supports sparse or non-linear spaces, dynamically</span>
+<span class="sd">    upsampling them to a dense representation, which can be visualized.</span>
+
+<span class="sd">    A HeatMap can be initialized with any dict or NdMapping type with</span>
+<span class="sd">    two-dimensional keys. Once instantiated the dense representation is</span>
+<span class="sd">    available via the .data property.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;HeatMap&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">dimensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">HeatMap</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">dimensions</span><span class="p">))</span>
+
+
+    <span class="k">def</span> <span class="nf">_process_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">dimensions</span> <span class="o">=</span> <span class="p">{</span><span class="n">group</span><span class="p">:</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">))</span>
+                      <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim_groups</span><span class="p">[:</span><span class="mi">2</span><span class="p">]}</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s">&#39;key_dimensions&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+                <span class="n">dimensions</span><span class="p">[</span><span class="s">&#39;key_dimensions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">key_dimensions</span>
+            <span class="k">if</span> <span class="s">&#39;value_dimensions&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+                <span class="n">dimensions</span><span class="p">[</span><span class="s">&#39;value_dimensions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">value_dimensions</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="nb">dict</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">None</span><span class="p">))):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">NdMapping</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">dimensions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;HeatMap only accepts dict or NdMapping types.&#39;</span><span class="p">)</span>
+
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">dim1_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">))</span>
+        <span class="n">dim2_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">))</span>
+        <span class="n">grid_keys</span> <span class="o">=</span> <span class="p">[((</span><span class="n">i1</span><span class="p">,</span> <span class="n">d1</span><span class="p">),</span> <span class="p">(</span><span class="n">i2</span><span class="p">,</span> <span class="n">d2</span><span class="p">))</span> <span class="k">for</span> <span class="n">i1</span><span class="p">,</span> <span class="n">d1</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">)</span>
+                     <span class="k">for</span> <span class="n">i2</span><span class="p">,</span> <span class="n">d2</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">)]</span>
+
+        <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">)))</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">i1</span><span class="p">,</span> <span class="n">d1</span><span class="p">),</span> <span class="p">(</span><span class="n">i2</span><span class="p">,</span> <span class="n">d2</span><span class="p">)</span> <span class="ow">in</span> <span class="n">grid_keys</span><span class="p">:</span>
+            <span class="n">array</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">)</span><span class="o">-</span><span class="n">i2</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">i1</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">dimensions</span>
+
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Slice the underlying NdMapping.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">,</span> <span class="n">coords</span><span class="p">))))</span>
+
+
+    <span class="k">def</span> <span class="nf">dense_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">dim1_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">))</span>
+        <span class="n">dim2_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">dim1_keys</span><span class="p">,</span> <span class="n">dim2_keys</span>
+
+
+    <span class="k">def</span> <span class="nf">dimension_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">k</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+        <span class="k">elif</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_value_names</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Dimension </span><span class="si">%s</span><span class="s"> not found.&quot;</span> <span class="o">%</span> <span class="n">dim</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">dframe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dense</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">dense</span><span class="p">:</span>
+            <span class="n">keys1</span><span class="p">,</span> <span class="n">keys2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense_keys</span><span class="p">()</span>
+            <span class="n">dense_map</span> <span class="o">=</span> <span class="n">HeatMap</span><span class="p">({(</span><span class="n">k1</span><span class="p">,</span> <span class="n">k2</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">k1</span><span class="p">,</span> <span class="n">k2</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
+                                 <span class="k">for</span> <span class="n">k1</span><span class="p">,</span> <span class="n">k2</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="n">keys1</span><span class="p">,</span> <span class="n">keys2</span><span class="p">)})</span>
+            <span class="k">return</span> <span class="n">dense_map</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">HeatMap</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span><span class="p">:</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span>
+        <span class="n">dim1_keys</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense_keys</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">dim1_keys</span><span class="p">)</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span><span class="p">:</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">dim2_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense_keys</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Matrix"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.Matrix">[docs]</a><span class="k">class</span> <span class="nc">Matrix</span><span class="p">(</span><span class="n">SheetCoordinateSystem</span><span class="p">,</span> <span class="n">Raster</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Matrix is the atomic unit as which 2D data is stored, along with</span>
+<span class="sd">    its bounds object. The input data may be a numpy.matrix object or</span>
+<span class="sd">    a two-dimensional numpy array.</span>
+
+<span class="sd">    Allows slicing operations of the data in sheet coordinates or direct</span>
+<span class="sd">    access to the data, via the .data attribute.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">bounds</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ClassSelector</span><span class="p">(</span><span class="n">class_</span><span class="o">=</span><span class="n">BoundingRegion</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">BoundingBox</span><span class="p">(),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The bounding region in sheet coordinates containing the data.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Matrix&#39;</span><span class="p">)</span>
+
+    <span class="n">value_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;Luminance&#39;</span><span class="p">)],</span>
+                                  <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The dimension description of the data held in the matrix.&quot;&quot;&quot;</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">xdensity</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ydensity</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">bounds</span> <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">BoundingBox</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">bounds</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="n">BoundingBox</span><span class="p">(</span><span class="n">points</span><span class="o">=</span><span class="p">((</span><span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">),</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">)))</span>
+        <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">bounds</span><span class="p">):</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="n">BoundingBox</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">]])</span> <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">data</span>
+        <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">bounds</span><span class="o">.</span><span class="n">lbrt</span><span class="p">()</span>
+        <span class="p">(</span><span class="n">dim1</span><span class="p">,</span> <span class="n">dim2</span><span class="p">)</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">xdensity</span> <span class="o">=</span> <span class="n">xdensity</span> <span class="k">if</span> <span class="n">xdensity</span> <span class="k">else</span> <span class="n">dim1</span><span class="o">/</span><span class="p">(</span><span class="n">r</span><span class="o">-</span><span class="n">l</span><span class="p">)</span>
+        <span class="n">ydensity</span> <span class="o">=</span> <span class="n">ydensity</span> <span class="k">if</span> <span class="n">ydensity</span> <span class="k">else</span> <span class="n">dim2</span><span class="o">/</span><span class="p">(</span><span class="n">t</span><span class="o">-</span><span class="n">b</span><span class="p">)</span>
+
+        <span class="n">SheetCoordinateSystem</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">xdensity</span><span class="p">,</span> <span class="n">ydensity</span><span class="p">)</span>
+        <span class="n">Element2D</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">extents</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lbrt</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Input array has shape </span><span class="si">%r</span><span class="s"> but </span><span class="si">%d</span><span class="s"> value dimensions defined&quot;</span>
+                                 <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">)))</span>
+
+
+
+<div class="viewcode-block" id="Matrix.closest"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.Matrix.closest">[docs]</a>    <span class="k">def</span> <span class="nf">closest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given a single coordinate tuple (or list of coordinates)</span>
+<span class="sd">        return the coordinate (or coordinatess) needed to address the</span>
+<span class="sd">        corresponding Matrix exactly.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">closest_cell_center</span><span class="p">(</span><span class="o">*</span><span class="n">coords</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">closest_cell_center</span><span class="p">(</span><span class="o">*</span><span class="n">el</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">coords</span><span class="p">]</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Slice the underlying numpy array in sheet coordinates.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">coords</span> <span class="ow">is</span> <span class="p">()</span> <span class="ow">or</span> <span class="n">coords</span> <span class="o">==</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="nb">slice</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">coords</span><span class="p">]):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">sheet2matrixidx</span><span class="p">(</span><span class="o">*</span><span class="n">coords</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="nb">slice</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">coords</span><span class="p">]):</span>
+            <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">lbrt</span><span class="p">()</span>
+            <span class="n">xcoords</span><span class="p">,</span> <span class="n">ycoords</span> <span class="o">=</span> <span class="n">coords</span>
+            <span class="n">xstart</span> <span class="o">=</span> <span class="n">l</span> <span class="k">if</span> <span class="n">xcoords</span><span class="o">.</span><span class="n">start</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">xcoords</span><span class="o">.</span><span class="n">start</span><span class="p">)</span>
+            <span class="n">xend</span> <span class="o">=</span> <span class="n">r</span> <span class="k">if</span> <span class="n">xcoords</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">xcoords</span><span class="o">.</span><span class="n">stop</span><span class="p">)</span>
+            <span class="n">ystart</span> <span class="o">=</span> <span class="n">b</span> <span class="k">if</span> <span class="n">ycoords</span><span class="o">.</span><span class="n">start</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="nb">max</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">ycoords</span><span class="o">.</span><span class="n">start</span><span class="p">)</span>
+            <span class="n">yend</span> <span class="o">=</span> <span class="n">t</span> <span class="k">if</span> <span class="n">ycoords</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">ycoords</span><span class="o">.</span><span class="n">stop</span><span class="p">)</span>
+            <span class="n">bounds</span> <span class="o">=</span> <span class="n">BoundingBox</span><span class="p">(</span><span class="n">points</span><span class="o">=</span><span class="p">((</span><span class="n">xstart</span><span class="p">,</span> <span class="n">ystart</span><span class="p">),</span> <span class="p">(</span><span class="n">xend</span><span class="p">,</span> <span class="n">yend</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s">&#39;Indexing requires x- and y-slice ranges.&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">Slice</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">submatrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">),</span>
+                          <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">)</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">l</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">lbrt</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">lbrt</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
+        <span class="n">dim_idx</span> <span class="o">=</span> <span class="n">dim</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dim_idx</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">dim_idx</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Matrix</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_coord2matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sheet2matrixidx</span><span class="p">(</span><span class="o">*</span><span class="n">coord</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">get_roi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">Slice</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">submatrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">([</span><span class="n">Slice</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">submatrix</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="RGB"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.RGB">[docs]</a><span class="k">class</span> <span class="nc">RGB</span><span class="p">(</span><span class="n">Matrix</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An RGB element is a Matrix containing channel data for the the</span>
+<span class="sd">    red, green, blue and (optionally) the alpha channels. The values</span>
+<span class="sd">    of each channel must be in the range 0.0 to 1.0.</span>
+
+<span class="sd">    In input array may have a shape of NxMx4 or NxMx3. In the latter</span>
+<span class="sd">    case, the defined alpha dimension parameter is appended to the</span>
+<span class="sd">    list of value dimensions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">alpha_dimension</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ClassSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;A&#39;</span><span class="p">,</span><span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span>
+                                          <span class="n">class_</span><span class="o">=</span><span class="n">Dimension</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The alpha dimension definition to add the value_dimensions if</span>
+<span class="s">        an alpha channel is supplied.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">value_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;R&#39;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span> <span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;G&#39;</span><span class="p">,</span><span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span>
+                 <span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;B&#39;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))],</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The dimension description of the data held in the matrix.</span>
+
+<span class="s">        If an alpha channel is supplied, the defined alpha_dimension</span>
+<span class="s">        is automatically appended to this list.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="n">sliced</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Three dimensional matrices or arrays required&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">sliced</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,:,:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,:,</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;value_dimensions&#39;</span><span class="p">,[]))</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">alpha_dim</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s">&#39;value_dimensions&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+            <span class="n">params</span><span class="p">[</span><span class="s">&#39;alpha_dimension&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">alpha_dim</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">RGB</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span> <span class="k">if</span> <span class="n">sliced</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">sliced</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sliced</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">value_dimensions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alpha_dimension</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">alpha</span><span class="p">])</span>
+
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Slice the underlying numpy array in sheet coordinates.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ndims</span><span class="p">:]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">()</span>
+            <span class="n">sliced</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">RGB</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__getitem__</span><span class="p">(</span><span class="n">coords</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">ndims</span><span class="p">])</span>
+            <span class="n">vidx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">sliced</span><span class="o">.</span><span class="n">data</span><span class="p">[:,:,</span> <span class="n">vidx</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_param_values</span><span class="p">(),</span>
+                                       <span class="n">value_dimensions</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">[</span><span class="n">vidx</span><span class="o">-</span><span class="mi">2</span><span class="p">]]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">RGB</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__getitem__</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+</pre></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div align="center"><h1>HoloViews</h1></div>
+<ul class="global-toc">
+
+<li><a href="../../../index.html">Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+<li><a href="http://github.com/ioam/holoviews">Github Source Code</a></li>
+<li><a href="../../../site_map.html">Site Map</a></li>
+</ul>
+<h3><a href="../../../index.html">Table Of Contents</a></h3>
+
+
+
+<h3>This Page</h3>
+<ul class="this-page-menu">
+	<li><a	href="https://github.com/ioam/dataviews/edit/master/doc/_modules/holoviews/element/raster.rst" rel="nofollow">Edit on GitHub</a></li>
+</ul>
+
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../element.html" >holoviews.element</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, IOAM: Jean-Luc Stevens and Philipp Rudiger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

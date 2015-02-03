@@ -1,0 +1,915 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>holoviews.core.element &mdash; holoviews</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2014.05.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/custom.js"></script>
+    <link rel="top" title="holoviews" href="../../../index.html" />
+    <link rel="up" title="holoviews.core" href="../core.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../core.html" accesskey="U">holoviews.core</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for holoviews.core.element</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">.dimension</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">ViewableElement</span>
+<span class="kn">from</span> <span class="nn">.layout</span> <span class="kn">import</span> <span class="n">Composable</span><span class="p">,</span> <span class="n">LayoutTree</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">,</span> <span class="n">NdLayout</span>
+<span class="kn">from</span> <span class="nn">.ndmapping</span> <span class="kn">import</span> <span class="n">UniformNdMapping</span>
+<span class="kn">from</span> <span class="nn">.overlay</span> <span class="kn">import</span> <span class="n">Overlayable</span><span class="p">,</span> <span class="n">NdOverlay</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">CompositeOverlay</span>
+<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">find_minmax</span>
+
+
+<div class="viewcode-block" id="Element"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.Element">[docs]</a><span class="k">class</span> <span class="nc">Element</span><span class="p">(</span><span class="n">ViewableElement</span><span class="p">,</span> <span class="n">Composable</span><span class="p">,</span> <span class="n">Overlayable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Element is the baseclass for all ViewableElement types, with an x- and</span>
+<span class="sd">    y-dimension. Subclasses should define the data storage in the</span>
+<span class="sd">    constructor, as well as methods and properties, which define how</span>
+<span class="sd">    the data maps onto the x- and y- and value dimensions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Element&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">hist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">bin_range</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">adjoin</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">individually</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">..operation</span> <span class="kn">import</span> <span class="n">histogram</span>
+        <span class="k">return</span> <span class="n">histogram</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="n">num_bins</span><span class="p">,</span> <span class="n">bin_range</span><span class="o">=</span><span class="n">bin_range</span><span class="p">,</span> <span class="n">adjoin</span><span class="o">=</span><span class="n">adjoin</span><span class="p">,</span>
+                         <span class="n">individually</span><span class="o">=</span><span class="n">individually</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+    <span class="c">########################</span>
+    <span class="c"># Subclassable methods #</span>
+    <span class="c">########################</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Element</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Element.closest"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.Element.closest">[docs]</a>    <span class="k">def</span> <span class="nf">closest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Class method that returns the exact keys for a given list of</span>
+<span class="sd">        coordinates. The supplied bounds defines the extent within</span>
+<span class="sd">        which the samples are drawn and the optional shape argument is</span>
+<span class="sd">        the shape of the numpy array (typically the shape of the .data</span>
+<span class="sd">        attribute) when applicable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">coords</span>
+
+</div>
+<div class="viewcode-block" id="Element.sample"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.Element.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">samples</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Base class signature to demonstrate API for sampling Views.</span>
+<span class="sd">        To sample a ViewableElement kwargs, where the keyword matches a Dimension</span>
+<span class="sd">        in the ViewableElement and the value matches a corresponding entry in the</span>
+<span class="sd">        data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+</div>
+<div class="viewcode-block" id="Element.reduce"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.Element.reduce">[docs]</a>    <span class="k">def</span> <span class="nf">reduce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label_prefix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">reduce_map</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Base class signature to demonstrate API for reducing Views,</span>
+<span class="sd">        using some reduce function, e.g. np.mean. Signature is the</span>
+<span class="sd">        same as sample, however a label_prefix may be provided to</span>
+<span class="sd">        describe the reduction operation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+</div>
+<div class="viewcode-block" id="Element.table"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.Element.table">[docs]</a>    <span class="k">def</span> <span class="nf">table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This method transforms any ViewableElement type into a Table</span>
+<span class="sd">        as long as it implements a dimension_values method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">..element</span> <span class="kn">import</span> <span class="n">Table</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dim</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                 <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">])</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dim</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                       <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">])</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">key_dimensions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">,</span>
+                      <span class="n">value_dimensions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">,</span>
+                      <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Table</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">values</span><span class="p">),</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">dframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">pandas</span>
+        <span class="n">column_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">dim_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">column_names</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+        <span class="k">return</span> <span class="n">pandas</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">dim_vals</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">column_names</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">=</span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_param_values</span><span class="p">())</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">(</span><span class="si">%r</span><span class="s">, </span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="Element2D"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.Element2D">[docs]</a><span class="k">class</span> <span class="nc">Element2D</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">extents</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="n">extents</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">extents</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">extents</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="n">extents</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">extents</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">extents</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Element2D</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">xlabel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">pprint_label</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ylabel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">pprint_label</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="nd">@xlim.setter</span>
+    <span class="k">def</span> <span class="nf">xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limits</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">limits</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">limits</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">limits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span> <span class="o">=</span> <span class="n">limits</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;xlim needs to be a length two tuple or None.&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="nd">@ylim.setter</span>
+    <span class="k">def</span> <span class="nf">ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limits</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">limits</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">limits</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">limits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span> <span class="o">=</span> <span class="n">limits</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;xlim needs to be a length two tuple or None.&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">extents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;&quot;</span>
+<span class="sd">        For Element2D the extents is the 4-tuple (left, bottom, right, top).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">l</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span> <span class="k">else</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
+        <span class="n">b</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span> <span class="k">else</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span>
+
+
+    <span class="nd">@extents.setter</span>
+<div class="viewcode-block" id="Element2D.extents"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.Element2D.extents">[docs]</a>    <span class="k">def</span> <span class="nf">extents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extents</span><span class="p">):</span>
+        <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">extents</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span> <span class="o">=</span> <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="Element3D"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.Element3D">[docs]</a><span class="k">class</span> <span class="nc">Element3D</span><span class="p">(</span><span class="n">Element2D</span><span class="p">):</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">extents</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">extents</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span> <span class="o">=</span> <span class="p">(</span><span class="n">extents</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">extents</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span>
+            <span class="n">extent</span> <span class="o">=</span> <span class="p">(</span><span class="n">extents</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">extents</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">extents</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">extents</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Element3D</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">extents</span><span class="o">=</span><span class="n">extents</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">extents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;&quot;</span>
+<span class="sd">        For Element3D the extents is the 6-tuple (left, bottom, -z, right, top, +z) using</span>
+<span class="sd">        a right-handed Cartesian coordinate-system.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">l</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span> <span class="k">else</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
+        <span class="n">b</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span> <span class="k">else</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
+        <span class="n">zminus</span><span class="p">,</span> <span class="n">zplus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zlim</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zlim</span> <span class="k">else</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">zminus</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">zplus</span>
+
+    <span class="nd">@extents.setter</span>
+<div class="viewcode-block" id="Element3D.extents"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.Element3D.extents">[docs]</a>    <span class="k">def</span> <span class="nf">extents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extents</span><span class="p">):</span>
+        <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">zminus</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">zplus</span> <span class="o">=</span> <span class="n">extents</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zlim</span> <span class="o">=</span> <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span> <span class="p">(</span><span class="n">zminus</span><span class="p">,</span> <span class="n">zplus</span><span class="p">)</span>
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">zlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="nd">@zlim.setter</span>
+    <span class="k">def</span> <span class="nf">zlim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limits</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">limits</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">limits</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">limits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span> <span class="o">=</span> <span class="n">limits</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;zlim needs to be a length two tuple or None.&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">zlabel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">pprint_label</span>
+
+
+</div>
+<div class="viewcode-block" id="HoloMap"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap">[docs]</a><span class="k">class</span> <span class="nc">HoloMap</span><span class="p">(</span><span class="n">UniformNdMapping</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A HoloMap can hold any number of DataLayers indexed by a list of</span>
+<span class="sd">    dimension values. It also has a number of properties, which can find</span>
+<span class="sd">    the x- and y-dimension limits and labels.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;HoloMap&#39;</span><span class="p">)</span>
+
+    <span class="n">data_type</span> <span class="o">=</span> <span class="p">(</span><span class="n">ViewableElement</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="HoloMap.layer_types"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.layer_types">[docs]</a>    <span class="k">def</span> <span class="nf">layer_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The type of layers stored in the HoloMap.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">NdOverlay</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">layer_types</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">)</span>
+
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">xlabel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">xlabel</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ylabel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">ylabel</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">xlim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">xlim</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">xlim</span> <span class="o">=</span> <span class="n">find_minmax</span><span class="p">(</span><span class="n">xlim</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">xlim</span><span class="p">)</span> <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">xlim</span> <span class="ow">and</span> <span class="n">xlim</span> <span class="k">else</span> <span class="n">xlim</span>
+        <span class="k">return</span> <span class="n">xlim</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ylim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">ylim</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">ylim</span> <span class="o">=</span> <span class="n">find_minmax</span><span class="p">(</span><span class="n">ylim</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">ylim</span><span class="p">)</span> <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">ylim</span> <span class="ow">and</span> <span class="n">ylim</span> <span class="k">else</span> <span class="n">ylim</span>
+        <span class="k">return</span> <span class="n">ylim</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">extents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span>
+        <span class="n">l</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span>
+        <span class="n">b</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">l</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+
+
+<div class="viewcode-block" id="HoloMap.overlay"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.overlay">[docs]</a>    <span class="k">def</span> <span class="nf">overlay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Splits the UniformNdMapping along a specified number of dimensions and</span>
+<span class="sd">        overlays items in the split out Maps.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">split_map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+            <span class="n">new_map</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">split_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">NdOverlay</span><span class="p">)</span>
+            <span class="n">new_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">shared_data</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="n">split_map</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">outer</span><span class="p">,</span> <span class="n">vmap</span> <span class="ow">in</span> <span class="n">split_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">new_map</span><span class="p">[</span><span class="n">outer</span><span class="p">]</span> <span class="o">=</span> <span class="n">NdOverlay</span><span class="p">(</span><span class="n">vmap</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="n">vmap</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">new_map</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">new_map</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">_tocomposite</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">container_type</span><span class="o">=</span><span class="n">NdLayout</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span><span class="p">:</span>
+            <span class="n">split_map</span> <span class="o">=</span> <span class="n">container_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">,</span>
+                                       <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">all</span><span class="p">(</span><span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="p">):</span>
+            <span class="n">split_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="p">]</span>
+            <span class="n">split_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">split_dims</span><span class="p">,</span> <span class="n">container_type</span><span class="o">=</span><span class="n">container_type</span><span class="p">)</span>
+            <span class="n">split_map</span> <span class="o">=</span> <span class="n">split_map</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;HoloMap does not have supplied dimensions.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">split_map</span>
+
+
+<div class="viewcode-block" id="HoloMap.grid"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.grid">[docs]</a>    <span class="k">def</span> <span class="nf">grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        AxisLayout takes a list of one or two dimensions, and lays out the containing</span>
+<span class="sd">        Views along these axes in a AxisLayout.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;At most two dimensions can be laid out in a grid.&#39;</span><span class="p">)</span>
+        <span class="n">composite</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tocomposite</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">AxisLayout</span><span class="p">(</span><span class="n">composite</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="n">composite</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="HoloMap.layout"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.layout">[docs]</a>    <span class="k">def</span> <span class="nf">layout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        AxisLayout takes a list of one or two dimensions, and lays out the containing</span>
+<span class="sd">        Views along these axes in a AxisLayout.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tocomposite</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="HoloMap.split_overlays"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.split_overlays">[docs]</a>    <span class="k">def</span> <span class="nf">split_overlays</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given a UniformNdMapping of Overlays of N layers, split out the layers into</span>
+<span class="sd">        N separate Maps.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">CompositeOverlay</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+        <span class="n">item_maps</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">overlay</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">item_maps</span><span class="p">:</span>
+                    <span class="n">item_maps</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">el</span><span class="p">)]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">item_maps</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">el</span><span class="p">))</span>
+
+        <span class="n">maps</span><span class="p">,</span> <span class="n">keys</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">item_maps</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">maps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">item_maps</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span>
+            <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">keys</span><span class="p">,</span> <span class="n">maps</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">_dimension_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Helper for __mul__ that returns the list of keys together with</span>
+<span class="sd">        the dimension labels.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">,</span> <span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">k</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+
+
+    <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The mul (*) operator implements overlaying of different Views.</span>
+<span class="sd">        This method tries to intelligently overlay Maps with differing</span>
+<span class="sd">        keys. If the UniformNdMapping is mulled with a simple</span>
+<span class="sd">        ViewableElement each element in the UniformNdMapping is</span>
+<span class="sd">        overlaid with the ViewableElement. If the element the</span>
+<span class="sd">        UniformNdMapping is mulled with is another UniformNdMapping it</span>
+<span class="sd">        will try to match up the dimensions, making sure that items</span>
+<span class="sd">        with completely different dimensions aren&#39;t overlaid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">):</span>
+            <span class="n">self_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">)</span>
+            <span class="n">other_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">)</span>
+
+            <span class="c"># Determine which is the subset, to generate list of keys and</span>
+            <span class="c"># dimension labels for the new view</span>
+            <span class="n">self_in_other</span> <span class="o">=</span> <span class="n">self_set</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">other_set</span><span class="p">)</span>
+            <span class="n">other_in_self</span> <span class="o">=</span> <span class="n">other_set</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">self_set</span><span class="p">)</span>
+            <span class="n">dimensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_dimensions</span>
+            <span class="k">if</span> <span class="n">self_in_other</span> <span class="ow">and</span> <span class="n">other_in_self</span><span class="p">:</span> <span class="c"># superset of each other</span>
+                <span class="n">super_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dimension_keys</span><span class="p">()</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">_dimension_keys</span><span class="p">()))</span>
+            <span class="k">elif</span> <span class="n">self_in_other</span><span class="p">:</span> <span class="c"># self is superset</span>
+                <span class="n">dimensions</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">key_dimensions</span>
+                <span class="n">super_keys</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">_dimension_keys</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">other_in_self</span><span class="p">:</span> <span class="c"># self is superset</span>
+                <span class="n">super_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dimension_keys</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span> <span class="c"># neither is superset</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;One set of keys needs to be a strict subset of the other.&#39;</span><span class="p">)</span>
+
+            <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">dim_keys</span> <span class="ow">in</span> <span class="n">super_keys</span><span class="p">:</span>
+                <span class="c"># Generate keys for both subset and superset and sort them by the dimension index.</span>
+                <span class="n">self_key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">k</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span>
+                    <span class="p">[(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">dim</span><span class="p">),</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dim_keys</span>
+                     <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">]))</span>
+                <span class="n">other_key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">k</span> <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span>
+                    <span class="p">[(</span><span class="n">other</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">dim</span><span class="p">),</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dim_keys</span>
+                     <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">]))</span>
+                <span class="n">new_key</span> <span class="o">=</span> <span class="n">self_key</span> <span class="k">if</span> <span class="n">other_in_self</span> <span class="k">else</span> <span class="n">other_key</span>
+                <span class="c"># Append SheetOverlay of combined items</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">self_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">other_key</span> <span class="ow">in</span> <span class="n">other</span><span class="p">):</span>
+                    <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_key</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">self_key</span><span class="p">]</span> <span class="o">*</span> <span class="n">other</span><span class="p">[</span><span class="n">other_key</span><span class="p">]))</span>
+                <span class="k">elif</span> <span class="n">self_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                    <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_key</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">self_key</span><span class="p">]</span> <span class="o">*</span> <span class="n">other</span><span class="o">.</span><span class="n">empty_element</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">new_key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">empty_element</span> <span class="o">*</span> <span class="n">other</span><span class="p">[</span><span class="n">other_key</span><span class="p">]))</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="n">dimensions</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_type</span><span class="p">):</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="o">*</span> <span class="n">other</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Can only overlay with {data} or {vmap}.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_type</span><span class="p">,</span> <span class="n">vmap</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="HoloMap.dframe"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.dframe">[docs]</a>    <span class="k">def</span> <span class="nf">dframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets a dframe for each Element in the HoloMap, appends the</span>
+<span class="sd">        dimensions of the HoloMap as series and concatenates the</span>
+<span class="sd">        dframes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">pandas</span>
+        <span class="n">dframes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">view</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">view_frame</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">val</span><span class="p">,</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">)):</span>
+                <span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
+                <span class="n">dimn</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">while</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">view_frame</span><span class="p">:</span>
+                    <span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span><span class="o">+</span><span class="s">&#39;_</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">dimn</span>
+                    <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">view_frame</span><span class="p">:</span>
+                        <span class="n">dimn</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">view_frame</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+            <span class="n">dframes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">view_frame</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dframes</span><span class="p">)</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">LayoutTree</span><span class="o">.</span><span class="n">from_view</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">+</span> <span class="n">LayoutTree</span><span class="o">.</span><span class="n">from_view</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__lshift__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="p">(</span><span class="n">ViewableElement</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">AdjointLayout</span><span class="p">([</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">AdjointLayout</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">data</span><span class="o">+</span><span class="p">[</span><span class="bp">self</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Cannot append {0} to a AdjointLayout&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="HoloMap.sample"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">samples</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">sample_values</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sample each Element in the UniformNdMapping by passing either a list of</span>
+<span class="sd">        samples or a tuple specifying the number of regularly spaced</span>
+<span class="sd">        samples per dimension. Alternatively, a single sample may be</span>
+<span class="sd">        requested using dimension-value pairs. Optionally, the bounds</span>
+<span class="sd">        argument can be used to specify the bounding extent from which</span>
+<span class="sd">        the coordinates are to regularly sampled. Regular sampling</span>
+<span class="sd">        assumes homogenous and regularly sampled data.</span>
+
+<span class="sd">        For 1D sampling, the shape is simply as the desired number of</span>
+<span class="sd">        samples (and not a tuple). The bounds format for 1D sampling</span>
+<span class="sd">        is the tuple (lower, upper) and the tuple (left, bottom,</span>
+<span class="sd">        right, top) for 2D sampling.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">ndims</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">samples</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">dims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xlims</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="bp">self</span><span class="o">.</span><span class="n">xlims</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">bounds</span>
+                <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">samples</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">linsamples</span> <span class="o">=</span> <span class="p">[(</span><span class="n">l</span><span class="o">+</span><span class="n">u</span><span class="p">)</span><span class="o">/</span><span class="mf">2.0</span> <span class="k">for</span> <span class="n">l</span><span class="p">,</span><span class="n">u</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:])]</span>
+            <span class="k">elif</span> <span class="n">dims</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)</span> <span class="o">=</span> <span class="n">samples</span>
+                <span class="p">(</span><span class="n">l</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">r</span><span class="p">,</span><span class="n">t</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">extents</span> <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">bounds</span>
+
+                <span class="n">xedges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">cols</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">yedges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">rows</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">xsamples</span> <span class="o">=</span> <span class="p">[(</span><span class="n">l</span><span class="o">+</span><span class="n">u</span><span class="p">)</span><span class="o">/</span><span class="mf">2.0</span> <span class="k">for</span> <span class="n">l</span><span class="p">,</span><span class="n">u</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">xedges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">xedges</span><span class="p">[</span><span class="mi">1</span><span class="p">:])]</span>
+                <span class="n">ysamples</span> <span class="o">=</span> <span class="p">[(</span><span class="n">l</span><span class="o">+</span><span class="n">u</span><span class="p">)</span><span class="o">/</span><span class="mf">2.0</span> <span class="k">for</span> <span class="n">l</span><span class="p">,</span><span class="n">u</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">yedges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">yedges</span><span class="p">[</span><span class="mi">1</span><span class="p">:])]</span>
+
+                <span class="n">X</span><span class="p">,</span><span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">xsamples</span><span class="p">,</span> <span class="n">ysamples</span><span class="p">)</span>
+                <span class="n">linsamples</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">flat</span><span class="p">,</span> <span class="n">Y</span><span class="o">.</span><span class="n">flat</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Regular sampling not implented&quot;</span>
+                                          <span class="s">&quot;for high-dimensional Views.&quot;</span><span class="p">)</span>
+
+            <span class="n">samples</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">closest</span><span class="p">(</span><span class="n">linsamples</span><span class="p">))</span>
+
+        <span class="n">sampled_items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">view</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="o">**</span><span class="n">sample_values</span><span class="p">))</span>
+                         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">view</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">sampled_items</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="HoloMap.reduce"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.reduce">[docs]</a>    <span class="k">def</span> <span class="nf">reduce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label_prefix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">reduce_map</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reduce each Element in the HoloMap using a function supplied</span>
+<span class="sd">        via the kwargs, where the keyword has to match a particular</span>
+<span class="sd">        dimension in the Elements.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">reduced_items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">label_prefix</span><span class="o">=</span><span class="n">label_prefix</span><span class="p">,</span> <span class="o">**</span><span class="n">reduce_map</span><span class="p">))</span>
+                         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">reduced_items</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="HoloMap.collate"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.collate">[docs]</a>    <span class="k">def</span> <span class="nf">collate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collate_dim</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Collate splits out the specified dimension and joins the</span>
+<span class="sd">        samples in each of the split out Maps into Curves. If there</span>
+<span class="sd">        are multiple entries in the ItemTable it will lay them out</span>
+<span class="sd">        into a AxisLayout.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">..operation</span> <span class="kn">import</span> <span class="n">table_collate</span>
+        <span class="k">return</span> <span class="n">table_collate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collation_dim</span><span class="o">=</span><span class="n">collate_dim</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="HoloMap.map"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.map">[docs]</a>    <span class="k">def</span> <span class="nf">map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">map_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        UniformNdMapping a function across the HoloMap, using the bounds of first</span>
+<span class="sd">        mapped item.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mapped_items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">map_fn</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">mapped_items</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">empty_element</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_type</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">N</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">hist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">bin_range</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">adjoin</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">individually</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">histmap</span> <span class="o">=</span> <span class="n">HoloMap</span><span class="p">(</span><span class="n">key_dimensions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">)</span>
+
+        <span class="n">map_range</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="n">individually</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span>
+        <span class="n">bin_range</span> <span class="o">=</span> <span class="n">map_range</span> <span class="k">if</span> <span class="n">bin_range</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">bin_range</span>
+        <span class="n">style_prefix</span> <span class="o">=</span> <span class="s">&#39;Custom[&lt;&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s">&#39;&gt;]_&#39;</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">histmap</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">adjoin</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">bin_range</span><span class="o">=</span><span class="n">bin_range</span><span class="p">,</span>
+                                <span class="n">individually</span><span class="o">=</span><span class="n">individually</span><span class="p">,</span> <span class="n">num_bins</span><span class="o">=</span><span class="n">num_bins</span><span class="p">,</span>
+                                <span class="n">style_prefix</span><span class="o">=</span><span class="n">style_prefix</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">adjoin</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="p">(</span><span class="n">NdOverlay</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">)):</span>
+            <span class="n">layout</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span> <span class="o">&lt;&lt;</span> <span class="n">histmap</span><span class="p">)</span>
+            <span class="n">layout</span><span class="o">.</span><span class="n">main_layer</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;index&#39;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">layout</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span> <span class="o">&lt;&lt;</span> <span class="n">histmap</span><span class="p">)</span> <span class="k">if</span> <span class="n">adjoin</span> <span class="k">else</span> <span class="n">histmap</span>
+
+
+    <span class="k">def</span> <span class="nf">normalize_elements</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
+
+    <span class="k">def</span> <span class="nf">normalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+        <span class="n">data_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">([</span><span class="n">el</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+        <span class="n">data_min</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">([</span><span class="n">el</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+        <span class="n">norm_factor</span> <span class="o">=</span> <span class="n">data_max</span><span class="o">-</span><span class="n">data_min</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="nb">min</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="nb">max</span><span class="p">,</span>
+                                                 <span class="n">norm_factor</span><span class="o">=</span><span class="n">norm_factor</span><span class="p">))</span>
+
+</div>
+<div class="viewcode-block" id="AxisLayout"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.AxisLayout">[docs]</a><span class="k">class</span> <span class="nc">AxisLayout</span><span class="p">(</span><span class="n">UniformNdMapping</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Grids are distinct from GridLayouts as they ensure all contained elements</span>
+<span class="sd">    to be of the same type. Unlike GridLayouts, which have integer keys,</span>
+<span class="sd">    Grids usually have floating point keys, which correspond to a grid</span>
+<span class="sd">    sampling in some two-dimensional space. This two-dimensional space may</span>
+<span class="sd">    have to arbitrary dimensions, e.g. for 2D parameter spaces.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># NOTE: If further composite types supporting Overlaying and Layout these</span>
+    <span class="c">#       classes may be moved to core/composite.py</span>
+
+    <span class="n">key_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="n">Dimension</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;X&quot;</span><span class="p">),</span> <span class="n">Dimension</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;Y&quot;</span><span class="p">)],</span>
+                                <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
+
+    <span class="n">label</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">      A short label used to indicate what kind of data is contained</span>
+<span class="s">      within the AxisLayout.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;AxisLayout&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_items</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AxisLayout</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">initial_items</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Grids can have no more than two dimensions.&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_style</span> <span class="o">=</span> <span class="bp">None</span>
+
+
+    <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">AxisLayout</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&quot;Can only overlay two ParameterGrids if their keys match&quot;</span><span class="p">)</span>
+            <span class="n">zipped</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">other</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="n">overlayed_items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">el1</span> <span class="o">*</span> <span class="n">el2</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">)</span> <span class="ow">in</span> <span class="n">zipped</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">overlayed_items</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">view</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">last</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Can only overlay with HoloMap of length 1&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">view</span> <span class="o">=</span> <span class="n">other</span>
+
+        <span class="n">overlayed_items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">el</span> <span class="o">*</span> <span class="n">view</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">overlayed_items</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_transform_indices</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Transforms indices by snapping to the closest value if</span>
+<span class="sd">        values are numeric, otherwise applies no transformation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="nb">slice</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">key</span><span class="p">):</span>
+            <span class="n">dim_inds</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">:</span>
+                <span class="n">dim_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_type</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dim_type</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">dim_type</span><span class="p">,</span> <span class="n">Number</span><span class="p">):</span>
+                    <span class="n">dim_inds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span>
+            <span class="n">str_keys</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ndims</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dim_inds</span><span class="p">)</span>
+            <span class="n">num_keys</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dim_inds</span><span class="p">):</span>
+                <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">({</span><span class="nb">tuple</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dim_inds</span><span class="p">)</span>
+                             <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()})</span>
+                <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">tuple</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dim_inds</span><span class="p">)])</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">inner</span><span class="p">(</span><span class="n">q</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">q</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+                                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dim_inds</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">q</span><span class="o">-</span><span class="n">x</span><span class="p">)</span>
+                                     <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">])</span>
+                <span class="n">num_keys</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">keys</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">num_keys</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">dim_inds</span> <span class="k">else</span> <span class="nb">next</span><span class="p">(</span><span class="n">str_keys</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ndims</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="nb">slice</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">key</span><span class="p">):</span>
+            <span class="n">index_ind</span> <span class="o">=</span> <span class="p">[</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="p">(</span><span class="nb">slice</span><span class="p">,</span> <span class="nb">str</span><span class="p">))][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">dim_keys</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">k</span><span class="p">[</span><span class="n">index_ind</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()])</span>
+            <span class="n">snapped_val</span> <span class="o">=</span> <span class="n">dim_keys</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">dim_keys</span><span class="o">-</span><span class="n">key</span><span class="p">[</span><span class="n">index_ind</span><span class="p">])]</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">key</span><span class="p">[</span><span class="n">index_ind</span><span class="p">]</span> <span class="o">=</span> <span class="n">snapped_val</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">key</span>
+
+
+<div class="viewcode-block" id="AxisLayout.keys"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.AxisLayout.keys">[docs]</a>    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_grid</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a complete set of keys on a AxisLayout, even when AxisLayout isn&#39;t fully</span>
+<span class="sd">        populated. This makes it easier to identify missing elements in the</span>
+<span class="sd">        AxisLayout.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">AxisLayout</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">full_grid</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">keys</span>
+        <span class="n">dim1_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">))</span>
+        <span class="n">dim2_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">))</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">)</span> <span class="k">for</span> <span class="n">d1</span> <span class="ow">in</span> <span class="n">dim1_keys</span> <span class="k">for</span> <span class="n">d2</span> <span class="ow">in</span> <span class="n">dim2_keys</span><span class="p">]</span>
+
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="AxisLayout.last"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.AxisLayout.last">[docs]</a>    <span class="k">def</span> <span class="nf">last</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The last of a AxisLayout is another AxisLayout</span>
+<span class="sd">        constituted of the last of the individual elements. To access</span>
+<span class="sd">        the elements by their X,Y position, either index the position</span>
+<span class="sd">        directly or use the items() method.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">last_items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">clone</span><span class="p">((</span><span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">v</span><span class="o">.</span><span class="n">last</span><span class="p">)))</span>
+                      <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">last_items</span><span class="p">)</span>
+
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="AxisLayout.layer_types"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.AxisLayout.layer_types">[docs]</a>    <span class="k">def</span> <span class="nf">layer_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The type of layers stored in the AxisLayout.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">NdOverlay</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">layer_types</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,)</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The maximum depth of all the elements. Matches the semantics</span>
+<span class="sd">        of __len__ used by Maps. For the total number of elements,</span>
+<span class="sd">        count the full set of keys.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">([(</span><span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="s">&#39;__len__&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span> <span class="o">+</span> <span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">LayoutTree</span><span class="o">.</span><span class="n">from_view</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">+</span> <span class="n">LayoutTree</span><span class="o">.</span><span class="n">from_view</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="AxisLayout.all_keys"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.AxisLayout.all_keys">[docs]</a>    <span class="k">def</span> <span class="nf">all_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a list of all keys of the elements in the grid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">keys_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">):</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">main</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">):</span>
+                <span class="n">keys_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="o">*</span><span class="n">keys_list</span><span class="p">)))</span>
+
+</div>
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="AxisLayout.common_keys"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.AxisLayout.common_keys">[docs]</a>    <span class="k">def</span> <span class="nf">common_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a list of common keys. If all elements in the AxisLayout share</span>
+<span class="sd">        keys it will return the full set common of keys, otherwise returns</span>
+<span class="sd">        None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">keys_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">):</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">main</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">):</span>
+                <span class="n">keys_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">keys_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">keys_list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">keys_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+</div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">)),</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">))</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">xlim</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">xlim</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">xlim</span> <span class="o">=</span> <span class="n">find_minmax</span><span class="p">(</span><span class="n">xlim</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">xlim</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">xlim</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ylim</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">ylim</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">ylim</span> <span class="o">=</span> <span class="n">find_minmax</span><span class="p">(</span><span class="n">ylim</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">ylim</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="n">ylim</span> <span class="o">=</span> <span class="p">(</span><span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mf">1.</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ylim</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">extents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span>
+        <span class="n">l</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span>
+        <span class="n">b</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">l</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">grid_lbrt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">grid_dimensions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">:</span>
+            <span class="n">grid_dimensions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">grid_dimensions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">xdim</span><span class="p">,</span> <span class="n">ydim</span> <span class="o">=</span> <span class="n">grid_dimensions</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">xdim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ydim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xdim</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ydim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+
+<div class="viewcode-block" id="AxisLayout.dframe"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.AxisLayout.dframe">[docs]</a>    <span class="k">def</span> <span class="nf">dframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets a Pandas dframe from each of the items in the AxisLayout, appends the</span>
+<span class="sd">        AxisLayout coordinates and concatenates all the dframes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">pandas</span>
+        <span class="n">dframes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">coords</span><span class="p">,</span> <span class="n">vmap</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">map_frame</span> <span class="o">=</span> <span class="n">vmap</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">coord</span><span class="p">,</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">map_frame</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dim</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span><span class="s">&#39;_&#39;</span><span class="p">),</span> <span class="n">coord</span><span class="p">)</span>
+            <span class="n">dframes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">map_frame</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dframes</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div align="center"><h1>HoloViews</h1></div>
+<ul class="global-toc">
+
+<li><a href="../../../index.html">Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+<li><a href="http://github.com/ioam/holoviews">Github Source Code</a></li>
+<li><a href="../../../site_map.html">Site Map</a></li>
+</ul>
+<h3><a href="../../../index.html">Table Of Contents</a></h3>
+
+
+
+<h3>This Page</h3>
+<ul class="this-page-menu">
+	<li><a	href="https://github.com/ioam/dataviews/edit/master/doc/_modules/holoviews/core/element.rst" rel="nofollow">Edit on GitHub</a></li>
+</ul>
+
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../core.html" >holoviews.core</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, IOAM: Jean-Luc Stevens and Philipp Rudiger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

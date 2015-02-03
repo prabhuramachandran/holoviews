@@ -1,0 +1,530 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>holoviews.plotting.element &mdash; holoviews</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2014.05.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/custom.js"></script>
+    <link rel="top" title="holoviews" href="../../../index.html" />
+    <link rel="up" title="holoviews.plotting" href="../plotting.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../plotting.html" accesskey="U">holoviews.plotting</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for holoviews.plotting.element</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">groupby</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">ticker</span>
+<span class="kn">from</span> <span class="nn">matplotlib.font_manager</span> <span class="kn">import</span> <span class="n">FontProperties</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Store</span>
+<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">NdOverlay</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">,</span> <span class="n">CompositeOverlay</span><span class="p">,</span> <span class="n">Element</span><span class="p">,</span> <span class="n">Element3D</span>
+<span class="kn">from</span> <span class="nn">..core.util</span> <span class="kn">import</span> <span class="n">valid_identifier</span><span class="p">,</span> <span class="n">find_minmax</span>
+<span class="kn">from</span> <span class="nn">..operation</span> <span class="kn">import</span> <span class="n">Channel</span>
+<span class="kn">from</span> <span class="nn">.plot</span> <span class="kn">import</span> <span class="n">Plot</span>
+
+
+<div class="viewcode-block" id="ElementPlot"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.element.ElementPlot">[docs]</a><span class="k">class</span> <span class="nc">ElementPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
+
+    <span class="n">apply_databounds</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether to compute the plot bounds from the data itself.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">orientation</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;horizontal&#39;</span><span class="p">,</span>
+                                       <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;horizontal&#39;</span><span class="p">,</span> <span class="s">&#39;vertical&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The orientation of the plot. Note that this parameter may not</span>
+<span class="s">        always be respected by all plots but should be respected by</span>
+<span class="s">        adjoined plots when appropriate.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">rescale_individually</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether to use redraw the axes per map or per element.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">show_grid</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether to show a Cartesian grid on the plot.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">show_xaxis</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;bottom&#39;</span><span class="p">,</span>
+                                      <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;top&#39;</span><span class="p">,</span> <span class="s">&#39;bottom&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether and where to display the xaxis.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">show_yaxis</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;left&#39;</span><span class="p">,</span>
+                                      <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;left&#39;</span><span class="p">,</span> <span class="s">&#39;right&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether and where to display the yaxis.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">xticks</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Number of ticks along the x-axis.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">yticks</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Number of ticks along the y-axis.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="c"># Element Plots should declare the valid style options for matplotlib call</span>
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">overlaid</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_map</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">ranges</span><span class="p">,</span> <span class="n">keys</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">overlaid</span> <span class="o">=</span> <span class="n">overlaid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span> <span class="o">=</span> <span class="n">cyclic_index</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">=</span> <span class="n">zorder</span>
+        <span class="n">dimensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">key_dimensions</span> <span class="k">if</span> <span class="n">dimensions</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">dimensions</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">keys</span> <span class="k">if</span> <span class="n">keys</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ElementPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="n">keys</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">dimensions</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uniform</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span> <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">key</span><span class="p">,)</span>
+            <span class="n">select</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">k</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">key</span><span class="p">)}</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="nb">min</span><span class="p">([</span><span class="n">key</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">select</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(</span><span class="s">&#39;key&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span> <span class="n">key</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">selection</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">ignore_invalid</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">select</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="n">selection</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="n">selection</span><span class="o">.</span><span class="n">last</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">selection</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">)</span> <span class="k">else</span> <span class="n">selection</span>
+
+
+    <span class="k">def</span> <span class="nf">_check_map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">holomap</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Helper method that ensures a given element is always returned as</span>
+<span class="sd">        an HoloMap object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Compute framewise normalization</span>
+        <span class="n">mapwise_ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_ranges</span><span class="p">(</span><span class="n">holomap</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">keys</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">holomap</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ranges</span><span class="p">:</span>
+            <span class="n">frame_ranges</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">([(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">key</span><span class="p">),</span>
+                                         <span class="bp">self</span><span class="o">.</span><span class="n">compute_ranges</span><span class="p">(</span><span class="n">holomap</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
+                                        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">])</span>
+            <span class="n">ranges</span> <span class="o">=</span> <span class="n">frame_ranges</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">holomap</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">):</span>
+            <span class="n">frame_ranges</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">([(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_ranges</span><span class="p">(</span><span class="n">holomap</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">mapwise_ranges</span><span class="p">))</span>
+                                        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="n">keys</span> <span class="k">if</span> <span class="n">keys</span> <span class="k">else</span> <span class="n">holomap</span><span class="o">.</span><span class="n">keys</span><span class="p">())])</span>
+            <span class="n">ranges</span> <span class="o">=</span> <span class="n">frame_ranges</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="n">holomap</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">holomap</span> <span class="o">=</span> <span class="n">HoloMap</span><span class="p">(</span><span class="n">initial_items</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">holomap</span><span class="p">),</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;Frame&#39;</span><span class="p">],</span> <span class="nb">id</span><span class="o">=</span><span class="n">holomap</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+            <span class="n">ranges</span> <span class="o">=</span> <span class="p">{(</span><span class="mi">0</span><span class="p">,):</span> <span class="n">mapwise_ranges</span><span class="p">}</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="n">check</span> <span class="o">=</span> <span class="n">holomap</span><span class="o">.</span><span class="n">last</span>
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">holomap</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">CompositeOverlay</span><span class="p">):</span>
+            <span class="n">check</span> <span class="o">=</span> <span class="n">holomap</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">holomap</span> <span class="o">=</span> <span class="n">Channel</span><span class="o">.</span><span class="n">collapse</span><span class="p">(</span><span class="n">holomap</span><span class="p">,</span>
+                                       <span class="p">(</span><span class="n">ranges</span><span class="p">,</span> <span class="n">keys</span> <span class="k">if</span> <span class="n">keys</span> <span class="k">else</span> <span class="bp">None</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">check</span><span class="p">,</span> <span class="n">Element3D</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">projection</span> <span class="o">=</span> <span class="s">&#39;3d&#39;</span>
+
+        <span class="k">return</span> <span class="n">holomap</span>
+
+
+<div class="viewcode-block" id="ElementPlot.get_extents"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.element.ElementPlot.get_extents">[docs]</a>    <span class="k">def</span> <span class="nf">get_extents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">ranges</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets the extents for the axes from the current View. The globally</span>
+<span class="sd">        computed ranges can optionally override the extents.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">view</span><span class="o">.</span><span class="n">extents</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_individually</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">extents</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">_format_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_frame</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">frame</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="bp">None</span>
+        <span class="n">type_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="n">type_name</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">title_format</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">frame</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+                                         <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+                                         <span class="nb">type</span><span class="o">=</span><span class="n">type_name</span><span class="p">)</span>
+        <span class="n">dim_title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frame_title</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">title</span><span class="p">,</span> <span class="n">dim_title</span><span class="p">])</span>
+
+
+    <span class="k">def</span> <span class="nf">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">xticks</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">yticks</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                       <span class="n">xlabel</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Applies all the axis settings before the axis or figure is returned.</span>
+<span class="sd">        Only plots with zorder 0 get to apply their settings.</span>
+
+<span class="sd">        When the number of the frame is supplied as n, this method looks</span>
+<span class="sd">        up and computes the appropriate title, axis labels and axis bounds.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">axis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;axis&#39;</span><span class="p">]</span>
+
+        <span class="n">view</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_frame</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">view</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">title</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="s">&#39;xlabel&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">xlabel</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">xlabel</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">xlabel</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="s">&#39;ylabel&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ylabel</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">ylabel</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">ylabel</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_databounds</span><span class="p">:</span>
+                    <span class="n">extents</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_extents</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">extents</span><span class="p">:</span>
+                        <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="p">[</span><span class="n">coord</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isreal</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span> <span class="k">for</span> <span class="n">coord</span> <span class="ow">in</span> <span class="n">extents</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span> <span class="ow">in</span> <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">):</span> <span class="n">axis</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">((</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">b</span> <span class="o">==</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span> <span class="o">+=</span> <span class="mf">1.</span> <span class="c"># Arbitrary y-extent if zero range</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span> <span class="ow">in</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span> <span class="n">axis</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">((</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_grid</span><span class="p">:</span>
+                <span class="n">axis</span><span class="o">.</span><span class="n">get_xaxis</span><span class="p">()</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+                <span class="n">axis</span><span class="o">.</span><span class="n">get_yaxis</span><span class="p">()</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">xlabel</span><span class="p">:</span> <span class="n">axis</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="n">xlabel</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ylabel</span><span class="p">:</span> <span class="n">axis</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="n">ylabel</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">projection</span> <span class="o">==</span> <span class="s">&#39;3d&#39;</span><span class="p">:</span>
+                <span class="n">disabled_spines</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_xaxis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_xaxis</span> <span class="o">==</span> <span class="s">&#39;top&#39;</span><span class="p">:</span>
+                        <span class="n">axis</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s">&quot;top&quot;</span><span class="p">)</span>
+                        <span class="n">axis</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s">&quot;top&quot;</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_xaxis</span> <span class="o">==</span> <span class="s">&#39;bottom&#39;</span><span class="p">:</span>
+                        <span class="n">axis</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s">&quot;bottom&quot;</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">axis</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+                        <span class="n">disabled_spines</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s">&#39;top&#39;</span><span class="p">,</span> <span class="s">&#39;bottom&#39;</span><span class="p">])</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_yaxis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_yaxis</span> <span class="o">==</span> <span class="s">&#39;left&#39;</span><span class="p">:</span>
+                        <span class="n">axis</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s">&quot;left&quot;</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_yaxis</span> <span class="o">==</span> <span class="s">&#39;right&#39;</span><span class="p">:</span>
+                        <span class="n">axis</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_ticks_position</span><span class="p">(</span><span class="s">&quot;right&quot;</span><span class="p">)</span>
+                        <span class="n">axis</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_label_position</span><span class="p">(</span><span class="s">&quot;right&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">axis</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+                    <span class="n">disabled_spines</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s">&#39;left&#39;</span><span class="p">,</span> <span class="s">&#39;right&#39;</span><span class="p">])</span>
+
+                <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">disabled_spines</span><span class="p">:</span>
+                    <span class="n">axis</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_frame</span><span class="p">:</span>
+                <span class="n">axis</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s">&#39;right&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_yaxis</span> <span class="o">==</span> <span class="s">&#39;left&#39;</span> <span class="k">else</span> <span class="s">&#39;left&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+                <span class="n">axis</span><span class="o">.</span><span class="n">spines</span><span class="p">[</span><span class="s">&#39;bottom&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_xaxis</span> <span class="o">==</span> <span class="s">&#39;top&#39;</span> <span class="k">else</span> <span class="s">&#39;top&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">aspect</span> <span class="o">==</span> <span class="s">&#39;square&#39;</span><span class="p">:</span>
+                <span class="n">axis</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">((</span><span class="mf">1.</span><span class="o">/</span><span class="n">axis</span><span class="o">.</span><span class="n">get_data_ratio</span><span class="p">()))</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">aspect</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="s">&#39;square&#39;</span><span class="p">]:</span>
+                <span class="n">axis</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aspect</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">xticks</span><span class="p">:</span>
+                <span class="n">axis</span><span class="o">.</span><span class="n">set_xticks</span><span class="p">(</span><span class="n">xticks</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">axis</span><span class="o">.</span><span class="n">set_xticklabels</span><span class="p">(</span><span class="n">xticks</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">axis</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">ticker</span><span class="o">.</span><span class="n">MaxNLocator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xticks</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">yticks</span><span class="p">:</span>
+                <span class="n">axis</span><span class="o">.</span><span class="n">set_yticks</span><span class="p">(</span><span class="n">yticks</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">axis</span><span class="o">.</span><span class="n">set_yticklabels</span><span class="p">(</span><span class="n">yticks</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">axis</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">ticker</span><span class="o">.</span><span class="n">MaxNLocator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">yticks</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_title</span> <span class="ow">and</span> <span class="n">title</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;title&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">axis</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">hook</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">finalize_hooks</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Plotting hook </span><span class="si">%r</span><span class="s"> could not be applied.&quot;</span> <span class="o">%</span> <span class="n">hook</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">ElementPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">match_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">ranges</span><span class="p">):</span>
+        <span class="n">match_tuple</span> <span class="o">=</span> <span class="p">()</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">ranges</span><span class="o">.</span><span class="n">get</span><span class="p">((),</span> <span class="p">{})</span>
+        <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">element</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
+                     <span class="n">valid_identifier</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">value</span><span class="p">),</span>
+                     <span class="n">valid_identifier</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">label</span><span class="p">)]:</span>
+            <span class="n">match_tuple</span> <span class="o">+=</span> <span class="p">(</span><span class="n">spec</span><span class="p">,)</span>
+            <span class="k">if</span> <span class="n">match_tuple</span> <span class="ow">in</span> <span class="n">ranges</span><span class="p">:</span>
+                <span class="n">match</span> <span class="o">=</span> <span class="n">ranges</span><span class="p">[</span><span class="n">match_tuple</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">match</span>
+
+
+<div class="viewcode-block" id="ElementPlot.update_frame"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.element.ElementPlot.update_frame">[docs]</a>    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the plot(s) to the given frame number.  Operates by</span>
+<span class="sd">        manipulating the matplotlib objects held in the self._handles</span>
+<span class="sd">        dictionary.</span>
+
+<span class="sd">        If n is greater than the number of available frames, update</span>
+<span class="sd">        using the last available frame.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">view</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_frame</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">axis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;axis&#39;</span><span class="p">]</span>
+        <span class="n">axis</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="n">view</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">view</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize</span><span class="p">:</span>
+            <span class="n">ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_ranges</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
+            <span class="n">ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">match_range</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
+        <span class="n">axis_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_handles</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span> <span class="k">if</span> <span class="n">view</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">{},</span> <span class="n">ranges</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="n">ranges</span><span class="p">,</span> <span class="o">**</span><span class="p">(</span><span class="n">axis_kwargs</span> <span class="k">if</span> <span class="n">axis_kwargs</span> <span class="k">else</span> <span class="p">{}))</span>
+
+</div>
+<div class="viewcode-block" id="ElementPlot.update_handles"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.element.ElementPlot.update_handles">[docs]</a>    <span class="k">def</span> <span class="nf">update_handles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update the elements of the plot.</span>
+<span class="sd">        :param axis:</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+</div></div>
+<div class="viewcode-block" id="OverlayPlot"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.element.OverlayPlot">[docs]</a><span class="k">class</span> <span class="nc">OverlayPlot</span><span class="p">(</span><span class="n">ElementPlot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    OverlayPlot supports processing of channel operations on Overlays</span>
+<span class="sd">    across maps.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">show_legend</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether to show legend for the plot.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">OverlayPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="n">ranges</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_subplots</span><span class="p">(</span><span class="n">ranges</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_create_subplots</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="p">):</span>
+        <span class="n">subplots</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+
+        <span class="n">keys</span><span class="p">,</span> <span class="n">vmaps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">split_overlays</span><span class="p">()</span>
+        <span class="n">style_groups</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="p">)))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span>
+                            <span class="ow">in</span> <span class="n">groupby</span><span class="p">(</span><span class="n">vmaps</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">value</span><span class="p">)))</span>
+        <span class="k">for</span> <span class="n">zorder</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">vmap</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">vmaps</span><span class="p">)):</span>
+            <span class="n">cyclic_index</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">style_groups</span><span class="p">[(</span><span class="n">vmap</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">value</span><span class="p">)])</span>
+            <span class="n">plotopts</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">vmap</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span>
+            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">vmap</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">NdOverlay</span><span class="p">):</span>
+                <span class="n">plotopts</span><span class="p">[</span><span class="s">&#39;dimensions&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">vmap</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">key_dimensions</span>
+            <span class="n">plotopts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;axis&#39;</span><span class="p">],</span>
+                            <span class="n">cyclic_index</span><span class="o">=</span><span class="n">cyclic_index</span><span class="p">,</span> <span class="n">figure</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">],</span>
+                            <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="o">+</span><span class="n">zorder</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="n">ranges</span><span class="p">,</span> <span class="n">overlaid</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                            <span class="n">layout_dimensions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">layout_dimensions</span><span class="p">)</span>
+            <span class="n">plotype</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">vmap</span><span class="o">.</span><span class="n">last</span><span class="p">)]</span>
+            <span class="n">subplots</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">plotype</span><span class="p">(</span><span class="n">vmap</span><span class="p">,</span> <span class="o">**</span><span class="n">plotopts</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">subplots</span>
+
+
+    <span class="k">def</span> <span class="nf">_adjust_legend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="p">):</span>
+        <span class="c"># If legend enabled update handles and labels</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">axis</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">axis</span><span class="o">.</span><span class="n">get_legend</span><span class="p">():</span> <span class="k">return</span>
+        <span class="n">handles</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">axis</span><span class="o">.</span><span class="n">get_legend_handles_labels</span><span class="p">()</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">legend</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">handles</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_legend</span><span class="p">:</span>
+            <span class="n">fontP</span> <span class="o">=</span> <span class="n">FontProperties</span><span class="p">()</span>
+            <span class="n">fontP</span><span class="o">.</span><span class="n">set_size</span><span class="p">(</span><span class="s">&#39;medium&#39;</span><span class="p">)</span>
+            <span class="n">leg</span> <span class="o">=</span> <span class="n">axis</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">handles</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">labels</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">prop</span><span class="o">=</span><span class="n">fontP</span><span class="p">)</span>
+            <span class="n">leg</span><span class="o">.</span><span class="n">get_frame</span><span class="p">()</span><span class="o">.</span><span class="n">set_alpha</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="n">axis</span><span class="o">.</span><span class="n">get_legend</span><span class="p">()</span><span class="o">.</span><span class="n">get_frame</span><span class="p">()</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="s">&#39;1.0&#39;</span><span class="p">)</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">set_edgecolor</span><span class="p">(</span><span class="s">&#39;0.0&#39;</span><span class="p">)</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">set_linewidth</span><span class="p">(</span><span class="s">&#39;1.5&#39;</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">axis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;axis&#39;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">plot</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">plot</span><span class="p">(</span><span class="n">ranges</span><span class="o">=</span><span class="n">ranges</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_adjust_legend</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
+
+        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last_key</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="n">ranges</span><span class="p">,</span>
+                                   <span class="n">title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+
+
+    <span class="k">def</span> <span class="nf">get_extents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">ranges</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">projection</span> <span class="o">==</span> <span class="s">&#39;3d&#39;</span><span class="p">:</span>
+            <span class="n">indexes</span> <span class="o">=</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">indexes</span> <span class="o">=</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+        <span class="n">extents</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">subplot</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">layer</span> <span class="o">=</span> <span class="n">overlay</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">layer</span><span class="p">:</span>
+                <span class="n">lextnt</span> <span class="o">=</span> <span class="n">subplot</span><span class="o">.</span><span class="n">get_extents</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">extents</span> <span class="ow">and</span> <span class="n">lextnt</span><span class="p">:</span>
+                    <span class="n">extents</span> <span class="o">=</span> <span class="n">lextnt</span>
+                    <span class="k">continue</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">lextnt</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">bounds</span> <span class="o">=</span> <span class="p">[</span><span class="n">find_minmax</span><span class="p">((</span><span class="n">extents</span><span class="p">[</span><span class="n">low</span><span class="p">],</span> <span class="n">extents</span><span class="p">[</span><span class="n">high</span><span class="p">]),</span>
+                                      <span class="p">(</span><span class="n">lextnt</span><span class="p">[</span><span class="n">low</span><span class="p">],</span> <span class="n">lextnt</span><span class="p">[</span><span class="n">high</span><span class="p">]))</span>
+                                          <span class="k">for</span> <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="ow">in</span> <span class="n">indexes</span><span class="p">]</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">projection</span> <span class="o">==</span> <span class="s">&#39;3d&#39;</span><span class="p">:</span>
+                    <span class="n">extents</span> <span class="o">=</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                               <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">extents</span> <span class="o">=</span> <span class="p">(</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+                               <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">],</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">extents</span>
+
+
+    <span class="k">def</span> <span class="nf">_format_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_frame</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">frame</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="bp">None</span>
+        <span class="n">type_name</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">value</span> <span class="o">!=</span> <span class="n">type_name</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">label</span>
+
+        <span class="n">labels</span><span class="p">,</span> <span class="n">values</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">subplot</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">layer</span> <span class="o">=</span> <span class="n">frame</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">layer</span><span class="p">:</span>
+                <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+                <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">label</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">l</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">)):</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">)):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">title_format</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+                                         <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+                                         <span class="nb">type</span><span class="o">=</span><span class="n">type_name</span><span class="p">)</span>
+        <span class="n">dim_title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frame_title</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">title</span><span class="p">,</span> <span class="n">dim_title</span><span class="p">])</span>
+
+
+    <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">projection</span> <span class="o">==</span> <span class="s">&#39;3d&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;axis&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">plot</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">plot</span><span class="o">.</span><span class="n">update_frame</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
+
+</div>
+<span class="n">Store</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">NdOverlay</span><span class="p">:</span> <span class="n">OverlayPlot</span><span class="p">,</span>
+                       <span class="n">Overlay</span><span class="p">:</span> <span class="n">OverlayPlot</span><span class="p">})</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div align="center"><h1>HoloViews</h1></div>
+<ul class="global-toc">
+
+<li><a href="../../../index.html">Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+<li><a href="http://github.com/ioam/holoviews">Github Source Code</a></li>
+<li><a href="../../../site_map.html">Site Map</a></li>
+</ul>
+<h3><a href="../../../index.html">Table Of Contents</a></h3>
+
+
+
+<h3>This Page</h3>
+<ul class="this-page-menu">
+	<li><a	href="https://github.com/ioam/dataviews/edit/master/doc/_modules/holoviews/plotting/element.rst" rel="nofollow">Edit on GitHub</a></li>
+</ul>
+
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../plotting.html" >holoviews.plotting</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, IOAM: Jean-Luc Stevens and Philipp Rudiger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>holoviews.core.traversal &mdash; holoviews</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2014.05.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/custom.js"></script>
+    <link rel="top" title="holoviews" href="../../../index.html" />
+    <link rel="up" title="holoviews.core" href="../core.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../core.html" accesskey="U">holoviews.core</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for holoviews.core.traversal</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Advanced utilities for traversing nesting/hierarchical Dimensioned</span>
+<span class="sd">objects either to inspect the structure of their declared dimensions.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">itemgetter</span>
+
+<span class="kn">from</span> <span class="nn">.dimension</span> <span class="kn">import</span> <span class="n">Dimension</span>
+
+<span class="k">def</span> <span class="nf">create_ndkey</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="n">indexes</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">length</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">indexes</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="n">key</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+<div class="viewcode-block" id="uniform"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.traversal.uniform">[docs]</a><span class="k">def</span> <span class="nf">uniform</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Finds all common dimension keys in the object</span>
+<span class="sd">    including subsets of dimensions. If there are</span>
+<span class="sd">    is no common subset of dimensions, None is</span>
+<span class="sd">    returned.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dim_groups</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">),</span>
+                              <span class="p">(</span><span class="s">&#39;HoloMap&#39;</span><span class="p">,))</span>
+    <span class="k">if</span> <span class="n">dim_groups</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">all</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">g1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="nb">set</span><span class="p">(</span><span class="n">g2</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">(</span><span class="n">g1</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="nb">set</span><span class="p">(</span><span class="n">g2</span><span class="p">)</span>
+                   <span class="k">for</span> <span class="n">g1</span> <span class="ow">in</span> <span class="n">dim_groups</span> <span class="k">for</span> <span class="n">g2</span> <span class="ow">in</span> <span class="n">dim_groups</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">True</span>
+
+</div>
+<div class="viewcode-block" id="unique_dimkeys"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.traversal.unique_dimkeys">[docs]</a><span class="k">def</span> <span class="nf">unique_dimkeys</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Finds all common dimension keys in the object</span>
+<span class="sd">    including subsets of dimensions. If there are</span>
+<span class="sd">    is no common subset of dimensions, None is</span>
+<span class="sd">    returned.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">key_dims</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">),</span>
+                                       <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())),</span> <span class="p">(</span><span class="s">&#39;HoloMap&#39;</span><span class="p">,))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">key_dims</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;Frame&#39;</span><span class="p">)],</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,)]</span>
+    <span class="n">dim_groups</span><span class="p">,</span> <span class="n">keys</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="nb">sorted</span><span class="p">(</span><span class="n">key_dims</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">d</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">)))</span>
+    <span class="n">subset</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">g1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="nb">set</span><span class="p">(</span><span class="n">g2</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">(</span><span class="n">g1</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="nb">set</span><span class="p">(</span><span class="n">g2</span><span class="p">)</span>
+               <span class="k">for</span> <span class="n">g1</span> <span class="ow">in</span> <span class="n">dim_groups</span> <span class="k">for</span> <span class="n">g2</span> <span class="ow">in</span> <span class="n">dim_groups</span><span class="p">)</span>
+    <span class="c"># Find unique keys</span>
+    <span class="n">all_dims</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">dim</span> <span class="k">for</span> <span class="n">dim_group</span> <span class="ow">in</span> <span class="n">dim_groups</span>
+                       <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">dim_group</span><span class="p">},</span>
+                      <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="o">-</span><span class="n">dim_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+    <span class="n">ndims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">all_dims</span><span class="p">)</span>
+    <span class="n">unique_keys</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">keys</span> <span class="ow">in</span> <span class="n">key_dims</span><span class="p">:</span>
+        <span class="n">dim_idxs</span> <span class="o">=</span> <span class="p">[</span><span class="n">all_dims</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">group</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+            <span class="n">matches</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">unique_keys</span>
+                       <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="n">itemgetter</span><span class="p">(</span><span class="o">*</span><span class="n">dim_idxs</span><span class="p">)(</span><span class="n">item</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="p">:</span>
+                <span class="n">unique_keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">create_ndkey</span><span class="p">(</span><span class="n">ndims</span><span class="p">,</span> <span class="n">dim_idxs</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">subset</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">all_dims</span><span class="p">,</span> <span class="n">unique_keys</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s">&#39;Frames&#39;</span><span class="p">],</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">unique_keys</span><span class="p">))]</span>
+</pre></div></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div align="center"><h1>HoloViews</h1></div>
+<ul class="global-toc">
+
+<li><a href="../../../index.html">Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+<li><a href="http://github.com/ioam/holoviews">Github Source Code</a></li>
+<li><a href="../../../site_map.html">Site Map</a></li>
+</ul>
+<h3><a href="../../../index.html">Table Of Contents</a></h3>
+
+
+
+<h3>This Page</h3>
+<ul class="this-page-menu">
+	<li><a	href="https://github.com/ioam/dataviews/edit/master/doc/_modules/holoviews/core/traversal.rst" rel="nofollow">Edit on GitHub</a></li>
+</ul>
+
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../core.html" >holoviews.core</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, IOAM: Jean-Luc Stevens and Philipp Rudiger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

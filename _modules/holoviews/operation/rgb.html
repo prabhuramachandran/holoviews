@@ -1,0 +1,361 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>holoviews.operation.rgb &mdash; holoviews</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2014.05.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/custom.js"></script>
+    <link rel="top" title="holoviews" href="../../../index.html" />
+    <link rel="up" title="holoviews.operation" href="../operation.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../operation.html" accesskey="U">holoviews.operation</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for holoviews.operation.rgb</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">ElementOperations that output RGB elements are commonly used for</span>
+<span class="sd">displaying colored images.</span>
+
+<span class="sd">The element operations can often be used with option.Channel to define</span>
+<span class="sd">operations that should automatically be applied upon display.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">colorsys</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">..core.operation</span> <span class="kn">import</span> <span class="n">ElementOperation</span>
+<span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Options</span><span class="p">,</span> <span class="n">Cycle</span>
+<span class="kn">from</span> <span class="nn">..element</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">RGB</span>
+<span class="kn">from</span> <span class="nn">.normalization</span> <span class="kn">import</span> <span class="n">raster_normalization</span>
+<span class="kn">from</span> <span class="nn">.element</span> <span class="kn">import</span> <span class="n">split_raster</span>
+
+<span class="n">rgb_to_hsv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">colorsys</span><span class="o">.</span><span class="n">rgb_to_hsv</span><span class="p">)</span>
+<span class="n">hsv_to_rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">colorsys</span><span class="o">.</span><span class="n">hsv_to_rgb</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="toRGB"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.rgb.toRGB">[docs]</a><span class="k">class</span> <span class="nc">toRGB</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Accepts an overlay containing either 3 or 4 layers. The first</span>
+<span class="sd">    three layers are the R,G, B channels and the last layer (if</span>
+<span class="sd">    supplied) is the (optional) alpha channel.</span>
+
+<span class="sd">    Note that the values in the input Matrix elements are expected to</span>
+<span class="sd">    be bounded between 0.0-1.0. If this isn&#39;t the case, the values of</span>
+<span class="sd">    these channels will be clipped into this range.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">output_type</span> <span class="o">=</span> <span class="n">RGB</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;RGB&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The value string for the output RGB element.&quot;&quot;&quot;</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Requires 3 or 4 layers to convert to RGB(A)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">Matrix</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All layers must be of type Matrix to convert to RGB&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All Matrix elements must have single value&quot;</span>
+                            <span class="s">&quot; dimension for conversion to RGB&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">bounds</span> <span class="o">==</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bounds</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All input Matrix elements must have the same bounds.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All input Matrix must have data with matching shape.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">input_ranges</span><span class="p">:</span>
+            <span class="n">normfn</span> <span class="o">=</span> <span class="n">raster_normalization</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
+            <span class="n">overlay</span> <span class="o">=</span> <span class="n">normfn</span><span class="o">.</span><span class="n">process_element</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">input_ranges</span><span class="p">)</span>
+
+        <span class="n">arrays</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">el</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">1.0</span> <span class="ow">or</span> <span class="n">el</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Clipping data into the interval [0, 1]&quot;</span><span class="p">)</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">el</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">)</span>
+                <span class="n">arrays</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">arrays</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+
+        <span class="k">return</span> <span class="n">RGB</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">(</span><span class="n">arrays</span><span class="p">),</span>
+                   <span class="n">bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_overlay_extents</span><span class="p">(</span><span class="n">overlay</span><span class="p">),</span>
+                   <span class="n">label</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_overlay_label</span><span class="p">(</span><span class="n">overlay</span><span class="p">),</span>
+                   <span class="n">value</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="toHCS"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.rgb.toHCS">[docs]</a><span class="k">class</span> <span class="nc">toHCS</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Hue-Confidence-Strength plot.</span>
+
+<span class="sd">    Accepts an overlay containing either 2 or 3 layers. The first two</span>
+<span class="sd">    layers are hue and confidence and the third layer (if available)</span>
+<span class="sd">    is the strength channel.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">output_type</span> <span class="o">=</span> <span class="n">RGB</span>
+
+    <span class="n">S_multiplier</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="bp">None</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Post-normalization multiplier for the strength value.</span>
+
+<span class="s">        Note that if the result is outside the bounds 0.0-1.0, it will</span>
+<span class="s">        be clipped. &quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">C_multiplier</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="bp">None</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Post-normalization multiplier for the confidence value.</span>
+
+<span class="s">        Note that if the result is outside the bounds 0.0-1.0, it will</span>
+<span class="s">        be clipped.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">flipSC</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether to flip the strength and confidence channels&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;HCS&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The value string for the output (an RGB element).&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">input_ranges</span><span class="p">:</span>
+            <span class="n">normfn</span> <span class="o">=</span> <span class="n">raster_normalization</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
+            <span class="n">overlay</span> <span class="o">=</span> <span class="n">normfn</span><span class="o">.</span><span class="n">process_element</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">input_ranges</span><span class="p">)</span>
+
+        <span class="n">hue</span><span class="p">,</span> <span class="n">confidence</span> <span class="o">=</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">strength_data</span> <span class="o">=</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">hue</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+        <span class="n">hue_range</span> <span class="o">=</span> <span class="n">hue</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">range</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">hue</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">cyclic</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">None</span> <span class="ow">in</span> <span class="n">hue_range</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;The input hue channel must be declared cyclic with a defined range.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">hue_data</span> <span class="o">=</span> <span class="n">hue</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">hue_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">hue_data</span> <span class="o">/=</span> <span class="p">(</span><span class="n">hue_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">hue_range</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">hue</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">confidence</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Cannot combine input Matrices with different shapes.&quot;</span><span class="p">)</span>
+
+        <span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="n">s</span><span class="p">,</span><span class="n">v</span><span class="p">)</span><span class="o">=</span> <span class="p">(</span><span class="n">hue_data</span><span class="p">,</span>
+                  <span class="p">(</span><span class="n">confidence</span><span class="o">.</span><span class="n">data</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">C_multiplier</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+                  <span class="p">(</span><span class="n">strength_data</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">S_multiplier</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">flipSC</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="n">s</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="n">v</span><span class="p">,</span><span class="n">s</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">RGB</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">(</span><span class="n">hsv_to_rgb</span><span class="p">(</span><span class="n">h</span><span class="p">,</span><span class="n">s</span><span class="p">,</span><span class="n">v</span><span class="p">)),</span>
+                   <span class="n">bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_overlay_extents</span><span class="p">(</span><span class="n">overlay</span><span class="p">),</span>
+                   <span class="n">label</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">get_overlay_label</span><span class="p">(</span><span class="n">overlay</span><span class="p">),</span>
+                   <span class="n">value</span> <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="colormap"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.rgb.colormap">[docs]</a><span class="k">class</span> <span class="nc">colormap</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Applies a colormap on a Matrix input, returning the result as an</span>
+<span class="sd">    RGB element.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">output_type</span> <span class="o">=</span> <span class="n">RGB</span>
+
+    <span class="n">cmap</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;jet&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The name of matplotlib color map to apply.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Colormap&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The value string for the output (an RGB element).&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">matplotlib</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Can only apply colour maps to Matrix&quot;</span>
+                            <span class="s">&quot; with single value dimension.&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">RGB</span><span class="p">(</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">cmap</span><span class="p">)(</span><span class="n">matrix</span><span class="o">.</span><span class="n">data</span><span class="p">),</span>
+                   <span class="n">bounds</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
+                   <span class="n">label</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
+                   <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="alpha_overlay"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.rgb.alpha_overlay">[docs]</a><span class="k">class</span> <span class="nc">alpha_overlay</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Accepts an overlay of a Matrix defined with a cmap and converts it</span>
+<span class="sd">    to an RGB element whereby the alpha channel of the result is</span>
+<span class="sd">    obtained from the second layer of the overlay.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;AlphaOverlay&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The value string for the output (an RGB element).&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">cmap</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;jet&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The name of matplotlib color map to apply.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">R</span><span class="p">,</span><span class="n">G</span><span class="p">,</span><span class="n">B</span><span class="p">,</span><span class="n">_</span> <span class="o">=</span> <span class="n">split_raster</span><span class="p">(</span><span class="n">colormap</span><span class="p">(</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">cmap</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">cmap</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">RGB</span><span class="p">(</span><span class="n">toRGB</span><span class="p">(</span><span class="n">R</span><span class="o">*</span><span class="n">G</span><span class="o">*</span><span class="n">B</span><span class="o">*</span><span class="n">overlay</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                   <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_overlay_extents</span><span class="p">(</span><span class="n">overlay</span><span class="p">),</span>
+                   <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_overlay_label</span><span class="p">(</span><span class="n">overlay</span><span class="p">),</span>
+                   <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="colorizeHSV"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.rgb.colorizeHSV">[docs]</a><span class="k">class</span> <span class="nc">colorizeHSV</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given an Overlay consisting of two Matrix elements, colorize the</span>
+<span class="sd">    data in the bottom Matrix with the data in the top Matrix using</span>
+<span class="sd">    the HSV color space.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;ColorizedHSV&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The value string for the colorized output (an RGB element)&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;colorizeHSV required an overlay of two Matrix elements as input.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">))</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Each Matrix element must have single value dimension.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Mismatch in the shapes of the data in the Matrix elements.&quot;</span><span class="p">)</span>
+
+
+        <span class="n">hue</span> <span class="o">=</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">Hdim</span> <span class="o">=</span> <span class="n">hue</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="n">hue</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">hue</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+                      <span class="n">value_dimensions</span><span class="o">=</span><span class="p">[</span><span class="n">Hdim</span><span class="p">(</span><span class="n">cyclic</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="n">hue</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="n">Hdim</span><span class="o">.</span><span class="n">name</span><span class="p">))])</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">input_ranges</span><span class="p">:</span>
+            <span class="n">normfn</span> <span class="o">=</span> <span class="n">raster_normalization</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
+            <span class="n">S</span> <span class="o">=</span> <span class="n">normfn</span><span class="o">.</span><span class="n">process_element</span><span class="p">(</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">input_ranges</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">S</span> <span class="o">=</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">C</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">hue</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>
+                   <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_overlay_extents</span><span class="p">(</span><span class="n">overlay</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="s">&#39;F&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;G&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">toHCS</span><span class="p">(</span><span class="n">H</span> <span class="o">*</span> <span class="n">C</span> <span class="o">*</span> <span class="n">S</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div align="center"><h1>HoloViews</h1></div>
+<ul class="global-toc">
+
+<li><a href="../../../index.html">Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+<li><a href="http://github.com/ioam/holoviews">Github Source Code</a></li>
+<li><a href="../../../site_map.html">Site Map</a></li>
+</ul>
+<h3><a href="../../../index.html">Table Of Contents</a></h3>
+
+
+
+<h3>This Page</h3>
+<ul class="this-page-menu">
+	<li><a	href="https://github.com/ioam/dataviews/edit/master/doc/_modules/holoviews/operation/rgb.rst" rel="nofollow">Edit on GitHub</a></li>
+</ul>
+
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../operation.html" >holoviews.operation</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, IOAM: Jean-Luc Stevens and Philipp Rudiger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>

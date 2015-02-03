@@ -66,17 +66,21 @@
   <h1>Source code for holoviews.plotting</h1><div class="highlight"><pre>
 <span class="kn">import</span> <span class="nn">os</span>
 
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">seaborn</span> <span class="c"># pyflakes:ignore (API import)</span>
-<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">pandas</span> <span class="c"># pyflakes:ignore (API import)</span>
-<span class="kn">from</span> <span class="nn">.dataplots</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
-<span class="kn">from</span> <span class="nn">.sheetplots</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
-<span class="kn">from</span> <span class="nn">.viewplots</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
+<span class="kn">import</span> <span class="nn">param</span>
 
+<span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Cycle</span><span class="p">,</span> <span class="n">Options</span><span class="p">,</span> <span class="n">Store</span>
+<span class="kn">from</span> <span class="nn">.annotation</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
+<span class="kn">from</span> <span class="nn">.chart</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
+<span class="kn">from</span> <span class="nn">.plot</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
+<span class="kn">from</span> <span class="nn">.raster</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
+<span class="kn">from</span> <span class="nn">.tabular</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">pandas</span> <span class="c"># pyflakes:ignore (API import)</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">seaborn</span> <span class="c"># pyflakes:ignore (API import)</span>
 
 
 <div class="viewcode-block" id="PlotSaver"><a class="viewcode-back" href="../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.PlotSaver">[docs]</a><span class="k">class</span> <span class="nc">PlotSaver</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">ParameterizedFunction</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Parameterized function for saving the plot of a View object to</span>
+<span class="sd">    Parameterized function for saving the plot of a ViewableElement object to</span>
 <span class="sd">    disk either as a static figure or as an animation. Keywords that</span>
 <span class="sd">    are not parameters are passed into the anim method of the</span>
 <span class="sd">    appropriate plot for animations and into matplotlib.figure.savefig</span>
@@ -116,8 +120,8 @@
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;File of type </span><span class="si">%r</span><span class="s"> not in </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ext</span><span class="p">,</span> <span class="n">valid_exts</span><span class="p">))</span>
         <span class="n">file_format</span> <span class="o">=</span> <span class="n">ext</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 
-        <span class="n">plottype</span> <span class="o">=</span> <span class="n">Plot</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">view</span><span class="p">)]</span>
-        <span class="n">plotopts</span> <span class="o">=</span> <span class="n">View</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">plotting</span><span class="p">(</span><span class="n">view</span><span class="p">)</span><span class="o">.</span><span class="n">opts</span>
+        <span class="n">plottype</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">view</span><span class="p">)]</span>
+        <span class="n">plotopts</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span>
         <span class="n">plot</span> <span class="o">=</span> <span class="n">plottype</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">plotopts</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">anim_exts</span><span class="p">:</span>
@@ -134,13 +138,32 @@
                            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">extra_keywords</span><span class="p">())</span>
 
 </div>
+<span class="n">Store</span><span class="o">.</span><span class="n">register_plots</span><span class="p">()</span>
+
+
+
+<span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">Contours</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;k&#39;</span><span class="p">)</span>
+<span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">Matrix</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s">&#39;nearest&#39;</span><span class="p">)</span>
+<span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">Raster</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;jet&#39;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s">&#39;nearest&#39;</span><span class="p">)</span>
+<span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">HeatMap</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;jet&#39;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s">&#39;nearest&#39;</span><span class="p">)</span>
+<span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">GridLayout</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="o">**</span><span class="p">{</span><span class="s">&#39;font.size&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span> <span class="s">&#39;axes.labelsize&#39;</span><span class="p">:</span> <span class="s">&#39;small&#39;</span><span class="p">,</span>
+                                                 <span class="s">&#39;axes.titlesize&#39;</span><span class="p">:</span> <span class="s">&#39;small&#39;</span><span class="p">})</span>
+<span class="c"># Color cycles can be removed once default style set and test data updated</span>
+<span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">Curve</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">Cycle</span><span class="p">(),</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">Scatter</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">Cycle</span><span class="p">(),</span> <span class="n">marker</span><span class="o">=</span><span class="s">&#39;o&#39;</span><span class="p">)</span>
+<span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">Histogram</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="n">ec</span><span class="o">=</span><span class="s">&#39;k&#39;</span><span class="p">,</span> <span class="n">fc</span><span class="o">=</span><span class="s">&#39;w&#39;</span><span class="p">)</span>
+<span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">Points</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">Cycle</span><span class="p">(),</span> <span class="n">marker</span><span class="o">=</span><span class="s">&#39;o&#39;</span><span class="p">)</span>
+
+<span class="c"># Defining the most common style options for holoviews</span>
+<span class="n">GrayNearest</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s">&#39;nearest&#39;</span><span class="p">)</span>
+
 <span class="k">def</span> <span class="nf">public</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span> <span class="k">return</span> <span class="bp">False</span>
     <span class="n">baseclasses</span> <span class="o">=</span> <span class="p">[</span><span class="n">Plot</span><span class="p">]</span>
     <span class="k">return</span> <span class="nb">any</span><span class="p">([</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">bc</span><span class="p">)</span> <span class="k">for</span> <span class="n">bc</span> <span class="ow">in</span> <span class="n">baseclasses</span><span class="p">])</span>
 
 
-<span class="n">_public</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;PlotSaver&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">_k</span> <span class="k">for</span> <span class="n">_k</span><span class="p">,</span> <span class="n">_v</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">public</span><span class="p">(</span><span class="n">_v</span><span class="p">)]))</span>
+<span class="n">_public</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;PlotSaver&quot;</span><span class="p">,</span> <span class="s">&quot;GrayNearest&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">_k</span> <span class="k">for</span> <span class="n">_k</span><span class="p">,</span> <span class="n">_v</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">public</span><span class="p">(</span><span class="n">_v</span><span class="p">)]))</span>
 <span class="n">__all__</span> <span class="o">=</span> <span class="n">_public</span>
 </pre></div>
 

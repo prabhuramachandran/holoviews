@@ -70,31 +70,33 @@
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">magics</span>
 <span class="kn">from</span> <span class="nn">.magics</span> <span class="kn">import</span> <span class="n">ViewMagic</span><span class="p">,</span> <span class="n">load_magics</span>
 <span class="kn">from</span> <span class="nn">.display_hooks</span> <span class="kn">import</span> <span class="n">animate</span><span class="p">,</span> <span class="n">set_display_hooks</span>
+<span class="kn">from</span> <span class="nn">.parser</span> <span class="kn">import</span> <span class="n">Parser</span>
 
 <span class="kn">from</span> <span class="nn">param</span> <span class="kn">import</span> <span class="n">ipython</span> <span class="k">as</span> <span class="n">param_ext</span>
 
 <span class="k">try</span><span class="p">:</span>    <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">animation</span>
 <span class="k">except</span><span class="p">:</span> <span class="n">animation</span> <span class="o">=</span> <span class="bp">None</span>
 
-
-
-<span class="n">all_line_magics</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="s">&#39;%params&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%o</span><span class="s">pts&#39;</span><span class="p">,</span> <span class="s">&#39;%view&#39;</span><span class="p">])</span>
+<span class="n">all_line_magics</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="s">&#39;%params&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%o</span><span class="s">pts&#39;</span><span class="p">,</span> <span class="s">&#39;%view&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%c</span><span class="s">hannels&#39;</span><span class="p">])</span>
 <span class="n">all_cell_magics</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="s">&#39;</span><span class="si">%%</span><span class="s">view&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%%</span><span class="s">opts&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%%</span><span class="s">labels&#39;</span><span class="p">])</span>
 <span class="n">message</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;Welcome to the holoviews IPython extension! (http://ioam.github.io/holoviews/)&quot;&quot;&quot;</span>
-<span class="n">message</span> <span class="o">+=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">Available magics: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">all_line_magics</span> <span class="o">+</span> <span class="n">all_cell_magics</span><span class="p">)</span>
+<span class="n">message</span> <span class="o">+=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">Available magics: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">all_line_magics</span><span class="p">)</span>
+                                                <span class="o">+</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">all_cell_magics</span><span class="p">))</span>
 
 
-<span class="k">def</span> <span class="nf">select_format</span><span class="p">(</span><span class="n">format_priority</span><span class="p">):</span>
-    <span class="k">for</span> <span class="n">fmt</span> <span class="ow">in</span> <span class="n">format_priority</span><span class="p">:</span>
+<div class="viewcode-block" id="supported_formats"><a class="viewcode-back" href="../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.supported_formats">[docs]</a><span class="k">def</span> <span class="nf">supported_formats</span><span class="p">(</span><span class="n">optional_formats</span><span class="p">):</span>
+    <span class="s">&quot;Optional formats that are actually supported&quot;</span>
+    <span class="n">supported</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">fmt</span> <span class="ow">in</span> <span class="n">optional_formats</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">anim</span> <span class="o">=</span> <span class="n">animation</span><span class="o">.</span><span class="n">FuncAnimation</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(),</span>
                                            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="n">frames</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
-            <span class="n">animate</span><span class="p">(</span><span class="n">anim</span><span class="p">,</span> <span class="o">*</span><span class="n">magics</span><span class="o">.</span><span class="n">ANIMATION_OPTS</span><span class="p">[</span><span class="n">fmt</span><span class="p">])</span>
-            <span class="k">return</span> <span class="n">fmt</span>
+            <span class="n">animate</span><span class="p">(</span><span class="n">anim</span><span class="p">,</span> <span class="o">*</span><span class="n">ViewMagic</span><span class="o">.</span><span class="n">ANIMATION_OPTS</span><span class="p">[</span><span class="n">fmt</span><span class="p">])</span>
+            <span class="n">supported</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
         <span class="k">except</span><span class="p">:</span> <span class="k">pass</span>
-    <span class="k">return</span> <span class="n">format_priority</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">supported</span>
 
-
+</div>
 <div class="viewcode-block" id="update_matplotlib_rc"><a class="viewcode-back" href="../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.update_matplotlib_rc">[docs]</a><span class="k">def</span> <span class="nf">update_matplotlib_rc</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Default changes to the matplotlib rc used by IPython Notebook.</span>
@@ -109,10 +111,12 @@
          <span class="p">}</span>
     <span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">rc</span><span class="p">)</span>
 
-</div>
-<span class="n">ViewMagic</span><span class="o">.</span><span class="n">VIDEO_FORMAT</span> <span class="o">=</span> <span class="n">select_format</span><span class="p">([</span><span class="s">&#39;webm&#39;</span><span class="p">,</span><span class="s">&#39;h264&#39;</span><span class="p">,</span><span class="s">&#39;gif&#39;</span><span class="p">])</span>
-<span class="c"># HTML_video output by default, but may be set to first_frame,</span>
-<span class="c"># middle_frame or last_frame (e.g. for testing purposes)</span>
+
+<span class="c"># Populating the namespace for keyword evaluation</span></div>
+<span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Cycle</span>         <span class="c"># pyflakes:ignore (namespace import)</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>                       <span class="c"># pyflakes:ignore (namespace import)</span>
+
+<span class="n">Parser</span><span class="o">.</span><span class="n">namespace</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;np&#39;</span><span class="p">:</span><span class="n">np</span><span class="p">,</span> <span class="s">&#39;Cycle&#39;</span><span class="p">:</span><span class="n">Cycle</span><span class="p">}</span>
 
 <span class="n">_loaded</span> <span class="o">=</span> <span class="bp">False</span>
 <span class="k">def</span> <span class="nf">load_ipython_extension</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
@@ -126,6 +130,8 @@
         <span class="n">param_ext</span><span class="o">.</span><span class="n">load_ipython_extension</span><span class="p">(</span><span class="n">ip</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
         <span class="n">load_magics</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span>
+        <span class="n">valid_formats</span> <span class="o">=</span> <span class="n">supported_formats</span><span class="p">(</span><span class="n">ViewMagic</span><span class="o">.</span><span class="n">optional_formats</span><span class="p">)</span>
+        <span class="n">ViewMagic</span><span class="o">.</span><span class="n">register_supported_formats</span><span class="p">(</span><span class="n">valid_formats</span><span class="p">)</span>
         <span class="n">set_display_hooks</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span>
         <span class="n">update_matplotlib_rc</span><span class="p">()</span>
         <span class="n">set_style</span><span class="p">(</span><span class="s">&#39;default&#39;</span><span class="p">)</span>

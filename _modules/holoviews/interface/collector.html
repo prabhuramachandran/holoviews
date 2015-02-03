@@ -75,9 +75,10 @@
 
 <span class="kn">import</span> <span class="nn">param</span>
 
-<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Map</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">Grid</span><span class="p">,</span> <span class="n">View</span><span class="p">,</span> <span class="n">ViewMap</span><span class="p">,</span> <span class="n">AttrTree</span>
+<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">ViewableElement</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">,</span>\
+ <span class="n">AxisLayout</span><span class="p">,</span> <span class="n">AttrTree</span><span class="p">,</span> <span class="n">HoloMap</span>
+<span class="kn">from</span> <span class="nn">..element.raster</span> <span class="kn">import</span> <span class="n">Matrix</span>
 <span class="kn">from</span> <span class="nn">..ipython.widgets</span> <span class="kn">import</span> <span class="n">RunProgress</span><span class="p">,</span> <span class="n">ProgressBar</span>
-<span class="kn">from</span> <span class="nn">..view</span> <span class="kn">import</span> <span class="n">Matrix</span>
 
 <span class="n">Time</span> <span class="o">=</span> <span class="n">Dimension</span><span class="p">(</span><span class="s">&quot;Time&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">Dynamic</span><span class="o">.</span><span class="n">time_fn</span><span class="o">.</span><span class="n">time_type</span><span class="p">)</span>
 
@@ -134,7 +135,7 @@
 <span class="sd">    possible to schedule tasks for processing data not yet present.</span>
 
 <span class="sd">    ViewRefs compose with the * operator to specify Overlays and also</span>
-<span class="sd">    support slicing of the referenced view objects:</span>
+<span class="sd">    support slicing of the referenced elements:</span>
 
 <span class="sd">    &gt;&gt;&gt; ref = ViewRef(&#39;Example.Path1 * Example.Path2&#39;)</span>
 
@@ -205,12 +206,12 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">resolved_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">View</span><span class="p">,</span> <span class="n">Map</span><span class="p">,</span> <span class="n">Grid</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">ViewableElement</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">,</span> <span class="n">AxisLayout</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">_resolve_ref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">attrtree</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get the View referred to by a single reference tuple if the</span>
+<span class="sd">        Get the ViewableElement referred to by a single reference tuple if the</span>
 <span class="sd">        data exists, otherwise raise AttributeError.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="n">attrtree</span>
@@ -225,7 +226,7 @@
 
 <div class="viewcode-block" id="ViewRef.resolve"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.ViewRef.resolve">[docs]</a>    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrtree</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Resolve the current ViewRef object into the appropriate View</span>
+<span class="sd">        Resolve the current ViewRef object into the appropriate ViewableElement</span>
 <span class="sd">        object (if available).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">overlaid_view</span> <span class="o">=</span> <span class="bp">None</span>
@@ -244,7 +245,7 @@
 </div>
     <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Slice the referenced DataView.</span>
+<span class="sd">        Slice the referenced Chart.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">slices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">index</span>
@@ -310,7 +311,7 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An Collect takes an object and corresponding hook and when</span>
 <span class="sd">    called with an AttrTree, updates it with the output of the hook</span>
-<span class="sd">    (given the object). The output of the hook should be a View or an</span>
+<span class="sd">    (given the object). The output of the hook should be a ViewableElement or an</span>
 <span class="sd">    AttrTree.</span>
 
 <span class="sd">    The input object may be a picklable object (e.g. a</span>
@@ -371,7 +372,7 @@
 
     <span class="k">def</span> <span class="nf">_get_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrtree</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">times</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Method returning a View or AttrTree to be merged into the</span>
+<span class="sd">        Method returning a ViewableElement or AttrTree to be merged into the</span>
 <span class="sd">        attrtree (via the specified hook) in the call.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">resolvable</span> <span class="o">=</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;resolve&#39;</span><span class="p">)</span>
@@ -401,10 +402,10 @@
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Return value is not a AttrTree and mode is &#39;merge&#39;.&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">attrtree</span><span class="p">:</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">):</span>
-                <span class="n">val</span> <span class="o">=</span> <span class="n">ViewMap</span><span class="p">([((</span><span class="n">time</span><span class="p">,),</span> <span class="n">val</span><span class="p">)],</span> <span class="n">dimensions</span><span class="o">=</span><span class="p">[</span><span class="n">Time</span><span class="p">])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">):</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">HoloMap</span><span class="p">([((</span><span class="n">time</span><span class="p">,),</span> <span class="n">val</span><span class="p">)],</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="p">[</span><span class="n">Time</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">current_val</span> <span class="o">=</span> <span class="n">attrtree</span><span class="o">.</span><span class="n">path_items</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">]</span>
+            <span class="n">current_val</span> <span class="o">=</span> <span class="n">attrtree</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">]</span>
             <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_merge_views</span><span class="p">(</span><span class="n">current_val</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>
 
         <span class="n">attrtree</span><span class="o">.</span><span class="n">set_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>  <span class="n">val</span><span class="p">)</span>
@@ -414,11 +415,12 @@
     <span class="k">def</span> <span class="nf">_merge_views</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_val</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Helper for merging views together. For instance, this method</span>
-<span class="sd">        will add a Matrix to a ViewMap or merge two ViewMaps.</span>
+<span class="sd">        will add a Matrix to a HoloMap or merge two ViewMaps.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">View</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">ViewableElement</span><span class="p">):</span>
             <span class="n">current_val</span><span class="p">[</span><span class="n">time</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
-        <span class="k">elif</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">current_val</span><span class="p">,</span> <span class="n">Map</span><span class="p">)</span> <span class="ow">and</span> <span class="s">&#39;Time&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_val</span><span class="o">.</span><span class="n">dimension_labels</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">current_val</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">)</span> <span class="ow">and</span> <span class="s">&#39;Time&#39;</span> <span class="ow">not</span> <span class="ow">in</span>
+              <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">current_val</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">]):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Time dimension is missing.&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">current_val</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
@@ -446,8 +448,8 @@
 <div class="viewcode-block" id="Analyze"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Analyze">[docs]</a><span class="k">class</span> <span class="nc">Analyze</span><span class="p">(</span><span class="n">Collect</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An Analyze is a type of Collect that updates an Attrtree with</span>
-<span class="sd">    the results of a ViewOperation. Analyze takes a ViewRef object as</span>
-<span class="sd">    input which is resolved to generate input for the ViewOperation.</span>
+<span class="sd">    the results of a ElementOperation. Analyze takes a ViewRef object as</span>
+<span class="sd">    input which is resolved to generate input for the ElementOperation.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">analysis</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -497,7 +499,7 @@
 <span class="sd">    Collator is an NdMapping holding AttrTree objects and</span>
 <span class="sd">    provides methods to filter and merge them via the call</span>
 <span class="sd">    method. Collation inserts the Collator dimensions on</span>
-<span class="sd">    each Map type contained within the AttrTree objects.</span>
+<span class="sd">    each UniformNdMapping type contained within the AttrTree objects.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">drop</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
@@ -514,16 +516,16 @@
 <span class="sd">        AttrTrees is returned. Optionally a list of dimensions</span>
 <span class="sd">        to be ignored can be supplied.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">constant_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant_dims</span>
-        <span class="n">ndmapping</span> <span class="o">=</span> <span class="n">NdMapping</span><span class="p">(</span><span class="n">dimensions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">)</span>
+        <span class="n">constant_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant_dimensions</span>
+        <span class="n">ndmapping</span> <span class="o">=</span> <span class="n">NdMapping</span><span class="p">(</span><span class="n">key_dimensions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">)</span>
 
         <span class="n">progressbar</span> <span class="o">=</span> <span class="n">ProgressBar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s">&#39;Collation&#39;</span><span class="p">)</span>
         <span class="n">num_elements</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
            <span class="n">attrtree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">path_filters</span><span class="p">)</span>
 
            <span class="k">if</span> <span class="n">merge</span><span class="p">:</span>
-              <span class="n">dim_keys</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension_labels</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+              <span class="n">dim_keys</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
               <span class="n">varying_keys</span> <span class="o">=</span> <span class="p">[(</span><span class="n">d</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">dim_keys</span>
                               <span class="k">if</span> <span class="n">d</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">constant_dims</span><span class="p">]</span>
               <span class="n">constant_keys</span> <span class="o">=</span> <span class="p">[(</span><span class="n">d</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">dim_keys</span>
@@ -535,18 +537,31 @@
 
         <span class="k">if</span> <span class="n">merge</span><span class="p">:</span>
             <span class="n">trees</span> <span class="o">=</span> <span class="n">ndmapping</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-            <span class="n">accumulator</span> <span class="o">=</span> <span class="n">AttrTree</span><span class="p">(</span><span class="n">path_items</span><span class="o">=</span><span class="n">trees</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">path_items</span><span class="p">)</span>
+            <span class="n">accumulator</span> <span class="o">=</span> <span class="n">AttrTree</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">trees</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">tree</span> <span class="ow">in</span> <span class="n">trees</span><span class="p">:</span>
                 <span class="n">accumulator</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">accumulator</span>
         <span class="k">return</span> <span class="n">ndmapping</span>
 
 
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Collator.constant_dimensions"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Collator.constant_dimensions">[docs]</a>    <span class="k">def</span> <span class="nf">constant_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return all constant dimensions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dimensions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">:</span>
+            <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="n">dim</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">low</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">low</span> <span class="o">==</span> <span class="n">high</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dim</span><span class="o">.</span><span class="n">name</span><span class="p">)]):</span>
+                <span class="n">dimensions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dimensions</span>
+
+</div>
     <span class="k">def</span> <span class="nf">_add_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">constant_keys</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Recursively descend through an AttrTree and NdMapping objects</span>
 <span class="sd">        in order to add the supplied dimension values to all contained</span>
-<span class="sd">        Map objects.</span>
+<span class="sd">        UniformNdMapping objects.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">AttrTree</span><span class="p">):</span>
             <span class="n">item</span><span class="o">.</span><span class="n">fixed</span> <span class="o">=</span> <span class="bp">False</span>
@@ -554,11 +569,11 @@
         <span class="n">new_item</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">clone</span><span class="p">({})</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">)</span> <span class="k">else</span> <span class="n">item</span>
         <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="n">v</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Map</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">):</span>
                 <span class="n">dim_vals</span> <span class="o">=</span> <span class="p">[(</span><span class="n">dim</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
                             <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop</span><span class="p">]</span>
                 <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">dim_vals</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">dimension_labels</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">]:</span>
                         <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">add_dimension</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">constant_keys</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">constant_keys</span> <span class="o">=</span> <span class="n">constant_keys</span>
                 <span class="n">new_item</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
@@ -591,9 +606,9 @@
 
 <span class="sd">    The analysis method takes a reference to data on the attrtree (a</span>
 <span class="sd">    ViewRef) and passes the resolved output to the given analysisfn</span>
-<span class="sd">    ViewOperation.</span>
+<span class="sd">    ElementOperation.</span>
 
-<span class="sd">    &gt;&gt;&gt; Collector.for_type(str, lambda x: View(x, name=x))</span>
+<span class="sd">    &gt;&gt;&gt; Collector.for_type(str, lambda x: ViewableElement(x, name=x))</span>
 <span class="sd">    &gt;&gt;&gt; Collector.interval_hook = param.Dynamic.time_fn.advance</span>
 
 <span class="sd">    &gt;&gt;&gt; c = Collector()</span>
@@ -603,15 +618,16 @@
 <span class="sd">    &gt;&gt;&gt; data = c(times=[1,2,3,4,5])</span>
 <span class="sd">    &gt;&gt;&gt; isinstance(data, AttrTree)</span>
 <span class="sd">    True</span>
-<span class="sd">    &gt;&gt;&gt; isinstance(data.Target.Path, Map)</span>
+<span class="sd">    &gt;&gt;&gt; isinstance(data.Target.Path, UniformNdMapping)</span>
 <span class="sd">    True</span>
 
 <span class="sd">    &gt;&gt;&gt; times = data.Target.Path.keys()</span>
 <span class="sd">    &gt;&gt;&gt; print(&quot;Collected the data for %d time values&quot; % len(times))</span>
 <span class="sd">    Collected the data for 5 time values</span>
 
-<span class="sd">    &gt;&gt;&gt; data.Target.Path.last                 #doctest: +ELLIPSIS</span>
-<span class="sd">    View(&#39;example string&#39;...)</span>
+<span class="sd">    &gt;&gt;&gt; results = data.Target.Path.last</span>
+<span class="sd">    &gt;&gt;&gt; results.name</span>
+<span class="sd">    &#39;example string&#39;</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c"># A callable that advances by the specified time before the next</span>
@@ -623,7 +639,7 @@
 
     <span class="c"># A callable that returns the time where the time may be the</span>
     <span class="c"># simulation time or wall-clock time. The time values are</span>
-    <span class="c"># recorded by the Map keys</span>
+    <span class="c"># recorded by the UniformNdMapping keys</span>
     <span class="n">time_fn</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dynamic</span><span class="o">.</span><span class="n">time_fn</span>
 
     <span class="n">type_hooks</span> <span class="o">=</span> <span class="p">{}</span>
@@ -650,7 +666,7 @@
 
         <span class="k">for</span> <span class="p">(</span><span class="n">path_spec</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span> <span class="ow">in</span> <span class="n">specs</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">path_spec</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;path_items&#39;</span><span class="p">][</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;data&#39;</span><span class="p">][</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">path</span> <span class="o">=</span> <span class="n">path_spec</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">set_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span>
@@ -666,7 +682,7 @@
 <div class="viewcode-block" id="Collector.ref"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Collector.ref">[docs]</a>    <span class="k">def</span> <span class="nf">ref</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        A convenient property to easily generate ViewRef object (via</span>
-<span class="sd">        attribute access). Used to define View references for analysis</span>
+<span class="sd">        attribute access). Used to define ViewableElement references for analysis</span>
 <span class="sd">        or for setting a path for an Collect on the Collector.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">ViewRef</span><span class="p">()</span>
@@ -682,19 +698,19 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">task</span> <span class="o">=</span> <span class="n">Collect</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;merge&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="p">[</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">]</span> <span class="o">=</span> <span class="n">task</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">]</span> <span class="o">=</span> <span class="n">task</span>
             <span class="k">return</span> <span class="bp">None</span>
         <span class="k">return</span> <span class="n">task</span>
 
 </div>
 <div class="viewcode-block" id="Collector.analyze"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Collector.analyze">[docs]</a>    <span class="k">def</span> <span class="nf">analyze</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">analysisfn</span><span class="p">,</span>  <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Given a ViewRef and the ViewOperation analysisfn, process the</span>
+<span class="sd">        Given a ViewRef and the ElementOperation analysisfn, process the</span>
 <span class="sd">        data resolved by the reference with analysisfn at each step.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">task</span> <span class="o">=</span> <span class="n">Analyze</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">analysisfn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;merge&#39;</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="p">[</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">]</span> <span class="o">=</span> <span class="n">task</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">]</span> <span class="o">=</span> <span class="n">task</span>
         <span class="k">return</span> <span class="n">task</span>
 
 </div>
@@ -747,7 +763,7 @@
 <span class="sd">        Given a set of times this method checks that all</span>
 <span class="sd">        scheduled measurements will actually be carried out.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">times</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_verify_task_times</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">strict</span><span class="p">)</span>
 
@@ -771,11 +787,11 @@
 
     <span class="k">def</span> <span class="nf">_schedule_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Inspect the path_items to find all the Collects that have</span>
+<span class="sd">        Inspect the data to find all the Collects that have</span>
 <span class="sd">        been specified and add them to the scheduled tasks list.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_tasks</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
 
             <span class="k">if</span> <span class="n">task</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Incorrect task definition for </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
@@ -796,22 +812,21 @@
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">spec_strs</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">key</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="s">&#39;None&#39;</span>
             <span class="n">spec_strs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">(</span><span class="si">%s</span><span class="s">, </span><span class="si">%r</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
         <span class="k">return</span> <span class="s">&#39;Collector([</span><span class="si">%s</span><span class="s">])&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">spec_strs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">indent</span> <span class="o">=</span> <span class="s">&#39;  &#39;</span>
-        <span class="n">num_items</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="p">)</span>
-        <span class="n">padding</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">num_items</span><span class="p">))</span>
+        <span class="n">padding</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)))</span>
         <span class="n">num_fmt</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%%</span><span class="s">0</span><span class="si">%d</span><span class="s">d.&#39;</span> <span class="o">%</span> <span class="n">padding</span>
 
-        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;</span><span class="si">%d</span><span class="s"> tasks scheduled:</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">num_items</span><span class="p">]</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;</span><span class="si">%d</span><span class="s"> tasks scheduled:</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
         <span class="n">dotted_line</span> <span class="o">=</span> <span class="n">indent</span> <span class="o">+</span> <span class="n">num_fmt</span> <span class="o">+</span><span class="s">&quot;  </span><span class="si">%s</span><span class="s">&quot;</span>
         <span class="n">merge_line</span> <span class="o">=</span> <span class="n">indent</span> <span class="o">+</span> <span class="n">num_fmt</span> <span class="o">+</span> <span class="s">&quot;  [...] &quot;</span>
         <span class="n">value_line</span> <span class="o">=</span> <span class="n">indent</span><span class="o">*</span><span class="mi">3</span> <span class="o">+</span> <span class="s">&#39; &#39;</span><span class="o">*</span><span class="n">padding</span> <span class="o">+</span> <span class="s">&quot; </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
                 <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dotted_line</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">path</span><span class="p">)))</span>
                 <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value_line</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>

@@ -66,42 +66,99 @@
             
   <h1>Source code for holoviews.core.options</h1><div class="highlight"><pre>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">Options abstract away different classes of options (e.g. matplotlib</span>
-<span class="sd">specific styles and plot specific parameters) away from View and Map</span>
-<span class="sd">objects to allow these objects to share options by name.</span>
+<span class="sd">Options and OptionTrees allow different classes of options</span>
+<span class="sd">(e.g. matplotlib specific styles and plot specific parameters) to be</span>
+<span class="sd">defined separately from the core data structures and away from</span>
+<span class="sd">visualization specific code.</span>
 
-<span class="sd">StyleOpts is an OptionMap that allows matplotlib style options to be</span>
-<span class="sd">defined, allowing customization of how individual View objects are</span>
-<span class="sd">displayed given the appropriate style name.</span>
+<span class="sd">There are three classes that form the options system:</span>
+
+<span class="sd">Cycle:</span>
+
+<span class="sd">   Used to define infinite cycles over a finite set of elements, using</span>
+<span class="sd">   either an explicit list or the matplotlib rcParams. For instance, a</span>
+<span class="sd">   Cycle object can be used loop a set of display colors for multiple</span>
+<span class="sd">   curves on a single axis.</span>
+
+<span class="sd">Options:</span>
+
+<span class="sd">   Containers of arbitrary keyword values, including optional keyword</span>
+<span class="sd">   validation, support for Cycle objects and inheritance.</span>
+
+<span class="sd">OptionTree:</span>
+
+<span class="sd">   A subclass of AttrTree that is used to define the inheritance</span>
+<span class="sd">   relationships between a collection of Options objects. Each node</span>
+<span class="sd">   of the tree supports a group of Options objects and the leaf nodes</span>
+<span class="sd">   inherit their keyword values from parent nodes up to the root.</span>
+
+<span class="sd">Store:</span>
+
+<span class="sd">   A singleton class that stores all global and custom options and</span>
+<span class="sd">   links holoview objects, the chosen plotting backend and the IPython</span>
+<span class="sd">   extension together.</span>
+
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">param</span>
+<span class="kn">from</span> <span class="nn">.tree</span> <span class="kn">import</span> <span class="n">AttrTree</span>
 
-<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
-
-<div class="viewcode-block" id="Cycle"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Cycle">[docs]</a><span class="k">class</span> <span class="nc">Cycle</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="OptionError"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.OptionError">[docs]</a><span class="k">class</span> <span class="nc">OptionError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A simple container class to allow specification of cyclic style</span>
-<span class="sd">    patterns. A typical use would be to cycle styles on a plot with</span>
-<span class="sd">    multiple curves. Takes either a list of elements or an rckey</span>
-<span class="sd">    string used to look up the elements in the matplotlib rcParams.g</span>
+<span class="sd">    Custom exception raised when there is an attempt to apply invalid</span>
+<span class="sd">    options. Stores the necessary information to construct a more</span>
+<span class="sd">    readable message for the user if caught and processed</span>
+<span class="sd">    appropriately.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">invalid_keyword</span><span class="p">,</span> <span class="n">allowed_keywords</span><span class="p">,</span>
+                 <span class="n">group_name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">OptionError</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">(</span><span class="n">invalid_keyword</span><span class="p">,</span>
+                                                       <span class="n">allowed_keywords</span><span class="p">,</span>
+                                                       <span class="n">group_name</span><span class="p">,</span> <span class="n">path</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">invalid_keyword</span> <span class="o">=</span> <span class="n">invalid_keyword</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allowed_keywords</span> <span class="o">=</span> <span class="n">allowed_keywords</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">group_name</span> <span class="o">=</span><span class="n">group_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+
+
+    <span class="k">def</span> <span class="nf">message</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">invalid_keyword</span><span class="p">,</span> <span class="n">allowed_keywords</span><span class="p">,</span> <span class="n">group_name</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;Invalid option </span><span class="si">%s</span><span class="s">, valid options are: </span><span class="si">%s</span><span class="s">&quot;</span>
+               <span class="o">%</span> <span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">invalid_keyword</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">allowed_keywords</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">group_name</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;Invalid key for group </span><span class="si">%r</span><span class="s"> on path </span><span class="si">%r</span><span class="s">;</span><span class="se">\n</span><span class="s">&quot;</span>
+                    <span class="o">%</span> <span class="p">(</span><span class="n">group_name</span><span class="p">,</span> <span class="n">path</span><span class="p">))</span> <span class="o">+</span> <span class="n">msg</span>
+        <span class="k">return</span> <span class="n">msg</span>
+
+</div>
+<div class="viewcode-block" id="Cycle"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Cycle">[docs]</a><span class="k">class</span> <span class="nc">Cycle</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A simple container class that specifies cyclic options. A typical</span>
+<span class="sd">    example would be to cycle the curve colors in an Overlay composed</span>
+<span class="sd">    of an arbitrary number of curves.</span>
+
+<span class="sd">    A Cycles object accepts either a list of items to cycle over or an</span>
+<span class="sd">    rckey string used to look up the elements in the matplotlib</span>
+<span class="sd">    rcParams dictionary.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">elements</span><span class="o">=</span><span class="p">[],</span> <span class="n">rckey</span><span class="o">=</span><span class="s">&#39;axes.color_cycle&#39;</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">rckey</span> <span class="o">=</span> <span class="n">rckey</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">elements</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span> <span class="o">=</span> <span class="n">elements</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">allow_None</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>  <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        If supplied, the explicit list of items to be cycled over.&quot;&quot;&quot;</span><span class="p">)</span>
 
+    <span class="n">rckey</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;axes.color_cycle&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       If elements is None, this is the key in the matplotlib rcParams</span>
+<span class="s">       to use to get the cycle elements&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Cycle</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">items</span><span class="o">=</span><span class="n">items</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">elements</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">rcParams</span>
             <span class="k">return</span> <span class="n">rcParams</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">rckey</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_elements</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span>
 
 
     <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -113,27 +170,52 @@
 
 
 </div>
-<div class="viewcode-block" id="Opts"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Opts">[docs]</a><span class="k">class</span> <span class="nc">Opts</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="Options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Options">[docs]</a><span class="k">class</span> <span class="nc">Options</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A Options object specified keyword options. In addition to the</span>
-<span class="sd">    functionality of a simple dictionary, Opts support cyclic indexing</span>
-<span class="sd">    if supplied with a Cycle object.</span>
+<span class="sd">    An Options object holds a collection of keyword options. In</span>
+<span class="sd">    addition, Options support (optional) keyword validation as well as</span>
+<span class="sd">    infinite indexing over the set of supplied cyclic values.</span>
+
+<span class="sd">    Options support inheritance of setting values via the __call__</span>
+<span class="sd">    method. By calling an Options object with additional keywords, you</span>
+<span class="sd">    can create a new Options object inheriting the parent options.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">items</span> <span class="o">=</span> <span class="n">kwargs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_styles</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">allowed_keywords</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">allow_None</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Optional list of strings corresponding to the allowed keywords.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">key</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">allow_None</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Optional specification of the options key name. For instance,</span>
+<span class="s">       key could be &#39;plot&#39; or &#39;style&#39;.&quot;&quot;&quot;</span><span class="p">)</span>
 
 
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="n">new_style</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="o">**</span><span class="n">new_style</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">allowed_keywords</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">kwarg</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">allowed_keywords</span> <span class="ow">and</span> <span class="n">kwarg</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed_keywords</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">OptionError</span><span class="p">(</span><span class="n">kwarg</span><span class="p">,</span> <span class="n">allowed_keywords</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_options</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">allowed_keywords</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">allowed_keywords</span><span class="p">)</span> <span class="k">if</span> <span class="n">allowed_keywords</span> <span class="k">else</span> <span class="bp">None</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Options</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">allowed_keywords</span><span class="o">=</span><span class="n">allowed_keywords</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
 
 
-    <span class="k">def</span> <span class="nf">_expand_styles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">allowed_keywords</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Expand out Cycle objects into multiple sets of keyword options.</span>
+<span class="sd">        Create a new Options object that inherits the parent options.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">allowed_keywords</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">allowed_keywords</span> <span class="k">if</span> <span class="n">allowed_keywords</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">allowed_keywords</span>
+        <span class="n">inherited_style</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">allowed_keywords</span><span class="o">=</span><span class="n">allowed_keywords</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span> <span class="o">**</span><span class="n">inherited_style</span><span class="p">))</span>
+
+
+    <span class="k">def</span> <span class="nf">_expand_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Expand out Cycle objects into multiple sets of keyword values.</span>
+
+<span class="sd">        To elaborate, the full Cartesian product over the supplied</span>
+<span class="sd">        Cycle objects is expanded into a list, allowing infinite,</span>
+<span class="sd">        cyclic indexing in the __getitem__ method.&quot;&quot;&quot;</span>
         <span class="n">filter_static</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Cycle</span><span class="p">))</span>
         <span class="n">filter_cycles</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Cycle</span><span class="p">)]</span>
 
@@ -144,298 +226,427 @@
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Cycle objects supplied with different lengths&quot;</span><span class="p">)</span>
 
         <span class="n">cyclic_tuples</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">val</span><span class="o">.</span><span class="n">elements</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">filter_values</span><span class="p">]))</span>
-        <span class="k">return</span> <span class="p">[</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">filter_names</span><span class="p">,</span> <span class="n">tps</span><span class="p">),</span> <span class="o">**</span><span class="n">filter_static</span><span class="p">)</span> <span class="k">for</span> <span class="n">tps</span> <span class="ow">in</span> <span class="n">cyclic_tuples</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">filter_names</span><span class="p">,</span> <span class="n">tps</span><span class="p">),</span> <span class="o">**</span><span class="n">filter_static</span><span class="p">)</span> <span class="k">for</span> <span class="n">tps</span> <span class="ow">in</span> <span class="n">cyclic_tuples</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="Opts.keys"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Opts.keys">[docs]</a>    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="s">&quot;The keyword names defined in the options.&quot;</span>
-        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+<div class="viewcode-block" id="Options.keys"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Options.keys">[docs]</a>    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">&quot;The keyword names across the supplied options.&quot;</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
 
 </div>
     <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Cyclic indexing over any Cycle objects defined.</span>
+<span class="sd">        Infinite cyclic indexing of options over the integers,</span>
+<span class="sd">        looping over the set of defined Cycle objects.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="n">index</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="n">index</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">)])</span>
 
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">opts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<div class="viewcode-block" id="Options.options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Options.options">[docs]</a>    <span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">&quot;Access of the options keywords when no cycles are defined.&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;The opts property may only be used with non-cyclic styles&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;The options property may only be used with non-cyclic Options.&quot;</span><span class="p">)</span>
 
-
+</div>
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">kws</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">=</span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="n">kws</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">=</span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
         <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>  <span class="n">kws</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
 
 </div>
-<div class="viewcode-block" id="Options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Options">[docs]</a><span class="k">class</span> <span class="nc">Options</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="OptionTree"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.OptionTree">[docs]</a><span class="k">class</span> <span class="nc">OptionTree</span><span class="p">(</span><span class="n">AttrTree</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A Option is a collection of Opts objects that allows convenient</span>
-<span class="sd">    attribute access and can compose styles through inheritance.</span>
-<span class="sd">    Options are inherited by finding all matches which end in the</span>
-<span class="sd">    same substring as the supplied style.</span>
+<span class="sd">    A subclass of AttrTree that is used to define the inheritance</span>
+<span class="sd">    relationships between a collection of Options objects. Each node</span>
+<span class="sd">    of the tree supports a group of Options objects and the leaf nodes</span>
+<span class="sd">    inherit their keyword values from parent nodes up to the root.</span>
 
-<span class="sd">    For example supplying &#39;Example_View&#39; as a style would match</span>
-<span class="sd">    these styles (if they are defined):</span>
-
-<span class="sd">    &#39;View&#39; : Opts(a=1, b=2)</span>
-<span class="sd">    &#39;Example_View&#39;: Opts(b=3)</span>
-
-<span class="sd">    The resulting Opts object inherits a=1 from &#39;Options&#39; and b=3</span>
-<span class="sd">    from &#39;Example_Options&#39;.</span>
+<span class="sd">    Supports the ability to search the tree for the closest valid path</span>
+<span class="sd">    using the find method, or compute the appropriate Options value</span>
+<span class="sd">    given an object and a mode. For a given node of the tree, the</span>
+<span class="sd">    options method computes a Options object containing the result of</span>
+<span class="sd">    inheritance for a given group up to the root of the tree.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">identifier</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">groups</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Please supply groups dictionary&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;groups&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">groups</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_instantiated&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">AttrTree</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_instantiated&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+
+    <span class="k">def</span> <span class="nf">_inherited_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">group_name</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Computes the inherited Options object for the given group</span>
+<span class="sd">        name from the current node given a new set of options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">override_kwargs</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">kwargs</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_instantiated</span><span class="p">:</span>
+            <span class="n">override_kwargs</span><span class="p">[</span><span class="s">&#39;allowed_keywords&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">allowed_keywords</span>
+        <span class="k">elif</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="n">override_kwargs</span><span class="p">[</span><span class="s">&#39;allowed_keywords&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">identifier</span><span class="p">][</span><span class="n">group_name</span><span class="p">]</span><span class="o">.</span><span class="n">allowed_keywords</span>
+
+        <span class="k">if</span> <span class="n">group_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&quot;Group </span><span class="si">%s</span><span class="s"> not defined on SettingTree&quot;</span> <span class="o">%</span> <span class="n">group_name</span><span class="p">)</span>
+
+        <span class="n">current_node</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">identifier</span><span class="p">]</span> <span class="k">if</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="k">else</span> <span class="bp">self</span>
+        <span class="n">group_options</span> <span class="o">=</span> <span class="n">current_node</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">group_name</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">group_options</span><span class="p">(</span><span class="o">**</span><span class="n">override_kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">OptionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">OptionError</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">invalid_keyword</span><span class="p">,</span>
+                              <span class="n">e</span><span class="o">.</span><span class="n">allowed_keywords</span><span class="p">,</span>
+                              <span class="n">group_name</span><span class="o">=</span><span class="n">group_name</span><span class="p">,</span>
+                              <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">item</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">OptionTree</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__getitem__</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="n">new_groups</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">group_items</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">Options</span><span class="p">)</span> <span class="ow">and</span> <span class="n">val</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&quot;Options object needs to have a group name specified.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">Options</span><span class="p">):</span>
+            <span class="n">group_items</span> <span class="o">=</span> <span class="p">{</span><span class="n">val</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="n">val</span><span class="p">}</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">OptionTree</span><span class="p">):</span>
+            <span class="n">group_items</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">groups</span>
+
+        <span class="n">current_node</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">identifier</span><span class="p">]</span> <span class="k">if</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="k">else</span> <span class="bp">self</span>
+        <span class="k">for</span> <span class="n">group_name</span> <span class="ow">in</span> <span class="n">current_node</span><span class="o">.</span><span class="n">groups</span><span class="p">:</span>
+            <span class="n">options</span> <span class="o">=</span> <span class="n">group_items</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">group_name</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">options</span><span class="p">:</span>
+                <span class="n">new_groups</span><span class="p">[</span><span class="n">group_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inherited_options</span><span class="p">(</span><span class="n">identifier</span><span class="p">,</span> <span class="n">group_name</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_groups</span><span class="p">[</span><span class="n">group_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_node</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">group_name</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">new_groups</span><span class="p">:</span>
+            <span class="n">new_node</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">identifier</span><span class="o">=</span><span class="n">identifier</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="n">new_groups</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;OptionTree only accepts a dictionary of Options.&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">OptionTree</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">identifier</span><span class="p">,</span> <span class="n">new_node</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">OptionTree</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">subtree</span> <span class="ow">in</span> <span class="n">val</span><span class="p">:</span>
+                <span class="bp">self</span><span class="p">[</span><span class="n">identifier</span><span class="p">]</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">subtree</span><span class="o">.</span><span class="n">identifier</span><span class="p">,</span> <span class="n">subtree</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="OptionTree.find"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.OptionTree.find">[docs]</a>    <span class="k">def</span> <span class="nf">find</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;node&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find the closest node or path to an the arbitrary path that is</span>
+<span class="sd">        supplied down the tree from the given node. The mode argument</span>
+<span class="sd">        may be either &#39;node&#39; or &#39;path&#39; which determines the return</span>
+<span class="sd">        type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span>
+
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">child</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="n">matching_children</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">children</span> <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span>
+            <span class="n">matching_children</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">matching_children</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">matching_children</span><span class="p">:</span>
+                <span class="n">item</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="n">matching_children</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">continue</span>
+        <span class="k">return</span> <span class="n">item</span> <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;node&#39;</span> <span class="k">else</span> <span class="n">item</span><span class="o">.</span><span class="n">path</span>
+
+</div>
+<div class="viewcode-block" id="OptionTree.closest"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.OptionTree.closest">[docs]</a>    <span class="k">def</span> <span class="nf">closest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">group</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        This method is designed to be called from the root of the</span>
+<span class="sd">        tree. Given any LabelledData object, this method will return</span>
+<span class="sd">        the most appropriate Options object, including inheritance.</span>
+
+<span class="sd">        In addition, closest supports custom options by checking the</span>
+<span class="sd">        object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">components</span> <span class="o">=</span> <span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">components</span><span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="OptionTree.options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.OptionTree.options">[docs]</a>    <span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Using inheritance up to the root, get the complete Options</span>
+<span class="sd">        object for the given node and the specified group.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">group</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">Options</span><span class="p">(</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">options</span><span class="p">(</span><span class="n">group</span><span class="p">)</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
+                              <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">group</span><span class="p">]</span><span class="o">.</span><span class="n">kwargs</span><span class="p">))</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">_node_identifier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s">&#39;--+&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">repr</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+            <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">identifier</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_identifier</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">OptionTree</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
+
+
+</div>
+<div class="viewcode-block" id="Channel"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Channel">[docs]</a><span class="k">class</span> <span class="nc">Channel</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Channel is a way of specifying an operation to be automatically</span>
+<span class="sd">    applied to Overlays that match a specified pattern upon display.</span>
+
+<span class="sd">    Any ElementOperation that takes an Overlay as input may be used to</span>
+<span class="sd">    define a channel.</span>
+
+<span class="sd">    For instance, a channel may be defined to automatically display</span>
+<span class="sd">    three overlaid monochrome matrices as an RGB image as long as the</span>
+<span class="sd">    values names of those matrices match &#39;R&#39;, &#39;G&#39; and &#39;B&#39; respectively.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">operation</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The ElementOperation to apply when collapsing overlays into a</span>
+<span class="s">       channel.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The overlay pattern to be processed. An overlay pattern is a</span>
+<span class="s">       sequence of elements specified by dotted paths separated by * .</span>
+
+<span class="s">       For instance the following pattern specifies three overlayed</span>
+<span class="s">       matrices with values of &#39;RedChannel&#39;, &#39;GreenChannel&#39; and</span>
+<span class="s">       &#39;BlueChannel&#39; respectively:</span>
+
+<span class="s">      &#39;Matrix.RedChannel * Matrix.GreenChannel * Matrix.BlueChannel.</span>
+
+<span class="s">      This pattern specification could then be associated with the RGB</span>
+<span class="s">      operation that returns a single RGB matrix for display.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The value identifier for the output of this particular channel&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">kwargs</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Optional set of parameters to pass to the operation.&quot;&quot;&quot;</span><span class="p">)</span>
+
+
+    <span class="n">operations</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c"># The operations that can be used to define channels.</span>
+    <span class="n">definitions</span> <span class="o">=</span> <span class="p">[]</span> <span class="c"># The set of all the channel instances</span>
+
 
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Options.normalize_key"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Options.normalize_key">[docs]</a>    <span class="k">def</span> <span class="nf">normalize_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+<div class="viewcode-block" id="Channel.strongest_match"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Channel.strongest_match">[docs]</a>    <span class="k">def</span> <span class="nf">strongest_match</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">overlay</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Given a key which may contain spaces, such as a view label,</span>
-<span class="sd">        convert it to a string suitable for attribute access.</span>
+<span class="sd">        Returns the strongest matching channel operation given an</span>
+<span class="sd">        overlay. If no matches are found, None is returned.</span>
+
+<span class="sd">        The best match is defined as the channel operation with the</span>
+<span class="sd">        highest match value as returned by the match_level method.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">key</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">match_strength</span> <span class="o">=</span> <span class="p">[(</span><span class="n">op</span><span class="o">.</span><span class="n">match_level</span><span class="p">(</span><span class="n">overlay</span><span class="p">),</span> <span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">definitions</span><span class="p">]</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="p">[(</span><span class="n">lvl</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">lvl</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">match_strength</span> <span class="k">if</span> <span class="n">lvl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">matches</span> <span class="o">==</span> <span class="p">[]:</span> <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>             <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">matches</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
 
 </div>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">opt_type</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">opt_type</span><span class="p">,</span> <span class="n">Opts</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;The opt_type needs to be a subclass of Opts.&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_settable</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">opt_type</span> <span class="o">=</span> <span class="n">opt_type</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_items&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_collapse</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Finds any applicable channel operation and applies it.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">.overlay</span> <span class="kn">import</span> <span class="n">Overlay</span>
+        <span class="n">applicable_op</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">strongest_match</span><span class="p">(</span><span class="n">overlay</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">applicable_op</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">overlay</span>
+
+        <span class="n">output</span> <span class="o">=</span> <span class="n">applicable_op</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">relabel</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">applicable_op</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">output</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">overlay</span><span class="o">.</span><span class="n">id</span>
+        <span class="k">return</span> <span class="n">Overlay</span><span class="o">.</span><span class="n">from_view</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
 
 
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Channel.collapse"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Channel.collapse">[docs]</a>    <span class="k">def</span> <span class="nf">collapse</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">holomap</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given a map of Overlays, apply all applicable channel</span>
+<span class="sd">        reductions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># No potential channel reductions</span>
+        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">definitions</span> <span class="o">==</span> <span class="p">[]:</span>
+            <span class="k">return</span> <span class="n">holomap</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">obj</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">style</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span>  <span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">style</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_type</span><span class="p">()</span>
+        <span class="c"># Collapse channel operations</span>
+        <span class="n">clone</span> <span class="o">=</span> <span class="n">holomap</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">shared_data</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">overlay</span> <span class="ow">in</span> <span class="n">holomap</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">clone</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_collapse</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">clone</span>
+
+
+</div>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">operation</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span> <span class="p">(</span><span class="n">operation</span> <span class="ow">is</span> <span class="n">op</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">operations</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Operation </span><span class="si">%r</span><span class="s"> not in allowed operations&quot;</span> <span class="o">%</span> <span class="n">operation</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pattern_spec</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">pattern</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">):</span>
+            <span class="n">path_tuple</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pattern_spec</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path_tuple</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">path_tuple</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path_tuple</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">l</span><span class="o">==</span><span class="n">labels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&quot;Mismatched labels not allowed in channel operation patterns&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">name</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">style</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
 
-        <span class="n">matches</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="n">style</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">style</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
-                         <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
-        <span class="k">if</span> <span class="n">matches</span> <span class="o">==</span> <span class="p">[]:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_type</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">base_match</span> <span class="o">=</span> <span class="n">matches</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
-            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
-                <span class="n">base_match</span> <span class="o">=</span> <span class="n">base_match</span><span class="p">(</span><span class="o">**</span><span class="n">match</span><span class="o">.</span><span class="n">items</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">base_match</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Channel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+                                      <span class="n">pattern</span><span class="o">=</span><span class="n">pattern</span><span class="p">,</span>
+                                      <span class="n">operation</span><span class="o">=</span><span class="n">operation</span><span class="p">,</span>
+                                      <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
 
-
-<div class="viewcode-block" id="Options.options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Options.options">[docs]</a>    <span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The full list of base Style objects in the Options, excluding</span>
-<span class="sd">        options customized per object.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;Custom&#39;</span><span class="p">)]</span>
-
-</div>
-    <span class="k">def</span> <span class="nf">__dir__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Extend dir() to include base options in IPython tab completion.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">default_dir</span> <span class="o">=</span> <span class="nb">dir</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">default_dir</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">()))</span>
-
-
-    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Provide attribute access for the Opts in the Options.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_items&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
-        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-
-
-    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get a style by name via dictionary style access.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">opt_type</span><span class="p">())</span>
-
-
-    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&quot;&lt;OptionMap containing </span><span class="si">%d</span><span class="s"> options&gt;&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="Options.keys"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Options.keys">[docs]</a>    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The list of all options in the OptionMap, including options</span>
-<span class="sd">        associated with individual view objects.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-
-</div>
-<div class="viewcode-block" id="Options.values"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Options.values">[docs]</a>    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        All the Style objects in the OptionMap.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-
-</div>
-    <span class="k">def</span> <span class="nf">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-
-
-    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_settable</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;OptionMaps should be set via OptionGroup&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Opts</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;An OptionMap must only contain Opts.&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_items</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">normalize_key</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span>
-
-
-</div>
-<div class="viewcode-block" id="OptionsGroup"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.OptionsGroup">[docs]</a><span class="k">class</span> <span class="nc">OptionsGroup</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    An OptionsGroup coordinates the setting of OptionMaps to ensure</span>
-<span class="sd">    they share a common set of keys. While it is safe to access Opts</span>
-<span class="sd">    from OptionMaps directly, an OptionGroup object must be used to</span>
-<span class="sd">    set Options when there are multiple different types of Options</span>
-<span class="sd">    (plot options as distinct from style options for instance).</span>
-
-<span class="sd">    When setting Options, it is important to use the appropriate</span>
-<span class="sd">    subclass of Opts to disambiguate the OptionGroup to be set. For</span>
-<span class="sd">    instance, PlotOpts will set plotting options while StyleOpts are</span>
-<span class="sd">    designed for setting style options.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-
-    <span class="n">normalize_key</span> <span class="o">=</span> <span class="n">Options</span><span class="o">.</span><span class="n">normalize_key</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optmaps</span><span class="p">):</span>
-
-        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">optmaps</span><span class="p">]</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">names</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">names</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;OptionMap names must be unique&quot;</span><span class="p">)</span>
-
-        <span class="k">for</span> <span class="n">optmap</span> <span class="ow">in</span> <span class="n">optmaps</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">optmap</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">optmap</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_keys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_opttypes&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">optmap</span><span class="o">.</span><span class="n">opt_type</span><span class="p">,</span> <span class="n">optmap</span><span class="p">)</span>
-                                                 <span class="k">for</span> <span class="n">optmap</span> <span class="ow">in</span> <span class="n">optmaps</span><span class="p">)</span>
-
-
-    <span class="k">def</span> <span class="nf">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Attribute style addition of Style objects to the OptionMap.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">=</span> <span class="n">v</span>
-
-
-    <span class="k">def</span> <span class="nf">fuzzy_match_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">Options</span><span class="o">.</span><span class="n">normalize_key</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
-        <span class="n">reversed_matches</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-                                  <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">key</span><span class="p">))[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">reversed_matches</span><span class="p">:</span>
-            <span class="n">lens</span><span class="p">,</span> <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">reversed_matches</span><span class="p">))</span>
-            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[]</span>
-
-
-    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
-
-
-    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s">&#39;Key not available in the OptionGroup&#39;</span><span class="p">)</span>
-        <span class="n">retval</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">optmap</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">optmap</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_opttypes</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">retval</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">retval</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">retval</span>
-
-
-    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_opttypes</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Options of type </span><span class="si">%s</span><span class="s"> not applicable&quot;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
-        <span class="n">optmap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_opttypes</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)]</span>
-        <span class="n">optmap</span><span class="o">.</span><span class="n">_settable</span> <span class="o">=</span> <span class="bp">True</span>
-        <span class="n">optmap</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-        <span class="n">optmap</span><span class="o">.</span><span class="n">_settable</span> <span class="o">=</span> <span class="bp">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="OptionsGroup.options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.OptionsGroup.options">[docs]</a>    <span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The full list of option keys in the OptionGroup, excluding</span>
-<span class="sd">        options customized per object.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;Custom&#39;</span><span class="p">))</span>
-
-</div>
-    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">))</span>
-
-
-    <span class="k">def</span> <span class="nf">__dir__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Extend dir() to include base options in IPython tab completion.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">default_dir</span> <span class="o">=</span> <span class="nb">dir</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">)</span>
-        <span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_opttypes</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span>
-        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">default_dir</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">+</span> <span class="n">names</span><span class="p">))</span>
-
-
-</div>
-<div class="viewcode-block" id="StyleOpts"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StyleOpts">[docs]</a><span class="k">class</span> <span class="nc">StyleOpts</span><span class="p">(</span><span class="n">Opts</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A subclass of Opts designed to hold matplotlib options to set the</span>
-<span class="sd">    display Style of View objects.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-</div>
-<div class="viewcode-block" id="PlotOpts"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.PlotOpts">[docs]</a><span class="k">class</span> <span class="nc">PlotOpts</span><span class="p">(</span><span class="n">Opts</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A subclass of Opts designed to hold plotting options that set the</span>
-<span class="sd">    parameters of the Plot class that display View objects.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-</div>
-<div class="viewcode-block" id="ChannelOpts"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.ChannelOpts">[docs]</a><span class="k">class</span> <span class="nc">ChannelOpts</span><span class="p">(</span><span class="n">Opts</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A subclass of Opts designed to hold channel mode definitions that</span>
-<span class="sd">    control how particular labelled layer combinations in an Overlay</span>
-<span class="sd">    are displayed.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="c"># This dictionary specifies the available channel processing</span>
-    <span class="c"># operations. An channel operation is a ViewOperation that accept</span>
-    <span class="c"># Sheet Overlays as input and process them to return a single</span>
-    <span class="c"># RGB(A) Matrix.</span>
-    <span class="n">operations</span><span class="o">=</span><span class="p">{}</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">pattern</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">pattern</span> <span class="o">=</span> <span class="n">pattern</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pattern</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_styles</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">items</span> <span class="o">=</span> <span class="n">kwargs</span>
 
     <span class="nd">@property</span>
-<div class="viewcode-block" id="ChannelOpts.operation"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.ChannelOpts.operation">[docs]</a>    <span class="k">def</span> <span class="nf">operation</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get the channel operation from the set of operations&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">operations</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">]</span>
+<div class="viewcode-block" id="Channel.output_type"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Channel.output_type">[docs]</a>    <span class="k">def</span> <span class="nf">output_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the operation output_type unless explicitly overridden</span>
+<span class="sd">        in the kwargs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s">&#39;output_type&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">[</span><span class="s">&#39;output_type&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">output_type</span>
+
 </div>
-    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">(</span><span class="si">%s</span><span class="s">, </span><span class="si">%r%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span><span class="p">,</span>
-                                 <span class="bp">self</span><span class="o">.</span><span class="n">pattern</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">,</span>
-                                 <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">=</span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+<div class="viewcode-block" id="Channel.match_level"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Channel.match_level">[docs]</a>    <span class="k">def</span> <span class="nf">match_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given an overlay, return an integer if there is a match or</span>
+<span class="sd">        None if there is no match.</span>
+
+<span class="sd">        The returned integer is the number of matching</span>
+<span class="sd">        components. Higher values indicate a stronger match.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">level</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pattern_spec</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="k">for</span> <span class="n">spec</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pattern_spec</span><span class="p">,</span> <span class="n">overlay</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">spec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">type</span><span class="p">(</span><span class="n">el</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">None</span>
+            <span class="n">level</span> <span class="o">+=</span> <span class="mi">1</span>      <span class="c"># Types match</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="k">continue</span>
+
+            <span class="k">elif</span> <span class="n">spec</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">el</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="n">level</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c"># Values match</span>
+            <span class="k">else</span><span class="p">:</span>                     <span class="k">return</span> <span class="bp">None</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">el</span><span class="o">.</span><span class="n">label</span><span class="p">):</span>
+                <span class="n">level</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c"># Labels match</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="n">level</span>
+
+</div>
+<div class="viewcode-block" id="Channel.apply"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Channel.apply">[docs]</a>    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">input_ranges</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply the channel operation on the input value using the given</span>
+<span class="sd">        input ranges.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">input_ranges</span><span class="o">=</span><span class="n">input_ranges</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
 
 
-</div>
-<span class="n">channels</span> <span class="o">=</span> <span class="n">OptionsGroup</span><span class="p">([</span><span class="n">Options</span><span class="p">(</span><span class="s">&#39;definitions&#39;</span><span class="p">,</span> <span class="n">ChannelOpts</span><span class="p">)])</span>
-<span class="n">options</span> <span class="o">=</span>  <span class="n">OptionsGroup</span><span class="p">([</span><span class="n">Options</span><span class="p">(</span><span class="s">&#39;plotting&#39;</span><span class="p">,</span> <span class="n">PlotOpts</span><span class="p">),</span>
-                         <span class="n">Options</span><span class="p">(</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="n">StyleOpts</span><span class="p">)])</span>
-</pre></div>
+</div></div>
+<div class="viewcode-block" id="Store"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store">[docs]</a><span class="k">class</span> <span class="nc">Store</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The Store is what links up HoloViews objects and elements to both</span>
+<span class="sd">    the IPython extension and to the plotting/display backend.</span>
+
+<span class="sd">    * Data objects are independent of plotting and the IPython</span>
+<span class="sd">      extension.</span>
+
+<span class="sd">    * Plotting and the IPython extension are likewise independent from</span>
+<span class="sd">      each other.</span>
+
+<span class="sd">    The Store stores the display options (plotting) for data elements</span>
+<span class="sd">    as well as the association from holoview objects to the respective</span>
+<span class="sd">    plotting classes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># A mapping from ViewableElement types to their corresponding plot</span>
+    <span class="c"># types. Set using the register_plots methods.</span>
+    <span class="n">defaults</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c"># Once register_plotting_classes is called, this OptionTree is populated</span>
+    <span class="n">options</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="n">groups</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;plot&#39;</span><span class="p">:</span>  <span class="n">Options</span><span class="p">(),</span>
+                                 <span class="s">&#39;style&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(),</span>
+                                 <span class="s">&#39;norm&#39;</span><span class="p">:</span>  <span class="n">Options</span><span class="p">()})</span>
+
+    <span class="c"># A dictionary of custom OptionTree by custom object id</span>
+    <span class="n">custom_options</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">lookup_options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">group</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">id</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">closest</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">obj</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">custom_options</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">custom_options</span><span class="p">[</span><span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">]</span><span class="o">.</span><span class="n">closest</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&quot;No custom settings defined for object with id </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Store.register_plots"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.register_plots">[docs]</a>    <span class="k">def</span> <span class="nf">register_plots</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given that the Store.defaults dictionary has been populate</span>
+<span class="sd">        with {&lt;element&gt;:&lt;plot-class&gt;} items, build an OptionsTree for the</span>
+<span class="sd">        supported plot types, registering allowed plotting and style</span>
+<span class="sd">        keywords.</span>
+
+<span class="sd">        This is designed to be backend independent but makes the</span>
+<span class="sd">        following assumptions:</span>
+
+<span class="sd">        * Plotting classes are param.Parameterized objects.</span>
+
+<span class="sd">        * Plotting classes have a style_opts list of keywords used to</span>
+<span class="sd">          control the display style of the output.</span>
+
+<span class="sd">        * Overlay plotting is a function of the overlaid elements and</span>
+<span class="sd">          only has plot options (and not style or normalization</span>
+<span class="sd">          options).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">.overlay</span> <span class="kn">import</span> <span class="n">CompositeOverlay</span>
+        <span class="n">path_items</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">view_class</span><span class="p">,</span> <span class="n">plot</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">view_class</span><span class="o">.</span><span class="n">__name__</span>
+            <span class="n">plot_opts</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">plot</span><span class="o">.</span><span class="n">params</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]]</span>
+            <span class="n">style_opts</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">style_opts</span>
+            <span class="n">opt_groups</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;plot&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(</span><span class="n">allowed_keywords</span><span class="o">=</span><span class="n">plot_opts</span><span class="p">)}</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view_class</span><span class="p">,</span> <span class="n">CompositeOverlay</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="s">&#39;style_opts&#39;</span><span class="p">):</span>
+                <span class="n">opt_groups</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;style&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(</span><span class="n">allowed_keywords</span><span class="o">=</span><span class="n">style_opts</span><span class="p">),</span>
+                                   <span class="s">&#39;norm&#39;</span><span class="p">:</span>  <span class="n">Options</span><span class="p">(</span><span class="n">mapwise</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">groupwise</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                                                    <span class="n">allowed_keywords</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;groupwise&#39;</span><span class="p">,</span>
+                                                                      <span class="s">&#39;mapwise&#39;</span><span class="p">])})</span>
+            <span class="n">path_items</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt_groups</span>
+
+        <span class="n">cls</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                                  <span class="n">groups</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;style&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(),</span>
+                                          <span class="s">&#39;plot&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(),</span>
+                                          <span class="s">&#39;norm&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">()})</span>
+</pre></div></div></div>
 
           </div>
         </div>

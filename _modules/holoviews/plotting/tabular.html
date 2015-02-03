@@ -1,0 +1,261 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>holoviews.plotting.tabular &mdash; holoviews</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2014.05.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/custom.js"></script>
+    <link rel="top" title="holoviews" href="../../../index.html" />
+    <link rel="up" title="holoviews.plotting" href="../plotting.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../plotting.html" accesskey="U">holoviews.plotting</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for holoviews.plotting.tabular</h1><div class="highlight"><pre>
+<span class="kn">from</span> <span class="nn">matplotlib.font_manager</span> <span class="kn">import</span> <span class="n">FontProperties</span>
+<span class="kn">from</span> <span class="nn">matplotlib.table</span> <span class="kn">import</span> <span class="n">Table</span> <span class="k">as</span> <span class="n">mpl_Table</span>
+
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">..element</span> <span class="kn">import</span> <span class="n">ItemTable</span><span class="p">,</span> <span class="n">Table</span>
+<span class="kn">from</span> <span class="nn">.element</span> <span class="kn">import</span> <span class="n">ElementPlot</span>
+<span class="kn">from</span> <span class="nn">.plot</span> <span class="kn">import</span> <span class="n">Plot</span>
+<span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Store</span>
+
+
+<div class="viewcode-block" id="TablePlot"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.tabular.TablePlot">[docs]</a><span class="k">class</span> <span class="nc">TablePlot</span><span class="p">(</span><span class="n">ElementPlot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A TablePlot can plot both TableViews and ViewMaps which display</span>
+<span class="sd">    as either a single static table or as an animated table</span>
+<span class="sd">    respectively.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">border</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The fraction of the plot that should be empty around the</span>
+<span class="s">        edges.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">float_precision</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The floating point precision to use when printing float</span>
+<span class="s">        numeric data types.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">max_value_len</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The maximum allowable string length of a value shown in any</span>
+<span class="s">        table cell. Any strings longer than this length will be</span>
+<span class="s">        truncated.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">max_font_size</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The largest allowable font size for the text in each table</span>
+<span class="s">        cell.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">max_rows</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The maximum number of Table rows before the table is</span>
+<span class="s">        summarized.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">font_types</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;heading&#39;</span><span class="p">:</span> <span class="n">FontProperties</span><span class="p">(</span><span class="n">weight</span><span class="o">=</span><span class="s">&#39;bold&#39;</span><span class="p">,</span>
+                                                               <span class="n">family</span><span class="o">=</span><span class="s">&#39;monospace&#39;</span><span class="p">)},</span>
+       <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;The font style used for heading labels used for emphasis.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;sketch_params&#39;</span><span class="p">]</span>
+
+    <span class="c"># Disable computing plot bounds from data.</span>
+    <span class="n">apply_databounds</span> <span class="o">=</span> <span class="bp">False</span>
+
+<div class="viewcode-block" id="TablePlot.pprint_value"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.tabular.TablePlot.pprint_value">[docs]</a>    <span class="k">def</span> <span class="nf">pprint_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate the pretty printed representation of a value for</span>
+<span class="sd">        inclusion in a table cell.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="n">formatter</span> <span class="o">=</span> <span class="s">&#39;{:.</span><span class="si">%d</span><span class="s">f}&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">float_precision</span>
+            <span class="n">formatted</span> <span class="o">=</span> <span class="n">formatter</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">formatted</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">formatted</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_value_len</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">formatted</span><span class="p">[:(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_value_len</span><span class="o">-</span><span class="mi">3</span><span class="p">)]</span><span class="o">+</span><span class="s">&#39;...&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">formatted</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">tableview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last</span>
+        <span class="n">axis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;axis&#39;</span><span class="p">]</span>
+
+        <span class="n">axis</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+        <span class="n">size_factor</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">border</span><span class="p">)</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="n">mpl_Table</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">border</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">border</span><span class="p">,</span>
+                                      <span class="n">size_factor</span><span class="p">,</span> <span class="n">size_factor</span><span class="p">])</span>
+
+        <span class="n">width</span> <span class="o">=</span> <span class="n">size_factor</span> <span class="o">/</span> <span class="n">tableview</span><span class="o">.</span><span class="n">cols</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="n">size_factor</span> <span class="o">/</span> <span class="n">tableview</span><span class="o">.</span><span class="n">rows</span>
+
+        <span class="c"># Mapping from the cell coordinates to the dictionary key.</span>
+        <span class="n">summarize</span> <span class="o">=</span> <span class="n">tableview</span><span class="o">.</span><span class="n">rows</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_rows</span>
+        <span class="n">half_rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_rows</span><span class="o">/</span><span class="mi">2</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">max_rows</span><span class="p">,</span> <span class="n">tableview</span><span class="o">.</span><span class="n">rows</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rows</span><span class="p">):</span>
+            <span class="n">adjusted_row</span> <span class="o">=</span> <span class="n">row</span>
+            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">tableview</span><span class="o">.</span><span class="n">cols</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">summarize</span> <span class="ow">and</span> <span class="n">row</span> <span class="o">==</span> <span class="n">half_rows</span><span class="p">:</span>
+                    <span class="n">cell_text</span> <span class="o">=</span> <span class="s">&quot;...&quot;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">summarize</span> <span class="ow">and</span> <span class="n">row</span> <span class="o">&gt;</span> <span class="n">half_rows</span><span class="p">:</span>
+                        <span class="n">adjusted_row</span> <span class="o">=</span> <span class="p">(</span><span class="n">tableview</span><span class="o">.</span><span class="n">rows</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_rows</span> <span class="o">+</span> <span class="n">row</span><span class="p">)</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">tableview</span><span class="o">.</span><span class="n">cell_value</span><span class="p">(</span><span class="n">adjusted_row</span><span class="p">,</span> <span class="n">col</span><span class="p">)</span>
+                    <span class="n">cell_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pprint_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                <span class="n">cellfont</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">font_types</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tableview</span><span class="o">.</span><span class="n">cell_type</span><span class="p">(</span><span class="n">adjusted_row</span><span class="p">,</span><span class="n">col</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="n">font_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">fontproperties</span><span class="o">=</span><span class="n">cellfont</span><span class="p">)</span> <span class="k">if</span> <span class="n">cellfont</span> <span class="k">else</span> <span class="p">{}</span>
+                <span class="n">table</span><span class="o">.</span><span class="n">add_cell</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="n">cell_text</span><span class="p">,</span>  <span class="n">loc</span><span class="o">=</span><span class="s">&#39;center&#39;</span><span class="p">,</span>
+                               <span class="o">**</span><span class="n">font_kwargs</span><span class="p">)</span>
+
+        <span class="n">table</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_font_size</span><span class="p">)</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">auto_set_font_size</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+        <span class="n">axis</span><span class="o">.</span><span class="n">add_table</span><span class="p">(</span><span class="n">table</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;table&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">table</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last_key</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">update_handles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;table&#39;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">coords</span><span class="p">,</span> <span class="n">cell</span> <span class="ow">in</span> <span class="n">table</span><span class="o">.</span><span class="n">get_celld</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">cell_value</span><span class="p">(</span><span class="o">*</span><span class="n">coords</span><span class="p">)</span>
+            <span class="n">cell</span><span class="o">.</span><span class="n">set_text_props</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pprint_value</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+        <span class="c"># Resize fonts across table as necessary</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">set_fontsize</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_font_size</span><span class="p">)</span>
+        <span class="n">table</span><span class="o">.</span><span class="n">auto_set_font_size</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+</div>
+<span class="n">Store</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">ItemTable</span><span class="p">:</span> <span class="n">TablePlot</span><span class="p">,</span>
+                       <span class="n">Table</span><span class="p">:</span> <span class="n">TablePlot</span><span class="p">})</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div align="center"><h1>HoloViews</h1></div>
+<ul class="global-toc">
+
+<li><a href="../../../index.html">Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+<li><a href="http://github.com/ioam/holoviews">Github Source Code</a></li>
+<li><a href="../../../site_map.html">Site Map</a></li>
+</ul>
+<h3><a href="../../../index.html">Table Of Contents</a></h3>
+
+
+
+<h3>This Page</h3>
+<ul class="this-page-menu">
+	<li><a	href="https://github.com/ioam/dataviews/edit/master/doc/_modules/holoviews/plotting/tabular.rst" rel="nofollow">Edit on GitHub</a></li>
+</ul>
+
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../plotting.html" >holoviews.plotting</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, IOAM: Jean-Luc Stevens and Philipp Rudiger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
