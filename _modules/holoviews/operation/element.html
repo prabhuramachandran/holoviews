@@ -69,13 +69,14 @@
 
 <span class="kn">import</span> <span class="nn">param</span>
 
-<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">ElementOperation</span><span class="p">,</span> <span class="n">CompositeOverlay</span><span class="p">,</span> <span class="n">NdOverlay</span><span class="p">,</span> <span class="n">Overlay</span>
+<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">ElementOperation</span><span class="p">,</span> <span class="n">CompositeOverlay</span><span class="p">,</span> \
+                   <span class="n">NdOverlay</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">BoundingBox</span>
 <span class="kn">from</span> <span class="nn">..core.util</span> <span class="kn">import</span> <span class="n">find_minmax</span>
 <span class="kn">from</span> <span class="nn">..element.chart</span> <span class="kn">import</span> <span class="n">Histogram</span><span class="p">,</span> <span class="n">VectorField</span><span class="p">,</span> <span class="n">Curve</span>
 <span class="kn">from</span> <span class="nn">..element.annotation</span> <span class="kn">import</span> <span class="n">Contours</span>
 <span class="kn">from</span> <span class="nn">..element.raster</span> <span class="kn">import</span> <span class="n">Matrix</span>
 <span class="kn">from</span> <span class="nn">..element.tabular</span> <span class="kn">import</span> <span class="n">ItemTable</span>
-
+<span class="kn">from</span> <span class="nn">.normalization</span> <span class="kn">import</span> <span class="n">raster_normalization</span>
 
 
 <div class="viewcode-block" id="chain"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.element.chain">[docs]</a><span class="k">class</span> <span class="nc">chain</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
@@ -102,6 +103,38 @@
 
     <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="n">view</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="transform"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.element.transform">[docs]</a><span class="k">class</span> <span class="nc">transform</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generic ElementOperation to transform an input Matrix or RGBA</span>
+<span class="sd">    element into an output Matrix. The transformation is defined by</span>
+<span class="sd">    the supplied callable that accepts the data of the input Matrix</span>
+<span class="sd">    (typically a numpy array) and returns the transformed data of the</span>
+<span class="sd">    output Matrix.</span>
+
+<span class="sd">    For instance, you can implement a transform that computes the</span>
+<span class="sd">    autocorrelation using the scipy library by specifying:</span>
+
+<span class="sd">    transform=lambda x: scipy.signal.correlate2d(x, x)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">output_type</span> <span class="o">=</span> <span class="n">Matrix</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Transform&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The value assigned to the result after applying the</span>
+<span class="s">        transform.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">transform</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Function of one argument that transforms the data in the input</span>
+<span class="s">       Matrix to the data in the output Matrix. By default, acts as</span>
+<span class="s">       the identity function such that the output matches the input.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">processed</span> <span class="o">=</span> <span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">data</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">transform</span>
+                     <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">data</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">processed</span><span class="p">,</span> <span class="n">matrix</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
 
 <span class="c">#==============================#</span>
 <span class="c"># Raster processing operations #</span>
@@ -180,6 +213,96 @@
         <span class="n">thresholded</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">arr</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">level</span><span class="p">,</span> <span class="n">high</span><span class="p">,</span> <span class="n">low</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">matrix</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">thresholded</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="gradient"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.element.gradient">[docs]</a><span class="k">class</span> <span class="nc">gradient</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the gradient plot of the supplied Matrix.</span>
+
+<span class="sd">    If the Matrix value dimension is cyclic, negative differences will</span>
+<span class="sd">    be wrapped into the cyclic range.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">output_type</span> <span class="o">=</span> <span class="n">Matrix</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Gradient&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">    The value assigned to the output gradient matrix.&quot;&quot;&quot;</span><span class="p">)</span>
+
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="gradient.wrap"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.element.gradient.wrap">[docs]</a>    <span class="k">def</span> <span class="nf">wrap</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Circularly alias the numeric value x into the range</span>
+<span class="sd">        [lower,upper). Corresponds to a function of the same name in</span>
+<span class="sd">        the ImaGen project.</span>
+
+<span class="sd">        Valid for cyclic quantities.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">range_</span><span class="o">=</span><span class="n">upper</span><span class="o">-</span><span class="n">lower</span>
+        <span class="k">return</span> <span class="n">lower</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">fmod</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">lower</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">range_</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">x</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">range_</span><span class="p">))),</span> <span class="n">range_</span><span class="p">)</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Input matrix to gradient operation must &quot;</span>
+                             <span class="s">&quot;have single value dimension.&quot;</span><span class="p">)</span>
+
+        <span class="n">matrix_dim</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">r</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">dx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">:</span><span class="n">r</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">c</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">dy</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">:</span><span class="n">r</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="n">c</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">cyclic_range</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">matrix_dim</span><span class="o">.</span><span class="n">cyclic</span> <span class="k">else</span> <span class="n">matrix_dim</span><span class="o">.</span><span class="n">range</span>
+        <span class="k">if</span> <span class="n">cyclic_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span> <span class="c"># Wrap into the specified range</span>
+            <span class="c"># Convert negative differences to an equivalent positive value</span>
+            <span class="n">dx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cyclic_range</span><span class="p">,</span> <span class="n">dx</span><span class="p">)</span>
+            <span class="n">dy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrap</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">cyclic_range</span><span class="p">,</span> <span class="n">dy</span><span class="p">)</span>
+            <span class="c">#</span>
+            <span class="c"># Make it increase as gradient reaches the halfway point,</span>
+            <span class="c"># and decrease from there</span>
+            <span class="n">dx</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">cyclic_range</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dx</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">cyclic_range</span><span class="p">)</span>
+            <span class="n">dy</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">cyclic_range</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">dy</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">cyclic_range</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dx</span> <span class="o">*</span> <span class="n">dx</span> <span class="o">+</span> <span class="n">dy</span> <span class="o">*</span> <span class="n">dy</span><span class="p">),</span> <span class="n">matrix</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="fft_power"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.element.fft_power">[docs]</a><span class="k">class</span> <span class="nc">fft_power</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a Matrix element, compute the power of the 2D Fast Fourier</span>
+<span class="sd">    Transform (FFT).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">output_type</span> <span class="o">=</span> <span class="n">Curve</span>
+
+    <span class="n">max_power</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">    The maximum power value of the output power spectrum.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;FFT Power&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">    The value assigned to the output power spectrum.&quot;&quot;&quot;</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">input_ranges</span><span class="p">:</span>
+            <span class="n">normfn</span> <span class="o">=</span> <span class="n">raster_normalization</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
+            <span class="n">matrix</span> <span class="o">=</span> <span class="n">normfn</span><span class="o">.</span><span class="n">process_element</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">input_ranges</span><span class="p">)</span>
+
+        <span class="n">fft_spectrum</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fftshift</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">fft2</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))))</span>
+        <span class="n">fft_spectrum</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">fft_spectrum</span> <span class="c"># Inverted spectrum by convention</span>
+        <span class="n">zero_min_spectrum</span> <span class="o">=</span> <span class="n">fft_spectrum</span> <span class="o">-</span> <span class="n">fft_spectrum</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">spectrum_range</span> <span class="o">=</span> <span class="n">fft_spectrum</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">fft_spectrum</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
+        <span class="n">spectrum</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">max_power</span> <span class="o">*</span> <span class="n">zero_min_spectrum</span><span class="p">)</span> <span class="o">/</span> <span class="n">spectrum_range</span>
+
+        <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">bounds</span><span class="o">.</span><span class="n">lbrt</span><span class="p">()</span>
+        <span class="n">density</span> <span class="o">=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">xdensity</span>
+        <span class="n">bounds</span> <span class="o">=</span> <span class="n">BoundingBox</span><span class="p">(</span><span class="n">radius</span><span class="o">=</span><span class="p">(</span><span class="n">density</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">r</span><span class="o">-</span><span class="n">l</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">spectrum</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">matrix</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 
 
 </div>
