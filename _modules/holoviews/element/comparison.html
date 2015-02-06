@@ -86,10 +86,11 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span> <span class="nn">unittest.util</span> <span class="kn">import</span> <span class="n">safe_repr</span>
+<span class="kn">from</span> <span class="nn">unittest</span> <span class="kn">import</span> <span class="n">TestCase</span>
 <span class="kn">from</span> <span class="nn">numpy.testing</span> <span class="kn">import</span> <span class="n">assert_array_almost_equal</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="o">*</span>
-<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">AdjointLayout</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">Dimensioned</span>
+<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Element</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">Dimensioned</span><span class="p">,</span> <span class="n">LayoutTree</span>
 <span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Options</span>
 <span class="kn">from</span> <span class="nn">..interface.pandas</span> <span class="kn">import</span> <span class="o">*</span>
 <span class="kn">from</span> <span class="nn">..interface.seaborn</span> <span class="kn">import</span> <span class="o">*</span>
@@ -172,6 +173,18 @@
         <span class="c"># Dimension objects</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">Dimension</span><span class="p">]</span> <span class="o">=</span>    <span class="n">cls</span><span class="o">.</span><span class="n">compare_dimensions</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">Dimensioned</span><span class="p">]</span> <span class="o">=</span>  <span class="n">cls</span><span class="o">.</span><span class="n">compare_dimensioned</span>  <span class="c"># Used in unit tests</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">Element</span><span class="p">]</span>     <span class="o">=</span>  <span class="n">cls</span><span class="o">.</span><span class="n">compare_elements</span>     <span class="c"># Used in unit tests</span>
+
+        <span class="c"># Composition (+ and *)</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">Overlay</span><span class="p">]</span> <span class="o">=</span>       <span class="n">cls</span><span class="o">.</span><span class="n">compare_overlays</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">LayoutTree</span><span class="p">]</span> <span class="o">=</span>    <span class="n">cls</span><span class="o">.</span><span class="n">compare_layouttrees</span>
+
+        <span class="c"># Annotations</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">VLine</span><span class="p">]</span> <span class="o">=</span>       <span class="n">cls</span><span class="o">.</span><span class="n">compare_vline</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">HLine</span><span class="p">]</span> <span class="o">=</span>       <span class="n">cls</span><span class="o">.</span><span class="n">compare_hline</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">Spline</span><span class="p">]</span> <span class="o">=</span>      <span class="n">cls</span><span class="o">.</span><span class="n">compare_spline</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">Arrow</span><span class="p">]</span> <span class="o">=</span>       <span class="n">cls</span><span class="o">.</span><span class="n">compare_arrow</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">Text</span><span class="p">]</span> <span class="o">=</span>        <span class="n">cls</span><span class="o">.</span><span class="n">compare_text</span>
 
         <span class="c"># Rasters</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">Matrix</span><span class="p">]</span> <span class="o">=</span>       <span class="n">cls</span><span class="o">.</span><span class="n">compare_matrix</span>
@@ -203,9 +216,8 @@
 
         <span class="c"># NdMappings</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">NdLayout</span><span class="p">]</span> <span class="o">=</span>      <span class="n">cls</span><span class="o">.</span><span class="n">compare_gridlayout</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">AdjointLayout</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">compare_layouts</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">NdOverlay</span><span class="p">]</span> <span class="o">=</span>     <span class="n">cls</span><span class="o">.</span><span class="n">compare_layers</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">Overlay</span><span class="p">]</span> <span class="o">=</span>       <span class="n">cls</span><span class="o">.</span><span class="n">compare_layers</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">AdjointLayout</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">compare_adjointlayouts</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">NdOverlay</span><span class="p">]</span> <span class="o">=</span>     <span class="n">cls</span><span class="o">.</span><span class="n">compare_ndoverlays</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">AxisLayout</span><span class="p">]</span> <span class="o">=</span>    <span class="n">cls</span><span class="o">.</span><span class="n">compare_grids</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">HoloMap</span><span class="p">]</span> <span class="o">=</span>       <span class="n">cls</span><span class="o">.</span><span class="n">compare_holomap</span>
 
@@ -284,12 +296,39 @@
         <span class="n">cls</span><span class="o">.</span><span class="n">compare_dimension_lists</span><span class="p">(</span><span class="n">obj1</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">,</span> <span class="n">obj2</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">,</span>
                                     <span class="s">&#39;Key dimension list&#39;</span><span class="p">)</span>
 
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">compare_elements</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">compare_labelled_data</span><span class="p">(</span><span class="n">obj1</span><span class="p">,</span> <span class="n">obj2</span><span class="p">)</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">obj1</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">obj2</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+
+    <span class="c">#===============================#</span>
+    <span class="c"># Compositional trees (+ and *) #</span>
+    <span class="c">#===============================#</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">compare_trees</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;Trees&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">el1</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">el2</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">raise</span> <span class="n">cls</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> have mismatched path counts.&quot;</span> <span class="o">%</span> <span class="n">msg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">el1</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">!=</span> <span class="n">el2</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="n">cls</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> have mismatched paths.&quot;</span> <span class="o">%</span> <span class="n">msg</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">element1</span><span class="p">,</span> <span class="n">element2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">el1</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span>  <span class="n">el2</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">element1</span><span class="p">,</span> <span class="n">element2</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">compare_layouttrees</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">compare_dimensioned</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">)</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">compare_trees</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;LayoutTrees&#39;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">compare_overlays</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">compare_dimensioned</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">)</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">compare_trees</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;Overlays&#39;</span><span class="p">)</span>
 
 
     <span class="c">#================================#</span>
     <span class="c"># AttrTree and Map based classes #</span>
     <span class="c">#================================#</span>
-
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compare_ndmappings</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;NdMappings&#39;</span><span class="p">):</span>
@@ -302,7 +341,6 @@
 
         <span class="k">for</span> <span class="n">element1</span><span class="p">,</span> <span class="n">element2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">):</span>
             <span class="n">cls</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">element1</span><span class="p">,</span> <span class="n">element2</span><span class="p">)</span>
-
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compare_holomap</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;HoloMaps&#39;</span><span class="p">):</span>
@@ -323,20 +361,52 @@
         <span class="k">for</span> <span class="n">element1</span><span class="p">,</span> <span class="n">element2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">):</span>
             <span class="n">cls</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">element1</span><span class="p">,</span><span class="n">element2</span><span class="p">)</span>
 
+
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">compare_layouts</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">compare_ndoverlays</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">compare_dimensioned</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">el1</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">el2</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">cls</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;NdOverlays have different lengths.&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="n">layer1</span><span class="p">,</span> <span class="n">layer2</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">):</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">layer1</span><span class="p">,</span> <span class="n">layer2</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">compare_adjointlayouts</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">compare_dimensioned</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">element1</span><span class="p">,</span> <span class="n">element2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el1</span><span class="p">):</span>
             <span class="n">cls</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">element1</span><span class="p">,</span> <span class="n">element2</span><span class="p">)</span>
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">compare_layers</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">compare_dimensioned</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">el1</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">el2</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">cls</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;Overlays have different lengths.&quot;</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="p">(</span><span class="n">layer1</span><span class="p">,</span> <span class="n">layer2</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">):</span>
-            <span class="n">cls</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">layer1</span><span class="p">,</span> <span class="n">layer2</span><span class="p">)</span>
+    <span class="c">#=============#</span>
+    <span class="c"># Annotations #</span>
+    <span class="c">#=============#</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">compare_annotation</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;Annotation&#39;</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">compare_dimensioned</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">)</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">el1</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">el2</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">compare_hline</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;HLine&#39;</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">compare_annotation</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">compare_vline</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;VLine&#39;</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">compare_annotation</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">compare_spline</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;Spline&#39;</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">compare_annotation</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">compare_arrow</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;Arrow&#39;</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">compare_annotation</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">compare_text</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;Text&#39;</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">compare_annotation</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="n">msg</span><span class="p">)</span>
+
 
     <span class="c">#========#</span>
     <span class="c"># Charts #</span>
@@ -506,7 +576,20 @@
     <span class="k">def</span> <span class="nf">compare_channelopts</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">opt1</span><span class="p">,</span> <span class="n">opt2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">opt1</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="n">opt2</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">opt1</span><span class="o">.</span><span class="n">pattern</span><span class="p">,</span> <span class="n">opt2</span><span class="o">.</span><span class="n">pattern</span><span class="p">)</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">opt1</span><span class="o">.</span><span class="n">patter</span><span class="p">,</span> <span class="n">opt2</span><span class="o">.</span><span class="n">pattern</span><span class="p">)</span></div>
+        <span class="n">cls</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">opt1</span><span class="o">.</span><span class="n">patter</span><span class="p">,</span> <span class="n">opt2</span><span class="o">.</span><span class="n">pattern</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="ComparisonTestCase"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.comparison.ComparisonTestCase">[docs]</a><span class="k">class</span> <span class="nc">ComparisonTestCase</span><span class="p">(</span><span class="n">Comparison</span><span class="p">,</span> <span class="n">TestCase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class to integrate the Comparison class with unittest.TestCase.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">TestCase</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">registry</span> <span class="o">=</span> <span class="n">Comparison</span><span class="o">.</span><span class="n">register</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">addTypeEqualityFunc</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span></div>
 </pre></div>
 
           </div>

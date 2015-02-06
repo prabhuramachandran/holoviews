@@ -113,10 +113,15 @@
 <span class="sd">    (typically a numpy array) and returns the transformed data of the</span>
 <span class="sd">    output Matrix.</span>
 
-<span class="sd">    For instance, you can implement a transform that computes the</span>
-<span class="sd">    autocorrelation using the scipy library by specifying:</span>
+<span class="sd">    This operator is extremely versatile; for instance, you could</span>
+<span class="sd">    implement an alternative to the explict threshold operator with:</span>
 
-<span class="sd">    transform=lambda x: scipy.signal.correlate2d(x, x)</span>
+<span class="sd">    operator=lambda x: np.clip(x, 0, 0.5)</span>
+
+<span class="sd">    Alternatively, you can implement a transform computing the 2D</span>
+<span class="sd">    autocorrelation using the scipy library with:</span>
+
+<span class="sd">    operator=lambda x: scipy.signal.correlate2d(x, x)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">output_type</span> <span class="o">=</span> <span class="n">Matrix</span>
@@ -125,14 +130,14 @@
 <span class="s">        The value assigned to the result after applying the</span>
 <span class="s">        transform.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">transform</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+    <span class="n">operator</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">       Function of one argument that transforms the data in the input</span>
 <span class="s">       Matrix to the data in the output Matrix. By default, acts as</span>
 <span class="s">       the identity function such that the output matches the input.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">processed</span> <span class="o">=</span> <span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">data</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">transform</span>
-                     <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">data</span><span class="p">))</span>
+        <span class="n">processed</span> <span class="o">=</span> <span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">data</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">operator</span>
+                     <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">operator</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">data</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">processed</span><span class="p">,</span> <span class="n">matrix</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 
 
@@ -140,7 +145,7 @@
 <span class="c"># Raster processing operations #</span>
 <span class="c">#==============================#</span>
 </div>
-<div class="viewcode-block" id="operator"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.element.operator">[docs]</a><span class="k">class</span> <span class="nc">operator</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
+<div class="viewcode-block" id="collapse"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.element.collapse">[docs]</a><span class="k">class</span> <span class="nc">collapse</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Applies any arbitrary collapsing operator across the data elements</span>
 <span class="sd">    of the input overlay and returns the result.</span>
@@ -153,14 +158,28 @@
     <span class="n">output_type</span> <span class="o">=</span> <span class="n">Matrix</span>
 
     <span class="n">operator</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">        The commutative operator to apply between the data attributes</span>
+<span class="s">        The collapsing operator to apply between the data attributes</span>
 <span class="s">        of the supplied Views used to collapse the data.</span>
 
-<span class="s">        By default applies elementwise addition across the input data.&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">        By default applies elementwise addition across the input</span>
+<span class="s">        data. In unpack is set to True, needs to be used with</span>
+<span class="s">        operators than can take an arbitrary number of inputs.</span>
+
+<span class="s">       Simple example operators include:</span>
+<span class="s">          np.add, np.subtract, np.multiply np.divide</span>
+
+<span class="s">       For more complex example see the documentation for unpack.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">unpack</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">       Whether the operator is supplied the .data attributes as an</span>
-<span class="s">       unpack collection of arguments or as a list.&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">       unpack collection of arguments or as a list.</span>
+
+<span class="s">       Using unpack=False, more complex operators may be used such as:</span>
+
+<span class="s">        lambda x: np.mean(x, axis=0)</span>
+<span class="s">        lambda x: np.std(lx, axis=0)</span>
+<span class="s">        lambda x: np.var(lx, axis=0)</span>
+<span class="s">        &quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Operation&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        The value assigned to the result after having applied the operator.&quot;&quot;&quot;</span><span class="p">)</span>
@@ -177,6 +196,7 @@
         <span class="k">return</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">new_data</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
                       <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_overlay_label</span><span class="p">(</span><span class="n">overlay</span><span class="p">))</span>
 
+
 </div>
 <div class="viewcode-block" id="threshold"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.element.threshold">[docs]</a><span class="k">class</span> <span class="nc">threshold</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -184,7 +204,6 @@
 <span class="sd">    level map to the specified high value and all values lower than</span>
 <span class="sd">    that level map to the specified low value.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">output_type</span> <span class="o">=</span> <span class="n">Matrix</span>
 
     <span class="n">level</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
