@@ -82,7 +82,7 @@
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">groupby</span>
 <span class="kn">import</span> <span class="nn">pyparsing</span> <span class="kn">as</span> <span class="nn">pp</span>
 
-<span class="kn">from</span> <span class="nn">..operation</span> <span class="kn">import</span> <span class="n">Channel</span>
+<span class="kn">from</span> <span class="nn">..operation</span> <span class="kn">import</span> <span class="n">Compositor</span>
 <span class="kn">from</span> <span class="nn">..plotting</span> <span class="kn">import</span> <span class="n">Plot</span>
 
 <span class="n">ascii_uppercase</span> <span class="o">=</span> <span class="s">&#39;ABCDEFGHIJKLMNOPQRSTUVWXYZ&#39;</span>
@@ -190,14 +190,14 @@
                                  <span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&quot;norm_options&quot;</span><span class="p">)</span>
 
 
-    <span class="n">channelops</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">MatchFirst</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">pp</span><span class="o">.</span><span class="n">Literal</span><span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">Channel</span><span class="o">.</span><span class="n">definitions</span><span class="p">])</span>
+    <span class="n">compositor_ops</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">MatchFirst</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">pp</span><span class="o">.</span><span class="n">Literal</span><span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">Compositor</span><span class="o">.</span><span class="n">definitions</span><span class="p">])</span>
 
     <span class="n">dotted_path</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">Combine</span><span class="p">(</span> <span class="n">pp</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="n">ascii_uppercase</span><span class="p">,</span> <span class="n">exact</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
                               <span class="o">+</span> <span class="n">pp</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="n">pp</span><span class="o">.</span><span class="n">alphanums</span><span class="o">+</span><span class="s">&#39;._&#39;</span><span class="p">))</span>
 
 
-    <span class="n">pathspec</span> <span class="o">=</span> <span class="p">(</span><span class="n">dotted_path</span> <span class="o">|</span> <span class="n">channelops</span><span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&quot;pathspec&quot;</span><span class="p">)</span>
+    <span class="n">pathspec</span> <span class="o">=</span> <span class="p">(</span><span class="n">dotted_path</span> <span class="o">|</span> <span class="n">compositor_ops</span><span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&quot;pathspec&quot;</span><span class="p">)</span>
 
 
     <span class="n">spec_group</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">Group</span><span class="p">(</span><span class="n">pathspec</span>
@@ -286,23 +286,24 @@
 
 
 </div></div>
-<div class="viewcode-block" id="ChannelSpec"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.parser.ChannelSpec">[docs]</a><span class="k">class</span> <span class="nc">ChannelSpec</span><span class="p">(</span><span class="n">Parser</span><span class="p">):</span>
+<div class="viewcode-block" id="CompositorSpec"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.parser.CompositorSpec">[docs]</a><span class="k">class</span> <span class="nc">CompositorSpec</span><span class="p">(</span><span class="n">Parser</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    The syntax for defining a set of channel operations is as follows:</span>
+<span class="sd">    The syntax for defining a set of compositor is as follows:</span>
 
-<span class="sd">    [ op(spec) [settings] value ]+</span>
+<span class="sd">    [ mode op(spec) [settings] value ]+</span>
 
 <span class="sd">    The components are:</span>
 
+<span class="sd">    mode      : Operation mode, either &#39;data&#39; or &#39;display&#39;.</span>
 <span class="sd">    value     : Value identifier with capitalized initial letter.</span>
 <span class="sd">    op        : The name of the operation to apply.</span>
 <span class="sd">    spec      : Overlay specification of form (A * B) where A and B are</span>
 <span class="sd">                 dotted path specifications.</span>
-<span class="sd">    settings : Optional list of keyword arguments to be used as</span>
-<span class="sd">               parameters to the operation (in square brackets).</span>
+<span class="sd">    settings  : Optional list of keyword arguments to be used as</span>
+<span class="sd">                parameters to the operation (in square brackets).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">value</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="n">pp</span><span class="o">.</span><span class="n">alphas</span><span class="o">+</span><span class="n">pp</span><span class="o">.</span><span class="n">nums</span><span class="o">+</span><span class="s">&#39;_&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&quot;value&quot;</span><span class="p">)</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="n">pp</span><span class="o">.</span><span class="n">alphas</span><span class="o">+</span><span class="n">pp</span><span class="o">.</span><span class="n">nums</span><span class="o">+</span><span class="s">&#39;_&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&quot;mode&quot;</span><span class="p">)</span>
 
     <span class="n">op</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="n">pp</span><span class="o">.</span><span class="n">alphas</span><span class="o">+</span><span class="n">pp</span><span class="o">.</span><span class="n">nums</span><span class="o">+</span><span class="s">&#39;_&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&quot;op&quot;</span><span class="p">)</span>
 
@@ -311,22 +312,24 @@
                                  <span class="n">ignoreExpr</span><span class="o">=</span><span class="bp">None</span>
                              <span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&quot;spec&quot;</span><span class="p">)</span>
 
+    <span class="n">value</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="n">pp</span><span class="o">.</span><span class="n">alphas</span><span class="o">+</span><span class="n">pp</span><span class="o">.</span><span class="n">nums</span><span class="o">+</span><span class="s">&#39;_&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&quot;value&quot;</span><span class="p">)</span>
+
     <span class="n">op_settings</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">nestedExpr</span><span class="p">(</span><span class="n">opener</span><span class="o">=</span><span class="s">&#39;[&#39;</span><span class="p">,</span>
                                 <span class="n">closer</span><span class="o">=</span><span class="s">&#39;]&#39;</span><span class="p">,</span>
                                 <span class="n">ignoreExpr</span><span class="o">=</span><span class="bp">None</span>
                             <span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&quot;op_settings&quot;</span><span class="p">)</span>
 
-    <span class="n">channel_spec</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">OneOrMore</span><span class="p">(</span><span class="n">pp</span><span class="o">.</span><span class="n">Group</span><span class="p">(</span><span class="n">op</span> <span class="o">+</span> <span class="n">overlay_spec</span> <span class="o">+</span> <span class="n">value</span>
-                                         <span class="o">+</span> <span class="n">pp</span><span class="o">.</span><span class="n">Optional</span><span class="p">(</span><span class="n">op_settings</span><span class="p">)))</span>
+    <span class="n">compositor_spec</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">OneOrMore</span><span class="p">(</span><span class="n">pp</span><span class="o">.</span><span class="n">Group</span><span class="p">(</span><span class="n">mode</span> <span class="o">+</span> <span class="n">op</span> <span class="o">+</span> <span class="n">overlay_spec</span> <span class="o">+</span> <span class="n">value</span>
+                                            <span class="o">+</span> <span class="n">pp</span><span class="o">.</span><span class="n">Optional</span><span class="p">(</span><span class="n">op_settings</span><span class="p">)))</span>
 
 
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="ChannelSpec.parse"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.parser.ChannelSpec.parse">[docs]</a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+<div class="viewcode-block" id="CompositorSpec.parse"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.parser.CompositorSpec.parse">[docs]</a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Parse a list of channel specification, returning a Channel</span>
+<span class="sd">        Parse compositor specifications, returning a list Compositors</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">definitions</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">parses</span>  <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">channel_spec</span><span class="o">.</span><span class="n">scanString</span><span class="p">(</span><span class="n">line</span><span class="p">)]</span>
+        <span class="n">parses</span>  <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">compositor_spec</span><span class="o">.</span><span class="n">scanString</span><span class="p">(</span><span class="n">line</span><span class="p">)]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parses</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span><span class="s">&quot;Invalid specification syntax.&quot;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -335,8 +338,12 @@
             <span class="k">if</span> <span class="p">(</span><span class="n">processed</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()):</span>
                 <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span><span class="s">&quot;Failed to parse remainder of string: </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">line</span><span class="p">[</span><span class="n">e</span><span class="p">:])</span>
 
-        <span class="n">opmap</span> <span class="o">=</span> <span class="p">{</span><span class="n">op</span><span class="o">.</span><span class="n">__name__</span><span class="p">:</span><span class="n">op</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">Channel</span><span class="o">.</span><span class="n">operations</span><span class="p">}</span>
-        <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">channel_spec</span><span class="o">.</span><span class="n">parseString</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+        <span class="n">opmap</span> <span class="o">=</span> <span class="p">{</span><span class="n">op</span><span class="o">.</span><span class="n">__name__</span><span class="p">:</span><span class="n">op</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">Compositor</span><span class="o">.</span><span class="n">operations</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">compositor_spec</span><span class="o">.</span><span class="n">parseString</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="s">&#39;mode&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">group</span><span class="p">)</span> <span class="ow">or</span> <span class="n">group</span><span class="p">[</span><span class="s">&#39;mode&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="s">&#39;display&#39;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span><span class="s">&quot;Either data or display mode must be specified.&quot;</span><span class="p">)</span>
+            <span class="n">mode</span> <span class="o">=</span> <span class="n">group</span><span class="p">[</span><span class="s">&#39;mode&#39;</span><span class="p">]</span>
 
             <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="n">operation</span> <span class="o">=</span> <span class="n">opmap</span><span class="p">[</span><span class="n">group</span><span class="p">[</span><span class="s">&#39;op&#39;</span><span class="p">]]</span>
@@ -345,12 +352,12 @@
             <span class="k">if</span> <span class="s">&#39;*&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span><span class="s">&quot;Overlay specification must contain at least one * operation&quot;</span><span class="p">)</span>
             <span class="k">if</span>  <span class="n">group</span><span class="p">[</span><span class="s">&#39;op&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">opmap</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span><span class="s">&quot;Operation </span><span class="si">%s</span><span class="s"> not available for channel operations&quot;</span>
+                <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span><span class="s">&quot;Operation </span><span class="si">%s</span><span class="s"> not available for use with compositors.&quot;</span>
                                   <span class="o">%</span> <span class="n">group</span><span class="p">[</span><span class="s">&#39;op&#39;</span><span class="p">])</span>
             <span class="k">if</span>  <span class="s">&#39;op_settings&#39;</span> <span class="ow">in</span> <span class="n">group</span><span class="p">:</span>
                 <span class="n">kwargs</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">todict</span><span class="p">(</span><span class="n">group</span><span class="p">[</span><span class="s">&#39;op_settings&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="s">&#39;brackets&#39;</span><span class="p">)</span>
 
-            <span class="n">definition</span> <span class="o">=</span> <span class="n">Channel</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">spec</span><span class="p">),</span> <span class="n">operation</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">group</span><span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">]),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">definition</span> <span class="o">=</span> <span class="n">Compositor</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">spec</span><span class="p">),</span> <span class="n">operation</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">group</span><span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">]),</span> <span class="n">mode</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="n">definitions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">definition</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">definitions</span></div></div>
 </pre></div>

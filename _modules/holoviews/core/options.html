@@ -405,22 +405,26 @@
 
 
 </div>
-<div class="viewcode-block" id="Channel"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Channel">[docs]</a><span class="k">class</span> <span class="nc">Channel</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
+<div class="viewcode-block" id="Compositor"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Compositor">[docs]</a><span class="k">class</span> <span class="nc">Compositor</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A Channel is a way of specifying an operation to be automatically</span>
+<span class="sd">    A Compositor is a way of specifying an operation to be automatically</span>
 <span class="sd">    applied to Overlays that match a specified pattern upon display.</span>
 
 <span class="sd">    Any ElementOperation that takes an Overlay as input may be used to</span>
-<span class="sd">    define a channel.</span>
+<span class="sd">    define a compositor.</span>
 
-<span class="sd">    For instance, a channel may be defined to automatically display</span>
+<span class="sd">    For instance, a compositor may be defined to automatically display</span>
 <span class="sd">    three overlaid monochrome matrices as an RGB image as long as the</span>
-<span class="sd">    values names of those matrices match &#39;R&#39;, &#39;G&#39; and &#39;B&#39; respectively.</span>
+<span class="sd">    values names of those matrices match &#39;R&#39;, &#39;G&#39; and &#39;B&#39;.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;data&#39;</span><span class="p">,</span>
+                                <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="s">&#39;display&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">      The mode of the Compositor object which may be either &#39;data&#39; or</span>
+<span class="s">      &#39;display&#39;.&quot;&quot;&quot;</span><span class="p">)</span>
+
     <span class="n">operation</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">       The ElementOperation to apply when collapsing overlays into a</span>
-<span class="s">       channel.&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">       The ElementOperation to apply when collapsing overlays.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">pattern</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">       The overlay pattern to be processed. An overlay pattern is a</span>
@@ -436,38 +440,39 @@
 <span class="s">      operation that returns a single RGB matrix for display.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">       The value identifier for the output of this particular channel&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">       The value identifier for the output of this particular compositor&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">kwargs</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">       Optional set of parameters to pass to the operation.&quot;&quot;&quot;</span><span class="p">)</span>
 
 
-    <span class="n">operations</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c"># The operations that can be used to define channels.</span>
-    <span class="n">definitions</span> <span class="o">=</span> <span class="p">[]</span> <span class="c"># The set of all the channel instances</span>
+    <span class="n">operations</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c"># The operations that can be used to define compositors.</span>
+    <span class="n">definitions</span> <span class="o">=</span> <span class="p">[]</span> <span class="c"># The set of all the compositor instances</span>
 
 
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Channel.strongest_match"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Channel.strongest_match">[docs]</a>    <span class="k">def</span> <span class="nf">strongest_match</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">overlay</span><span class="p">):</span>
+<div class="viewcode-block" id="Compositor.strongest_match"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Compositor.strongest_match">[docs]</a>    <span class="k">def</span> <span class="nf">strongest_match</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns the strongest matching channel operation given an</span>
+<span class="sd">        Returns the strongest matching compositor operation given an</span>
 <span class="sd">        overlay. If no matches are found, None is returned.</span>
 
-<span class="sd">        The best match is defined as the channel operation with the</span>
+<span class="sd">        The best match is defined as the compositor operation with the</span>
 <span class="sd">        highest match value as returned by the match_level method.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">match_strength</span> <span class="o">=</span> <span class="p">[(</span><span class="n">op</span><span class="o">.</span><span class="n">match_level</span><span class="p">(</span><span class="n">overlay</span><span class="p">),</span> <span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">definitions</span><span class="p">]</span>
+        <span class="n">match_strength</span> <span class="o">=</span> <span class="p">[(</span><span class="n">op</span><span class="o">.</span><span class="n">match_level</span><span class="p">(</span><span class="n">overlay</span><span class="p">),</span> <span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">definitions</span>
+                          <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">mode</span><span class="p">]</span>
         <span class="n">matches</span> <span class="o">=</span> <span class="p">[(</span><span class="n">lvl</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">lvl</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">match_strength</span> <span class="k">if</span> <span class="n">lvl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">matches</span> <span class="o">==</span> <span class="p">[]:</span> <span class="k">return</span> <span class="bp">None</span>
         <span class="k">else</span><span class="p">:</span>             <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">matches</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
 
 </div>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">_collapse</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_collapse</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Finds any applicable channel operation and applies it.</span>
+<span class="sd">        Finds any applicable compositor and applies it.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span> <span class="nn">.overlay</span> <span class="kn">import</span> <span class="n">Overlay</span>
-        <span class="n">applicable_op</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">strongest_match</span><span class="p">(</span><span class="n">overlay</span><span class="p">)</span>
+        <span class="n">applicable_op</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">strongest_match</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">applicable_op</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">overlay</span>
 
         <span class="n">output</span> <span class="o">=</span> <span class="n">applicable_op</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">ranges</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
@@ -477,32 +482,31 @@
 
 
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Channel.collapse"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Channel.collapse">[docs]</a>    <span class="k">def</span> <span class="nf">collapse</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">holomap</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Compositor.collapse"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Compositor.collapse">[docs]</a>    <span class="k">def</span> <span class="nf">collapse</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">holomap</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;data&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Given a map of Overlays, apply all applicable channel</span>
-<span class="sd">        reductions.</span>
+<span class="sd">        Given a map of Overlays, apply all applicable compositors.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c"># No potential channel reductions</span>
+        <span class="c"># No potential compositors</span>
         <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">definitions</span> <span class="o">==</span> <span class="p">[]:</span>
             <span class="k">return</span> <span class="n">holomap</span>
 
-        <span class="c"># Collapse channel operations</span>
+        <span class="c"># Apply compositors</span>
         <span class="n">clone</span> <span class="o">=</span> <span class="n">holomap</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">shared_data</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">overlay</span> <span class="ow">in</span> <span class="n">holomap</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">clone</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_collapse</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
+            <span class="n">clone</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_collapse</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">clone</span>
 </div>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">channel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">compositor</span><span class="p">):</span>
         <span class="n">defined_values</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">definitions</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">channel</span><span class="o">.</span><span class="n">value</span> <span class="ow">in</span> <span class="n">defined_values</span><span class="p">:</span>
-            <span class="n">cls</span><span class="o">.</span><span class="n">definitions</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">defined_values</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">channel</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">definitions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">channel</span><span class="o">.</span><span class="n">operation</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">operations</span><span class="p">:</span>
-            <span class="n">cls</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">channel</span><span class="o">.</span><span class="n">operation</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">compositor</span><span class="o">.</span><span class="n">value</span> <span class="ow">in</span> <span class="n">defined_values</span><span class="p">:</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">definitions</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">defined_values</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">compositor</span><span class="o">.</span><span class="n">value</span><span class="p">))</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">definitions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">compositor</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">compositor</span><span class="o">.</span><span class="n">operation</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">operations</span><span class="p">:</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">compositor</span><span class="o">.</span><span class="n">operation</span><span class="p">)</span>
 
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">operation</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pattern</span><span class="p">,</span> <span class="n">operation</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pattern_spec</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
 
         <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">pattern</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">):</span>
@@ -513,20 +517,21 @@
                 <span class="n">labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path_tuple</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">l</span><span class="o">==</span><span class="n">labels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">labels</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&quot;Mismatched labels not allowed in channel operation patterns&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&quot;Mismatched labels not allowed in compositor patterns&quot;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">labels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
 
-        <span class="nb">super</span><span class="p">(</span><span class="n">Channel</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
-                                      <span class="n">pattern</span><span class="o">=</span><span class="n">pattern</span><span class="p">,</span>
-                                      <span class="n">operation</span><span class="o">=</span><span class="n">operation</span><span class="p">,</span>
-                                      <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Compositor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+                                         <span class="n">pattern</span><span class="o">=</span><span class="n">pattern</span><span class="p">,</span>
+                                         <span class="n">operation</span><span class="o">=</span><span class="n">operation</span><span class="p">,</span>
+                                         <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
+                                         <span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span><span class="p">)</span>
 
 
     <span class="nd">@property</span>
-<div class="viewcode-block" id="Channel.output_type"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Channel.output_type">[docs]</a>    <span class="k">def</span> <span class="nf">output_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Compositor.output_type"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Compositor.output_type">[docs]</a>    <span class="k">def</span> <span class="nf">output_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Returns the operation output_type unless explicitly overridden</span>
 <span class="sd">        in the kwargs.</span>
@@ -537,7 +542,7 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">output_type</span>
 
 </div>
-<div class="viewcode-block" id="Channel.match_level"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Channel.match_level">[docs]</a>    <span class="k">def</span> <span class="nf">match_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">):</span>
+<div class="viewcode-block" id="Compositor.match_level"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Compositor.match_level">[docs]</a>    <span class="k">def</span> <span class="nf">match_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given an overlay, return an integer if there is a match or</span>
 <span class="sd">        None if there is no match.</span>
@@ -565,10 +570,9 @@
         <span class="k">return</span> <span class="n">level</span>
 
 </div>
-<div class="viewcode-block" id="Channel.apply"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Channel.apply">[docs]</a>    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">input_ranges</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Compositor.apply"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Compositor.apply">[docs]</a>    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">input_ranges</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Apply the channel operation on the input value using the given</span>
-<span class="sd">        input ranges.</span>
+<span class="sd">        Apply the compositor on the input with the given input ranges.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">input_ranges</span><span class="o">=</span><span class="n">input_ranges</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>

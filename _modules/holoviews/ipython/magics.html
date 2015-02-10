@@ -76,7 +76,7 @@
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span><span class="p">,</span> <span class="n">HTML</span>
 
-<span class="kn">from</span> <span class="nn">..operation</span> <span class="kn">import</span> <span class="n">Channel</span>
+<span class="kn">from</span> <span class="nn">..operation</span> <span class="kn">import</span> <span class="n">Compositor</span>
 
 <span class="c">#========#</span>
 <span class="c"># Magics #</span>
@@ -88,7 +88,7 @@
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="n">pyparsing</span> <span class="o">=</span> <span class="bp">None</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">holoviews.ipython.parser</span> <span class="kn">import</span> <span class="n">ChannelSpec</span>
+    <span class="kn">from</span> <span class="nn">holoviews.ipython.parser</span> <span class="kn">import</span> <span class="n">CompositorSpec</span>
     <span class="kn">from</span> <span class="nn">holoviews.ipython.parser</span> <span class="kn">import</span> <span class="n">OptsSpec</span>
 
 
@@ -135,6 +135,7 @@
                <span class="s">&#39;max_frames&#39;</span>  <span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">)),</span>
                <span class="s">&#39;max_branches&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">)),</span>
                <span class="s">&#39;size&#39;</span>        <span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">)),</span>
+               <span class="s">&#39;dpi&#39;</span>         <span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">)),</span>
                <span class="s">&#39;charwidth&#39;</span>   <span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">))}</span>
 
     <span class="n">defaults</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">([(</span><span class="s">&#39;backend&#39;</span>     <span class="p">,</span> <span class="s">&#39;mpl&#39;</span><span class="p">),</span>
@@ -145,6 +146,7 @@
                             <span class="p">(</span><span class="s">&#39;max_frames&#39;</span>  <span class="p">,</span> <span class="mi">500</span><span class="p">),</span>
                             <span class="p">(</span><span class="s">&#39;max_branches&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
                             <span class="p">(</span><span class="s">&#39;size&#39;</span>        <span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
+                            <span class="p">(</span><span class="s">&#39;dpi&#39;</span>         <span class="p">,</span> <span class="mi">72</span><span class="p">),</span>
                             <span class="p">(</span><span class="s">&#39;charwidth&#39;</span>   <span class="p">,</span> <span class="mi">80</span><span class="p">)])</span>
 
     <span class="n">options</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="n">defaults</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
@@ -193,10 +195,12 @@
                   <span class="o">%</span> <span class="n">cls</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="s">&#39;max_branches&#39;</span><span class="p">])</span>
         <span class="n">size</span> <span class="o">=</span>   <span class="p">(</span><span class="s">&quot;size         : The percentage size of displayed output (default </span><span class="si">%r</span><span class="s">)&quot;</span>
                   <span class="o">%</span> <span class="n">cls</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="s">&#39;size&#39;</span><span class="p">])</span>
+        <span class="n">dpi</span> <span class="o">=</span>    <span class="p">(</span><span class="s">&quot;dpi          : The rendered dpi of the figure (default </span><span class="si">%r</span><span class="s">)&quot;</span>
+                  <span class="o">%</span> <span class="n">cls</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="s">&#39;dpi&#39;</span><span class="p">])</span>
         <span class="n">chars</span> <span class="o">=</span>  <span class="p">(</span><span class="s">&quot;charwidth    : The max character width view magic options display (default </span><span class="si">%r</span><span class="s">)&quot;</span>
                   <span class="o">%</span> <span class="n">cls</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="s">&#39;charwidth&#39;</span><span class="p">])</span>
 
-        <span class="n">descriptions</span> <span class="o">=</span> <span class="p">[</span><span class="n">backend</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">holomap</span><span class="p">,</span> <span class="n">widgets</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">branches</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">chars</span><span class="p">]</span>
+        <span class="n">descriptions</span> <span class="o">=</span> <span class="p">[</span><span class="n">backend</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">holomap</span><span class="p">,</span> <span class="n">widgets</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">branches</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">dpi</span><span class="p">,</span> <span class="n">chars</span><span class="p">]</span>
         <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">intro</span> <span class="o">+</span> <span class="n">descriptions</span><span class="p">)</span>
 
 
@@ -333,37 +337,41 @@
 
 </div>
 <span class="nd">@magics_class</span>
-<div class="viewcode-block" id="ChannelMagic"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.magics.ChannelMagic">[docs]</a><span class="k">class</span> <span class="nc">ChannelMagic</span><span class="p">(</span><span class="n">Magics</span><span class="p">):</span>
+<div class="viewcode-block" id="CompositorMagic"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.magics.CompositorMagic">[docs]</a><span class="k">class</span> <span class="nc">CompositorMagic</span><span class="p">(</span><span class="n">Magics</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Magic allowing easy definition of channel operations.</span>
-<span class="sd">    Consult %%channels? for more information.</span>
+<span class="sd">    Magic allowing easy definition of compositor operations.</span>
+<span class="sd">    Consult %compositor? for more information.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">ChannelMagic</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;The </span><span class="si">%c</span><span class="s">hannels line magic is used to define channel operations.&#39;</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">__func__</span><span class="o">.</span><span class="n">__doc__</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span> <span class="o">+</span> <span class="p">[</span><span class="n">ChannelSpec</span><span class="o">.</span><span class="n">__doc__</span><span class="p">])</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">CompositorMagic</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;The </span><span class="si">%c</span><span class="s">ompositor line magic is used to define compositors.&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compositor</span><span class="o">.</span><span class="n">__func__</span><span class="o">.</span><span class="n">__doc__</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span> <span class="o">+</span> <span class="p">[</span><span class="n">CompositorSpec</span><span class="o">.</span><span class="n">__doc__</span><span class="p">])</span>
 
 
     <span class="nd">@line_magic</span>
-    <span class="k">def</span> <span class="nf">channels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">compositor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">definition</span> <span class="ow">in</span> <span class="n">ChannelSpec</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()):</span>
+            <span class="k">for</span> <span class="n">definition</span> <span class="ow">in</span> <span class="n">CompositorSpec</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()):</span>
                 <span class="n">group</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;style&#39;</span><span class="p">:</span><span class="n">Options</span><span class="p">(),</span> <span class="s">&#39;style&#39;</span><span class="p">:</span><span class="n">Options</span><span class="p">(),</span> <span class="s">&#39;norm&#39;</span><span class="p">:</span><span class="n">Options</span><span class="p">()}</span>
                 <span class="n">type_name</span> <span class="o">=</span> <span class="n">definition</span><span class="o">.</span><span class="n">output_type</span><span class="o">.</span><span class="n">__name__</span>
                 <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="n">type_name</span> <span class="o">+</span> <span class="s">&#39;.&#39;</span> <span class="o">+</span> <span class="n">definition</span><span class="o">.</span><span class="n">value</span><span class="p">]</span> <span class="o">=</span> <span class="n">group</span>
-                <span class="n">Channel</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">definition</span><span class="p">)</span>
+                <span class="n">Compositor</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">definition</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">print</span><span class="p">(</span><span class="s">&quot;For help with the </span><span class="si">%c</span><span class="s">hannels magic, call </span><span class="si">%c</span><span class="s">hannels?</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;For help with the </span><span class="si">%c</span><span class="s">ompositor magic, call </span><span class="si">%c</span><span class="s">ompositor?</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
 
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">option_completer</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">):</span>
         <span class="n">line</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">text_until_cursor</span>
-        <span class="n">operation_openers</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">__name__</span><span class="o">+</span><span class="s">&#39;(&#39;</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">Channel</span><span class="o">.</span><span class="n">operations</span><span class="p">]</span>
+        <span class="n">operation_openers</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">__name__</span><span class="o">+</span><span class="s">&#39;(&#39;</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">Compositor</span><span class="o">.</span><span class="n">operations</span><span class="p">]</span>
 
+        <span class="n">modes</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;data&#39;</span><span class="p">,</span> <span class="s">&#39;display&#39;</span><span class="p">]</span>
         <span class="n">op_declared</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">op</span> <span class="ow">in</span> <span class="n">line</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">operation_openers</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">op_declared</span><span class="p">:</span>
+        <span class="n">mode_declared</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">mode</span> <span class="ow">in</span> <span class="n">line</span> <span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">modes</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mode_declared</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">modes</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">op_declared</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">operation_openers</span>
         <span class="k">if</span> <span class="n">op_declared</span> <span class="ow">and</span> <span class="s">&#39;)&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[</span><span class="s">&#39;)&#39;</span><span class="p">]</span>
@@ -397,8 +405,8 @@
         <span class="n">line</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">text_until_cursor</span>
 
         <span class="n">completions</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">setup_completer</span><span class="p">()</span>
-        <span class="n">channel_defs</span> <span class="o">=</span> <span class="p">{</span><span class="n">el</span><span class="o">.</span><span class="n">value</span><span class="p">:</span><span class="n">el</span><span class="o">.</span><span class="n">output_type</span><span class="o">.</span><span class="n">__name__</span>
-                        <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">Channel</span><span class="o">.</span><span class="n">definitions</span><span class="p">}</span>
+        <span class="n">compositor_defs</span> <span class="o">=</span> <span class="p">{</span><span class="n">el</span><span class="o">.</span><span class="n">value</span><span class="p">:</span><span class="n">el</span><span class="o">.</span><span class="n">output_type</span><span class="o">.</span><span class="n">__name__</span>
+                           <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">Compositor</span><span class="o">.</span><span class="n">definitions</span><span class="p">}</span>
 
         <span class="c"># Find the last element class mentioned</span>
         <span class="n">completion_key</span> <span class="o">=</span> <span class="bp">None</span>
@@ -406,13 +414,13 @@
             <span class="k">if</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">completions</span><span class="p">:</span>
                 <span class="n">completion_key</span> <span class="o">=</span> <span class="n">token</span>
                 <span class="k">break</span>
-            <span class="c"># Attempting to match channel definitions</span>
-            <span class="k">if</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">channel_defs</span><span class="p">:</span>
-                <span class="n">completion_key</span> <span class="o">=</span> <span class="n">channel_defs</span><span class="p">[</span><span class="n">token</span><span class="p">]</span>
+            <span class="c"># Attempting to match compositor definitions</span>
+            <span class="k">if</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">compositor_defs</span><span class="p">:</span>
+                <span class="n">completion_key</span> <span class="o">=</span> <span class="n">compositor_defs</span><span class="p">[</span><span class="n">token</span><span class="p">]</span>
                 <span class="k">break</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">completion_key</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">completions</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">+</span> <span class="n">channel_defs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">completions</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">+</span> <span class="n">compositor_defs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;]&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;[&#39;</span><span class="p">)</span> <span class="o">-</span> <span class="n">line</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;]&#39;</span><span class="p">))</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
             <span class="n">kws</span> <span class="o">=</span> <span class="n">completions</span><span class="p">[</span><span class="n">completion_key</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
@@ -424,7 +432,7 @@
         <span class="n">style_completions</span> <span class="o">=</span> <span class="p">[</span><span class="n">kw</span><span class="o">+</span><span class="s">&#39;=&#39;</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">completions</span><span class="p">[</span><span class="n">completion_key</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span>
         <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;)&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;(&#39;</span><span class="p">)</span> <span class="o">-</span> <span class="n">line</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;)&#39;</span><span class="p">))</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">style_completions</span>
-        <span class="k">return</span> <span class="n">style_completions</span> <span class="o">+</span> <span class="n">completions</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">+</span> <span class="n">channel_defs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">style_completions</span> <span class="o">+</span> <span class="n">completions</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">+</span> <span class="n">compositor_defs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
 
 
 
@@ -493,21 +501,21 @@
             <span class="n">cls</span><span class="o">.</span><span class="n">next_id</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="OptsMagic.expand_channel_keys"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.magics.OptsMagic.expand_channel_keys">[docs]</a>    <span class="k">def</span> <span class="nf">expand_channel_keys</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+<div class="viewcode-block" id="OptsMagic.expand_compositor_keys"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.magics.OptsMagic.expand_compositor_keys">[docs]</a>    <span class="k">def</span> <span class="nf">expand_compositor_keys</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Expands channel definition keys into {type}.{value} keys. For</span>
-<span class="sd">        instance a channel operation returning a value string &#39;Image&#39;</span>
-<span class="sd">        of element type RGB expands to &#39;RGB.Image&#39;.</span>
+<span class="sd">        Expands compositor definition keys into {type}.{value}</span>
+<span class="sd">        keys. For instance a compositor operation returning a value</span>
+<span class="sd">        string &#39;Image&#39; of element type RGB expands to &#39;RGB.Image&#39;.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">expanded_spec</span><span class="o">=</span><span class="p">{}</span>
-        <span class="n">channel_defs</span> <span class="o">=</span> <span class="p">{</span><span class="n">el</span><span class="o">.</span><span class="n">value</span><span class="p">:</span><span class="n">el</span><span class="o">.</span><span class="n">output_type</span><span class="o">.</span><span class="n">__name__</span>
-                        <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">Channel</span><span class="o">.</span><span class="n">definitions</span><span class="p">}</span>
+        <span class="n">compositor_defs</span> <span class="o">=</span> <span class="p">{</span><span class="n">el</span><span class="o">.</span><span class="n">value</span><span class="p">:</span><span class="n">el</span><span class="o">.</span><span class="n">output_type</span><span class="o">.</span><span class="n">__name__</span>
+                           <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">Compositor</span><span class="o">.</span><span class="n">definitions</span><span class="p">}</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">channel_defs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">compositor_defs</span><span class="p">:</span>
                 <span class="n">expanded_spec</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">cls</span><span class="o">.</span><span class="n">applied_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Overlay&#39;</span><span class="p">]</span> <span class="c"># Send id to Overlays</span>
-                <span class="n">type_name</span> <span class="o">=</span> <span class="n">channel_defs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="n">type_name</span> <span class="o">=</span> <span class="n">compositor_defs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
                 <span class="n">expanded_spec</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">type_name</span><span class="o">+</span><span class="s">&#39;.&#39;</span><span class="o">+</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="n">val</span>
         <span class="k">return</span> <span class="n">expanded_spec</span>
 
@@ -542,7 +550,7 @@
         <span class="n">get_object</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">spec</span> <span class="o">=</span> <span class="n">OptsSpec</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
-            <span class="n">spec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expand_channel_keys</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+            <span class="n">spec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expand_compositor_keys</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">SyntaxError</span><span class="p">:</span>
             <span class="n">display</span><span class="p">(</span><span class="n">HTML</span><span class="p">(</span><span class="s">&quot;&lt;b&gt;Invalid syntax&lt;/b&gt;: Consult &lt;tt&gt;</span><span class="si">%%</span><span class="s">opts?&lt;/tt&gt; for more information.&quot;</span><span class="p">))</span>
             <span class="k">return</span>
@@ -563,12 +571,12 @@
     <span class="k">if</span> <span class="n">pyparsing</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>  <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%o</span><span class="s">pts magic unavailable (pyparsing cannot be imported)&quot;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span> <span class="n">ip</span><span class="o">.</span><span class="n">register_magics</span><span class="p">(</span><span class="n">OptsMagic</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">pyparsing</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%c</span><span class="s">hannels magic unavailable (pyparsing cannot be imported)&quot;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span> <span class="n">ip</span><span class="o">.</span><span class="n">register_magics</span><span class="p">(</span><span class="n">ChannelMagic</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pyparsing</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%c</span><span class="s">ompositor magic unavailable (pyparsing cannot be imported)&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span> <span class="n">ip</span><span class="o">.</span><span class="n">register_magics</span><span class="p">(</span><span class="n">CompositorMagic</span><span class="p">)</span>
 
 
     <span class="c"># Configuring tab completion</span>
-    <span class="n">ip</span><span class="o">.</span><span class="n">set_hook</span><span class="p">(</span><span class="s">&#39;complete_command&#39;</span><span class="p">,</span> <span class="n">ChannelMagic</span><span class="o">.</span><span class="n">option_completer</span><span class="p">,</span> <span class="n">str_key</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%c</span><span class="s">hannels&#39;</span><span class="p">)</span>
+    <span class="n">ip</span><span class="o">.</span><span class="n">set_hook</span><span class="p">(</span><span class="s">&#39;complete_command&#39;</span><span class="p">,</span> <span class="n">CompositorMagic</span><span class="o">.</span><span class="n">option_completer</span><span class="p">,</span> <span class="n">str_key</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%c</span><span class="s">ompositor&#39;</span><span class="p">)</span>
 
     <span class="n">ip</span><span class="o">.</span><span class="n">set_hook</span><span class="p">(</span><span class="s">&#39;complete_command&#39;</span><span class="p">,</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">option_completer</span><span class="p">,</span> <span class="n">str_key</span> <span class="o">=</span> <span class="s">&#39;%view&#39;</span><span class="p">)</span>
     <span class="n">ip</span><span class="o">.</span><span class="n">set_hook</span><span class="p">(</span><span class="s">&#39;complete_command&#39;</span><span class="p">,</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">option_completer</span><span class="p">,</span> <span class="n">str_key</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%%</span><span class="s">view&#39;</span><span class="p">)</span>
