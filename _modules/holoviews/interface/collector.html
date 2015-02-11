@@ -76,7 +76,7 @@
 <span class="kn">import</span> <span class="nn">param</span>
 
 <span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">ViewableElement</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">,</span>\
- <span class="n">AxisLayout</span><span class="p">,</span> <span class="n">AttrTree</span><span class="p">,</span> <span class="n">HoloMap</span>
+ <span class="n">AxisLayout</span><span class="p">,</span> <span class="n">AttrTree</span><span class="p">,</span> <span class="n">LayoutTree</span><span class="p">,</span> <span class="n">HoloMap</span>
 <span class="kn">from</span> <span class="nn">..element.raster</span> <span class="kn">import</span> <span class="n">Matrix</span>
 <span class="kn">from</span> <span class="nn">..ipython.widgets</span> <span class="kn">import</span> <span class="n">RunProgress</span><span class="p">,</span> <span class="n">ProgressBar</span>
 
@@ -139,7 +139,7 @@
 
 <span class="sd">    &gt;&gt;&gt; ref = ViewRef(&#39;Example.Path1 * Example.Path2&#39;)</span>
 
-<span class="sd">    &gt;&gt;&gt; tree = AttrTree()</span>
+<span class="sd">    &gt;&gt;&gt; tree = LayoutTree()</span>
 <span class="sd">    &gt;&gt;&gt; tree.Example.Path1 = Matrix(np.random.rand(5,5))</span>
 <span class="sd">    &gt;&gt;&gt; tree.Example.Path2 = Matrix(np.random.rand(5,5))</span>
 <span class="sd">    &gt;&gt;&gt; overlay = ref.resolve(tree)</span>
@@ -151,7 +151,7 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        The specification is a string that follows attribute access on</span>
-<span class="sd">        an AttrTree. The &#39;*&#39; operator is supported, as well as slicing</span>
+<span class="sd">        an LayoutTree. The &#39;*&#39; operator is supported, as well as slicing</span>
 <span class="sd">        syntax - an example specification is &#39;A.B.C[2:4] *D.E&#39;</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">specification</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
@@ -310,9 +310,9 @@
 <div class="viewcode-block" id="Collect"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Collect">[docs]</a><span class="k">class</span> <span class="nc">Collect</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An Collect takes an object and corresponding hook and when</span>
-<span class="sd">    called with an AttrTree, updates it with the output of the hook</span>
+<span class="sd">    called with an LayoutTree, updates it with the output of the hook</span>
 <span class="sd">    (given the object). The output of the hook should be a ViewableElement or an</span>
-<span class="sd">    AttrTree.</span>
+<span class="sd">    LayoutTree.</span>
 
 <span class="sd">    The input object may be a picklable object (e.g. a</span>
 <span class="sd">    ParameterizedFunction) or a Reference to the target object.  The</span>
@@ -320,7 +320,7 @@
 <span class="sd">    the resolved object.</span>
 
 <span class="sd">    When mode is &#39;merge&#39; the return value of the hook needs to be an</span>
-<span class="sd">    AttrTree to be merged with the attrtree when called.</span>
+<span class="sd">    LayoutTree to be merged with the attrtree when called.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@classmethod</span>
@@ -372,7 +372,7 @@
 
     <span class="k">def</span> <span class="nf">_get_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrtree</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">times</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Method returning a ViewableElement or AttrTree to be merged into the</span>
+<span class="sd">        Method returning a ViewableElement or LayoutTree to be merged into the</span>
 <span class="sd">        attrtree (via the specified hook) in the call.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">resolvable</span> <span class="o">=</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;resolve&#39;</span><span class="p">)</span>
@@ -382,7 +382,7 @@
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrtree</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">times</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Update and return the supplied AttrTree with the output of</span>
+<span class="sd">        Update and return the supplied LayoutTree with the output of</span>
 <span class="sd">        the hook at the given time out of the given list of times.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
@@ -395,11 +395,11 @@
         <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>  <span class="k">return</span> <span class="n">attrtree</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;merge&#39;</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">AttrTree</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">LayoutTree</span><span class="p">):</span>
                 <span class="n">attrtree</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
                 <span class="k">return</span> <span class="n">attrtree</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Return value is not a AttrTree and mode is &#39;merge&#39;.&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Return value is not a LayoutTree and mode is &#39;merge&#39;.&quot;</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">attrtree</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">):</span>
@@ -496,10 +496,10 @@
 </div>
 <div class="viewcode-block" id="Collator"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Collator">[docs]</a><span class="k">class</span> <span class="nc">Collator</span><span class="p">(</span><span class="n">NdMapping</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Collator is an NdMapping holding AttrTree objects and</span>
+<span class="sd">    Collator is an NdMapping holding LayoutTree objects and</span>
 <span class="sd">    provides methods to filter and merge them via the call</span>
 <span class="sd">    method. Collation inserts the Collator dimensions on</span>
-<span class="sd">    each UniformNdMapping type contained within the AttrTree objects.</span>
+<span class="sd">    each UniformNdMapping type contained within the LayoutTree objects.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">drop</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
@@ -510,10 +510,10 @@
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_filters</span><span class="o">=</span><span class="p">[],</span> <span class="n">merge</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Filter each AttrTree in the Collator with the supplied</span>
-<span class="sd">        path_filters. If merge is set to True all AttrTrees are</span>
+<span class="sd">        Filter each LayoutTree in the Collator with the supplied</span>
+<span class="sd">        path_filters. If merge is set to True all LayoutTrees are</span>
 <span class="sd">        merged, otherwise an NdMapping containing all the</span>
-<span class="sd">        AttrTrees is returned. Optionally a list of dimensions</span>
+<span class="sd">        LayoutTrees is returned. Optionally a list of dimensions</span>
 <span class="sd">        to be ignored can be supplied.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">constant_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant_dimensions</span>
@@ -537,7 +537,7 @@
 
         <span class="k">if</span> <span class="n">merge</span><span class="p">:</span>
             <span class="n">trees</span> <span class="o">=</span> <span class="n">ndmapping</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
-            <span class="n">accumulator</span> <span class="o">=</span> <span class="n">AttrTree</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">trees</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">accumulator</span> <span class="o">=</span> <span class="n">LayoutTree</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">trees</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">tree</span> <span class="ow">in</span> <span class="n">trees</span><span class="p">:</span>
                 <span class="n">accumulator</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">accumulator</span>
@@ -559,11 +559,11 @@
 </div>
     <span class="k">def</span> <span class="nf">_add_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">constant_keys</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Recursively descend through an AttrTree and NdMapping objects</span>
+<span class="sd">        Recursively descend through an LayoutTree and NdMapping objects</span>
 <span class="sd">        in order to add the supplied dimension values to all contained</span>
 <span class="sd">        UniformNdMapping objects.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">AttrTree</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">LayoutTree</span><span class="p">):</span>
             <span class="n">item</span><span class="o">.</span><span class="n">fixed</span> <span class="o">=</span> <span class="bp">False</span>
 
         <span class="n">new_item</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">clone</span><span class="p">({})</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">)</span> <span class="k">else</span> <span class="n">item</span>
@@ -579,7 +579,7 @@
                 <span class="n">new_item</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">new_item</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_dimensions</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">constant_keys</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_item</span><span class="p">,</span> <span class="n">AttrTree</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_item</span><span class="p">,</span> <span class="n">LayoutTree</span><span class="p">):</span>
             <span class="n">new_item</span><span class="o">.</span><span class="n">fixed</span> <span class="o">=</span> <span class="bp">True</span>
 
         <span class="k">return</span> <span class="n">new_item</span>
@@ -596,7 +596,7 @@
 </div>
 <div class="viewcode-block" id="Collector"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Collector">[docs]</a><span class="k">class</span> <span class="nc">Collector</span><span class="p">(</span><span class="n">AttrTree</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A Collector specifies a template for how to populate a AttrTree</span>
+<span class="sd">    A Collector specifies a template for how to populate a LayoutTree</span>
 <span class="sd">    with data over time. Two methods are used to schedule data</span>
 <span class="sd">    collection: &#39;collect&#39; and &#39;analyze&#39;.</span>
 
@@ -616,7 +616,7 @@
 
 <span class="sd">    # Start collection...</span>
 <span class="sd">    &gt;&gt;&gt; data = c(times=[1,2,3,4,5])</span>
-<span class="sd">    &gt;&gt;&gt; isinstance(data, AttrTree)</span>
+<span class="sd">    &gt;&gt;&gt; isinstance(data, LayoutTree)</span>
 <span class="sd">    True</span>
 <span class="sd">    &gt;&gt;&gt; isinstance(data.Target.Path, UniformNdMapping)</span>
 <span class="sd">    True</span>
@@ -654,7 +654,7 @@
 <span class="sd">        object, a referencer (a Reference subclass) may be specified</span>
 <span class="sd">        to wrap the object as required.</span>
 
-<span class="sd">        If mode is &#39;merge&#39;, merge the AttrTree output by the hook,</span>
+<span class="sd">        If mode is &#39;merge&#39;, merge the LayoutTree output by the hook,</span>
 <span class="sd">        otherwise if &#39;set&#39;, add the output to the path specified by</span>
 <span class="sd">        the ViewRef.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -714,7 +714,7 @@
         <span class="k">return</span> <span class="n">task</span>
 
 </div>
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrtree</span><span class="o">=</span><span class="n">AttrTree</span><span class="p">(),</span> <span class="n">times</span><span class="o">=</span><span class="p">[],</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrtree</span><span class="o">=</span><span class="n">LayoutTree</span><span class="p">(),</span> <span class="n">times</span><span class="o">=</span><span class="p">[],</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
 
         <span class="n">current_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_fn</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">times</span> <span class="o">!=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">times</span><span class="p">):</span>
@@ -746,7 +746,7 @@
 
             <span class="c"># An empty attrtree buffer stops analysis repeatedly</span>
             <span class="c"># computing results over the entire accumulated map</span>
-            <span class="n">attrtree_buffer</span> <span class="o">=</span> <span class="n">AttrTree</span><span class="p">()</span>
+            <span class="n">attrtree_buffer</span> <span class="o">=</span> <span class="n">LayoutTree</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_tasks</span><span class="p">:</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">Analyze</span><span class="p">)</span> <span class="ow">and</span> <span class="n">task</span><span class="o">.</span><span class="n">mapwise</span><span class="p">:</span>
                     <span class="n">task</span><span class="p">(</span><span class="n">attrtree</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_fn</span><span class="p">(),</span> <span class="n">times</span><span class="p">)</span>
@@ -816,6 +816,7 @@
             <span class="n">key</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="s">&#39;None&#39;</span>
             <span class="n">spec_strs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">(</span><span class="si">%s</span><span class="s">, </span><span class="si">%r</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
         <span class="k">return</span> <span class="s">&#39;Collector([</span><span class="si">%s</span><span class="s">])&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">spec_strs</span><span class="p">)</span>
+
 
     <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">indent</span> <span class="o">=</span> <span class="s">&#39;  &#39;</span>

@@ -268,11 +268,14 @@
 </div>
 <div class="viewcode-block" id="LabelledData.matches"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.dimension.LabelledData.matches">[docs]</a>    <span class="k">def</span> <span class="nf">matches</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        A specification string is of form {type}.{value}.{label} which</span>
-<span class="sd">        may be supplied in full or up to the first or second</span>
-<span class="sd">        period. This method returns a boolean that indicates if the</span>
-<span class="sd">        current object matches the specification.</span>
+<span class="sd">        A specification may be a class, a tuple or a string.</span>
+<span class="sd">        Equivalent to isinstance if a class is supplied, otherwise</span>
+<span class="sd">        matching occurs on type, value and label. These may be supplied</span>
+<span class="sd">        as a tuple of strings or as a single string of form</span>
+<span class="sd">        {type}.{value}.{label}. Matching may be done on type alone,</span>
+<span class="sd">        type and value or type, value, and label.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span> <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">)</span>
         <span class="n">specification</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
         <span class="n">identifier_specification</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">valid_identifier</span><span class="p">(</span><span class="n">ident</span><span class="p">)</span> <span class="k">for</span> <span class="n">ident</span> <span class="ow">in</span> <span class="n">specification</span><span class="p">)</span>
         <span class="n">split_spec</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">))</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="n">spec</span>
@@ -303,15 +306,28 @@
         <span class="k">if</span> <span class="n">specs</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matches</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">specs</span><span class="p">):</span>
             <span class="n">accumulator</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fn</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
 
-        <span class="k">try</span><span class="p">:</span>
-            <span class="c"># Assumes composite objects are iterables</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deep_indexable</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
-                    <span class="n">accumulator</span> <span class="o">+=</span> <span class="n">el</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">specs</span><span class="p">,</span> <span class="n">full_breadth</span><span class="p">)</span>
-                    <span class="k">if</span> <span class="ow">not</span> <span class="n">full_breadth</span><span class="p">:</span> <span class="k">break</span>
-        <span class="k">except</span><span class="p">:</span>
-            <span class="k">pass</span>
+        <span class="c"># Assumes composite objects are iterables</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deep_indexable</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="n">accumulator</span> <span class="o">+=</span> <span class="n">el</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">specs</span><span class="p">,</span> <span class="n">full_breadth</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">full_breadth</span><span class="p">:</span> <span class="k">break</span>
         <span class="k">return</span> <span class="n">accumulator</span>
+
+</div>
+<div class="viewcode-block" id="LabelledData.map"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.dimension.LabelledData.map">[docs]</a>    <span class="k">def</span> <span class="nf">map</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">map_fn</span><span class="p">,</span> <span class="n">specs</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Recursively replaces elements using a map function when the</span>
+<span class="sd">        specification applies.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">applies</span> <span class="o">=</span> <span class="n">specs</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">matches</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">specs</span><span class="p">)</span>
+        <span class="n">mapped</span> <span class="o">=</span> <span class="n">map_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">if</span> <span class="n">applies</span> <span class="k">else</span> <span class="bp">self</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deep_indexable</span><span class="p">:</span>
+            <span class="n">deep_mapped</span> <span class="o">=</span> <span class="n">mapped</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">shared_data</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">mapped</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">deep_mapped</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">map_fn</span><span class="p">,</span> <span class="n">specs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">deep_mapped</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">mapped</span>
 
 </div>
     <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

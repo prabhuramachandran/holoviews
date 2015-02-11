@@ -82,17 +82,19 @@
 <div class="viewcode-block" id="chain"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.element.chain">[docs]</a><span class="k">class</span> <span class="nc">chain</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Defining an ElementOperation chain is an easy way to define a new</span>
-<span class="sd">    ElementOperation from a series of existing ones. The single</span>
-<span class="sd">    argument is a callable that accepts an input element and returns</span>
-<span class="sd">    the final, transformed element. To create the custom</span>
-<span class="sd">    ElementOperation, you will need to supply this argument to a new</span>
-<span class="sd">    instance of chain. For example:</span>
+<span class="sd">    ElementOperation from a series of existing ones. The argument is a</span>
+<span class="sd">    list of ElementOperation (or ElementOperation instances) that are</span>
+<span class="sd">    called in turn until the final, transformed element is returned.</span>
 
-<span class="sd">    chain.instance(</span>
-<span class="sd">       chain=lambda x: colormap(operator(x, operator=np.add), cmap=&#39;jet&#39;))</span>
+<span class="sd">    chain(operations=[collapse.instance(operator=np.add), colormap])</span>
 
-<span class="sd">    This defines an ElementOperation that sums the data in the input</span>
-<span class="sd">    and turns it into an RGB Matrix using the &#39;jet&#39; colormap.</span>
+<span class="sd">    This first sums the data in the input with collapse (using np.add)</span>
+<span class="sd">    and then returns an RGB Matrix applying the default colormap of</span>
+<span class="sd">    the colormap operator.</span>
+
+<span class="sd">    Instances are only required when arguments need to be passed to</span>
+<span class="sd">    individual operators so that the result is a function over one</span>
+<span class="sd">    argument.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">output_type</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">Matrix</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
@@ -103,10 +105,16 @@
 <span class="s">        The value assigned to the result after having applied the chain.&quot;&quot;&quot;</span><span class="p">)</span>
 
 
-    <span class="n">chain</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;A chain of existing ViewOperations.&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">operations</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">class_</span><span class="o">=</span><span class="n">ElementOperation</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       A list of ElementOperations (or ElementOperation instances)</span>
+<span class="s">       that are applied on the input from left to right..&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="n">view</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">processed</span> <span class="o">=</span> <span class="n">view</span>
+        <span class="k">for</span> <span class="n">operation</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">operations</span><span class="p">:</span>
+            <span class="n">processed</span> <span class="o">=</span> <span class="n">operation</span><span class="o">.</span><span class="n">process_element</span><span class="p">(</span><span class="n">processed</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">input_ranges</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">input_ranges</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">processed</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 
 </div>
 <div class="viewcode-block" id="transform"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.element.transform">[docs]</a><span class="k">class</span> <span class="nc">transform</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
@@ -172,10 +180,10 @@
 
     <span class="n">output_type</span> <span class="o">=</span> <span class="n">Overlay</span>
 
-    <span class="n">spec</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Tuple</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+    <span class="n">spec</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">       Specification of the output Overlay structure. For instance:</span>
 
-<span class="s">       (&#39;Matrix.R&#39;, &#39;Matrix.G&#39;, &#39;Matrix.B&#39;)</span>
+<span class="s">       Matrix.R * Matrix.G * Matrix.B</span>
 
 <span class="s">       Will ensure an overlay of this structure is created even if</span>
 <span class="s">       (for instance) only (Matrix.R * Matrix.B) is supplied.</span>
@@ -229,13 +237,14 @@
 
 
     <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raster</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">ordering</span><span class="p">,</span> <span class="n">strengths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_match_overlay</span><span class="p">(</span><span class="n">raster</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">specs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">))</span>
+        <span class="n">ordering</span><span class="p">,</span> <span class="n">strengths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_match_overlay</span><span class="p">(</span><span class="n">raster</span><span class="p">,</span> <span class="n">specs</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">el</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">ordering</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;The matrix_overlay operation requires at least one match&quot;</span><span class="p">)</span>
 
         <span class="n">completed</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">strongest</span> <span class="o">=</span> <span class="n">ordering</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">strengths</span><span class="p">)]</span>
-        <span class="k">for</span> <span class="n">el</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ordering</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">spec</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">el</span><span class="p">,</span> <span class="n">spec</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ordering</span><span class="p">,</span> <span class="n">specs</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">el</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                 <span class="n">spec_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="s">&#39;value&#39;</span><span class="p">,</span> <span class="s">&#39;label&#39;</span><span class="p">],</span> <span class="n">spec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)))</span>
                 <span class="n">el</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">strongest</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">fill</span><span class="p">,</span>
