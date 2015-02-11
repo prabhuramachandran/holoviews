@@ -78,6 +78,8 @@
 <span class="kn">from</span> <span class="nn">.element</span> <span class="kn">import</span> <span class="n">Element</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">,</span> <span class="n">AxisLayout</span>
 <span class="kn">from</span> <span class="nn">.layout</span> <span class="kn">import</span> <span class="n">NdLayout</span><span class="p">,</span> <span class="n">LayoutTree</span>
 <span class="kn">from</span> <span class="nn">.overlay</span> <span class="kn">import</span> <span class="n">CompositeOverlay</span><span class="p">,</span> <span class="n">NdOverlay</span><span class="p">,</span> <span class="n">Overlay</span>
+<span class="kn">from</span> <span class="nn">.traversal</span> <span class="kn">import</span> <span class="n">unique_dimkeys</span>
+
 
 
 <div class="viewcode-block" id="Operation"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.operation.Operation">[docs]</a><span class="k">class</span> <span class="nc">Operation</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">ParameterizedFunction</span><span class="p">):</span>
@@ -185,7 +187,10 @@
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">):</span>
             <span class="n">mapped_items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">k</span><span class="p">))</span>
                             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">element</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
-            <span class="n">processed</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">mapped_items</span><span class="p">)</span>
+            <span class="n">refval</span> <span class="o">=</span> <span class="n">mapped_items</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">processed</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">mapped_items</span><span class="p">,</span>
+                                      <span class="n">value</span><span class="o">=</span><span class="n">refval</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                                      <span class="n">label</span><span class="o">=</span><span class="n">refval</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Cannot process type </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">element</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">processed</span>
@@ -222,10 +227,62 @@
 
 
 </div>
-<div class="viewcode-block" id="TreeOperation"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.operation.TreeOperation">[docs]</a><span class="k">class</span> <span class="nc">TreeOperation</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">ParameterizedFunction</span><span class="p">):</span>
+<div class="viewcode-block" id="TreeOperation"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.operation.TreeOperation">[docs]</a><span class="k">class</span> <span class="nc">TreeOperation</span><span class="p">(</span><span class="n">Operation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A TreeOperation is the most general Operation type; it accepts any</span>
+<span class="sd">    holoviews datastructure and outputs a LayoutTree containing one or</span>
+<span class="sd">    more elements.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">pass</span></div>
-</pre></div>
+<div class="viewcode-block" id="TreeOperation.process_element"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.operation.TreeOperation.process_element">[docs]</a>    <span class="k">def</span> <span class="nf">process_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The process_element method allows a single element to be</span>
+<span class="sd">        operated on given an externally supplied key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ParamOverrides</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+        <span class="n">maps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">,</span> <span class="n">maps</span><span class="p">)</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">p</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ParamOverrides</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+        <span class="n">dims</span><span class="p">,</span> <span class="n">keys</span> <span class="o">=</span> <span class="n">unique_dimkeys</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dims</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_element</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">):</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="n">src</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">LayoutTree</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">src</span><span class="o">.</span><span class="n">uniform</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;TreeOperation can only process uniform LayoutTrees&quot;</span><span class="p">)</span>
+            <span class="n">dim_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">]</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">src</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">dim_names</span><span class="p">,</span> <span class="n">key</span><span class="p">)))</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">]</span>
+
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">LayoutTree</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">LayoutTree</span><span class="p">):</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="p">(</span><span class="n">LayoutTree</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">el</span><span class="p">),</span> <span class="n">key</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+            <span class="n">holomaps</span> <span class="o">=</span> <span class="p">[</span><span class="n">HoloMap</span><span class="p">([(</span><span class="n">key</span><span class="p">,</span><span class="n">el</span><span class="p">)],</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="n">dims</span><span class="p">,</span>
+                                <span class="n">value</span><span class="o">=</span><span class="n">el</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">el</span><span class="o">.</span><span class="n">label</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">result</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">holomaps</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">processed_tree</span> <span class="o">=</span> <span class="n">LayoutTree</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">holomaps</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">processed_tree</span> <span class="o">=</span> <span class="n">LayoutTree</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">holomaps</span><span class="p">)</span>
+
+            <span class="n">tree</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">processed_tree</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">tree</span>
+
+
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tree</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Process a single input LayoutTree, returning a list of</span>
+<span class="sd">        elements to be merged with the output LayoutTree.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+</pre></div></div>
 
           </div>
         </div>
