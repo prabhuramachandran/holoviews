@@ -278,39 +278,6 @@
             <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s">: Custom paths elements must be capitalized.&quot;</span> <span class="o">%</span> <span class="n">identifier</span><span class="p">)</span>
 
 
-    <span class="k">def</span> <span class="nf">_node_repr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&#39;--+&#39;</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">identifier</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">node</span><span class="o">.</span><span class="n">identifier</span>
-
-
-    <span class="k">def</span> <span class="nf">_draw_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">identifier</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Recursive function that builds up an ASCII tree given an</span>
-<span class="sd">        AttrTree node.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">children</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">AttrTree</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">AttrTree</span><span class="p">):</span>
-            <span class="n">identifier</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_repr</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">identifier</span> <span class="o">=</span> <span class="n">identifier</span> <span class="o">+</span> <span class="s">&#39; : &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
-
-        <span class="n">tree</span> <span class="o">=</span>  <span class="n">prefix</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="s">&#39;  +--&#39;</span> <span class="k">if</span> <span class="n">prefix</span> <span class="k">else</span> <span class="n">prefix</span>
-        <span class="n">tree</span> <span class="o">+=</span> <span class="n">identifier</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
-        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">child</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">children</span><span class="p">):</span>
-            <span class="n">child_prefix</span> <span class="o">=</span> <span class="n">prefix</span> <span class="o">+</span> <span class="p">(</span><span class="s">&#39;   &#39;</span> <span class="k">if</span> <span class="n">index</span><span class="o">+</span><span class="mi">1</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="k">else</span> <span class="s">&#39;  |&#39;</span><span class="p">)</span>
-            <span class="n">tree</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_draw_tree</span><span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="n">child</span><span class="p">],</span> <span class="n">child_prefix</span><span class="p">,</span> <span class="n">child</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">tree</span>
-
-    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The repr of an AttrTree is an ASCII tree showing the structure</span>
-<span class="sd">        of the tree and the types of leaves.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&quot;Dangling AttrTree node with no leaf items.&quot;</span>
-        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s"> of </span><span class="si">%s</span><span class="s"> items:</span><span class="se">\n\n</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
-                                          <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">),</span>
-                                          <span class="bp">self</span><span class="o">.</span><span class="n">_draw_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
-
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
 

@@ -1,0 +1,322 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>holoviews.core.pprint &mdash; holoviews</title>
+    
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '2014.05.14',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../../../_static/custom.js"></script>
+    <link rel="top" title="holoviews" href="../../../index.html" />
+    <link rel="up" title="holoviews.core" href="../core.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../core.html" accesskey="U">holoviews.core</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for holoviews.core.pprint</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Holoviews can be used to build highly-nested data-structures</span>
+<span class="sd">containing large amounts of raw data. As a result, it is difficult to</span>
+<span class="sd">generate a readable representation that is both informative yet</span>
+<span class="sd">concise.</span>
+
+<span class="sd">As a result, Holoviews does not attempt to build representations that</span>
+<span class="sd">can be evaluated with eval; such representations would typically be</span>
+<span class="sd">far too large to be practical. Instead, all Holoviews objects can be</span>
+<span class="sd">represented as tree structures, showing the types, values and labels</span>
+<span class="sd">where possible.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PrintUtils"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.PrintUtils">[docs]</a><span class="k">class</span> <span class="nc">PrintUtils</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Utilities used to assist the pretty printing process.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">tab</span> <span class="o">=</span> <span class="s">&#39;   &#39;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">shift</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">lines</span><span class="p">,</span> <span class="n">shift</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[(</span><span class="n">lvl</span><span class="o">+</span><span class="n">shift</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">lvl</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">isoverlay</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s">&#39;children&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s">&#39;__mul__&#39;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="PrintUtils.dotted"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.PrintUtils.dotted">[docs]</a>    <span class="k">def</span> <span class="nf">dotted</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="s">&quot;Return the type.value.label dotted information&quot;</span>
+        <span class="k">if</span> <span class="n">node</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="s">&#39;&#39;</span>
+        <span class="n">components</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">),</span> <span class="n">node</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">label</span><span class="p">:</span>
+            <span class="n">components</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">components</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="PrintUtils.leaf_padding"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.PrintUtils.leaf_padding">[docs]</a>    <span class="k">def</span> <span class="nf">leaf_padding</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">siblings</span><span class="p">,</span> <span class="n">line</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given the collection of sibling leaf names, return the padding</span>
+<span class="sd">        for the entire group.</span>
+
+<span class="sd">        For instance, if you have the tree (Pattern.Gaussian +</span>
+<span class="sd">        Pattern.Disk) then the padding is the length of &#39;Gaussian&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">el</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">siblings</span><span class="p">)</span> <span class="k">if</span> <span class="n">siblings</span> <span class="o">!=</span> <span class="p">[]</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="PrintUtils.dotted_padding"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.PrintUtils.dotted_padding">[docs]</a>    <span class="k">def</span> <span class="nf">dotted_padding</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">siblings</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the appropriate padding based on the longest dotted</span>
+<span class="sd">        name among the supplied siblings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">siblings</span> <span class="o">==</span> <span class="p">[]:</span> <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">dotted</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">dotted</span><span class="p">(</span><span class="n">sibling</span><span class="p">))</span> <span class="k">for</span> <span class="n">sibling</span> <span class="ow">in</span> <span class="n">siblings</span><span class="p">])</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="PrintUtils.layoutree_annotation"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.PrintUtils.layoutree_annotation">[docs]</a>    <span class="k">def</span> <span class="nf">layoutree_annotation</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">lines</span><span class="p">,</span> <span class="n">node_name</span><span class="p">,</span> <span class="n">node_names</span><span class="p">):</span>
+        <span class="s">&quot;Annotate the first line with the leaf label as appropriate&quot;</span>
+        <span class="k">if</span> <span class="n">node_name</span><span class="p">:</span>
+            <span class="n">tree_leaf</span> <span class="o">=</span> <span class="n">node_name</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">leaf_padding</span><span class="p">(</span><span class="n">node_names</span><span class="p">,</span> <span class="n">node_name</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">lines</span><span class="p">:</span>
+                <span class="n">first_level</span><span class="p">,</span> <span class="n">first_line</span><span class="p">,</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">first_level</span><span class="p">,</span> <span class="n">tree_leaf</span> <span class="o">+</span> <span class="s">&#39; : &#39;</span> <span class="o">+</span> <span class="n">first_line</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">lines</span> <span class="o">=</span> <span class="p">[(</span><span class="n">level</span><span class="p">,</span> <span class="n">tree_leaf</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">level</span><span class="p">,</span> <span class="n">lines</span>
+
+
+</div></div>
+<div class="viewcode-block" id="Info"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.Info">[docs]</a><span class="k">class</span> <span class="nc">Info</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Methods used to supply the pretty printer with information by</span>
+<span class="sd">    holoviews object type in a suitable format.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">overlay_info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">siblings</span><span class="p">,</span> <span class="n">value_dims</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="n">overlay_info</span><span class="p">,</span> <span class="n">siblings</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">node</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">siblings</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">element_info</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">element_info</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">el</span><span class="p">,</span> <span class="n">siblings</span><span class="p">,</span> <span class="n">value_dims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">element_info</span> <span class="o">=</span> <span class="p">[(</span><span class="n">lvl</span><span class="p">,</span><span class="s">&#39;*--&#39;</span><span class="o">+</span><span class="n">line</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">lvl</span><span class="p">,</span><span class="n">line</span><span class="p">)</span> <span class="ow">in</span> <span class="n">element_info</span><span class="p">]</span>
+            <span class="n">overlay_info</span> <span class="o">+=</span> <span class="n">element_info</span>
+
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">dotted</span><span class="p">(</span><span class="n">node</span><span class="p">),</span> <span class="n">overlay_info</span>
+
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Info.node_info"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.Info.node_info">[docs]</a>    <span class="k">def</span> <span class="nf">node_info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">siblings</span><span class="p">,</span> <span class="n">value_dims</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given a node, return relevant information.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s">&#39;children&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">level</span><span class="p">,</span> <span class="p">[]</span>
+        <span class="k">elif</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s">&#39;_deep_indexable&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">ndmapping_info</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">siblings</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">element_info</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">siblings</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Info.element_info"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.Info.element_info">[docs]</a>    <span class="k">def</span> <span class="nf">element_info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">siblings</span><span class="p">,</span> <span class="n">value_dims</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the information summary for an Element. This consists</span>
+<span class="sd">        of the dotted name followed by an value dimension names.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dotted_padding</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">dotted_padding</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">siblings</span><span class="p">)</span>
+        <span class="n">info</span> <span class="o">=</span>  <span class="n">cls</span><span class="o">.</span><span class="n">dotted</span><span class="p">(</span><span class="n">node</span><span class="p">)</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">dotted_padding</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">value_dims</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">info</span> <span class="o">+=</span> <span class="n">cls</span><span class="o">.</span><span class="n">tab</span> <span class="o">+</span> <span class="s">&#39;(</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">level</span><span class="p">,</span> <span class="p">[(</span><span class="n">level</span><span class="p">,</span> <span class="n">info</span><span class="p">)]</span>
+
+</div>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">ndmapping_info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">siblings</span><span class="p">,</span> <span class="n">value_dims</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="n">key_dim_info</span> <span class="o">=</span> <span class="s">&#39;[</span><span class="si">%s</span><span class="s">]&#39;</span> <span class="o">%</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">)</span>
+        <span class="n">first_line</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">dotted</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">+</span> <span class="n">cls</span><span class="o">.</span><span class="n">tab</span> <span class="o">+</span> <span class="n">key_dim_info</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[(</span><span class="n">level</span><span class="p">,</span> <span class="n">first_line</span><span class="p">)]</span>
+
+        <span class="n">additional_lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">level</span><span class="p">,</span> <span class="n">lines</span>
+
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="s">&#39;children&#39;</span><span class="p">):</span>  <span class="c"># Must be an Overlay</span>
+            <span class="n">overlay_info</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">overlay_info</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="n">siblings</span><span class="p">,</span> <span class="n">value_dims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">element_info</span><span class="p">,</span> <span class="n">additional_lines</span> <span class="o">=</span> <span class="n">overlay_info</span>
+        <span class="c"># NdOverlays, AxisLayout, Ndlayouts</span>
+        <span class="k">elif</span> <span class="n">node</span><span class="o">.</span><span class="n">last</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="s">&#39;_deep_indexable&#39;</span><span class="p">):</span>
+            <span class="k">pass</span> <span class="c"># TODO</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="p">[</span><span class="n">info</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">element_info</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="n">siblings</span><span class="p">,</span> <span class="n">value_dims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">element_info</span> <span class="o">=</span> <span class="n">info</span>
+        <span class="n">lines</span> <span class="o">+=</span> <span class="p">[(</span><span class="n">level</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;|_ </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">element_info</span><span class="p">)]</span> <span class="o">+</span> <span class="n">cls</span><span class="o">.</span><span class="n">shift</span><span class="p">(</span><span class="n">additional_lines</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">level</span><span class="p">,</span> <span class="n">lines</span>
+
+
+</div>
+<div class="viewcode-block" id="PrettyPrinter"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.PrettyPrinter">[docs]</a><span class="k">class</span> <span class="nc">PrettyPrinter</span><span class="p">(</span><span class="n">Info</span><span class="p">,</span> <span class="n">PrintUtils</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The PrettyPrinter used to print all HoloView objects via the</span>
+<span class="sd">    pprint classmethod.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">pprint</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="n">accumulator</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">level</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">recurse</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+            <span class="n">accumulator</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">level</span> <span class="o">*</span><span class="n">cls</span><span class="o">.</span><span class="n">tab</span><span class="p">)</span> <span class="o">+</span> <span class="n">line</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">accumulator</span><span class="p">)</span>
+
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="PrettyPrinter.recurse"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.PrettyPrinter.recurse">[docs]</a>    <span class="k">def</span> <span class="nf">recurse</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">node_name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">siblings</span><span class="o">=</span><span class="p">[],</span> <span class="n">node_names</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Recursive function that builds up an ASCII tree given an</span>
+<span class="sd">        AttrTree node.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">isoverlay</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+            <span class="n">header</span><span class="p">,</span> <span class="n">lines</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">overlay_info</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">siblings</span><span class="p">,</span> <span class="n">value_dims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="p">[(</span><span class="n">level</span><span class="p">,</span> <span class="n">header</span><span class="p">)]</span> <span class="o">+</span> <span class="n">lines</span>
+            <span class="n">children</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">siblings</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">process_node</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">node_name</span><span class="p">,</span> <span class="n">node_names</span><span class="p">,</span> <span class="n">siblings</span><span class="p">)</span>
+            <span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">lines</span><span class="p">,</span> <span class="n">children</span><span class="p">,</span> <span class="n">siblings</span><span class="p">)</span> <span class="o">=</span> <span class="n">info</span>
+
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">child_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">children</span><span class="p">):</span>
+            <span class="n">lines</span> <span class="o">+=</span> <span class="n">cls</span><span class="o">.</span><span class="n">recurse</span><span class="p">(</span><span class="n">node</span><span class="p">[</span><span class="n">child_name</span><span class="p">],</span> <span class="n">child_name</span><span class="p">,</span>
+                                 <span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">siblings</span><span class="o">=</span><span class="n">siblings</span><span class="p">,</span> <span class="n">node_names</span><span class="o">=</span><span class="n">children</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lines</span>
+</div>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">process_node</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">node_name</span><span class="p">,</span> <span class="n">node_names</span><span class="p">,</span> <span class="n">siblings</span><span class="p">):</span>
+        <span class="n">level</span><span class="p">,</span> <span class="n">lines</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">node_info</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">siblings</span><span class="p">)</span>
+        <span class="n">level</span><span class="p">,</span> <span class="n">lines</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">layoutree_annotation</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">lines</span><span class="p">,</span> <span class="n">node_name</span><span class="p">,</span> <span class="n">node_names</span><span class="p">)</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">children</span> <span class="k">if</span>  <span class="nb">hasattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s">&#39;children&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="n">siblings</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span><span class="p">[</span><span class="n">child</span><span class="p">]</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">level</span><span class="p">,</span> <span class="n">lines</span><span class="p">,</span> <span class="n">children</span><span class="p">,</span> <span class="n">siblings</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div align="center"><h1>HoloViews</h1></div>
+<ul class="global-toc">
+
+<li><a href="../../../index.html">Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+<li><a href="http://github.com/ioam/holoviews">Github Source Code</a></li>
+<li><a href="../../../site_map.html">Site Map</a></li>
+</ul>
+<h3><a href="../../../index.html">Table Of Contents</a></h3>
+
+
+
+<h3>This Page</h3>
+<ul class="this-page-menu">
+	<li><a	href="https://github.com/ioam/dataviews/edit/master/doc/_modules/holoviews/core/pprint.rst" rel="nofollow">Edit on GitHub</a></li>
+</ul>
+
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+
+<li><a href="../../../index.html">HoloViews Home</a></li>
+<li><a href="../../../Tutorials/index.html">Tutorials</a></li>
+<li><a href="../../../Reference_Manual/index.html">Reference Manual</a></li>
+
+
+
+<li><ul class="parents">
+
+
+
+          <li><a href="../../index.html" >Module code</a> &raquo;</li>
+          <li><a href="../core.html" >holoviews.core</a> &raquo;</li>
+
+</ul></li>
+
+
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2014, IOAM: Jean-Luc Stevens and Philipp Rudiger.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
+    </div>
+  </body>
+</html>
