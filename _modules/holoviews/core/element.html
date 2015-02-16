@@ -330,14 +330,6 @@
         <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">l</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
 
 
-    <span class="k">def</span> <span class="nf">_valid_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span> <span class="n">dimensions</span> <span class="o">=</span> <span class="p">[</span><span class="n">dimensions</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Supplied dimensions </span><span class="si">%s</span><span class="s"> not found.&quot;</span> <span class="o">%</span> <span class="n">dim</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">dimensions</span>
-
-
 <div class="viewcode-block" id="HoloMap.overlay"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.overlay">[docs]</a>    <span class="k">def</span> <span class="nf">overlay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Splits the UniformNdMapping along a specified number of dimensions and</span>
@@ -563,17 +555,18 @@
 
         <span class="n">sampled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">([(</span><span class="n">k</span><span class="p">,</span> <span class="n">view</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="o">**</span><span class="n">sample_values</span><span class="p">))</span>
                               <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">view</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span>
-        <span class="k">return</span> <span class="n">sampled</span><span class="o">.</span><span class="n">table</span><span class="p">()</span><span class="o">.</span><span class="n">reindex</span><span class="p">()</span> <span class="k">if</span> <span class="n">sampled</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">[</span><span class="n">ItemTable</span><span class="p">,</span> <span class="n">Table</span><span class="p">]</span> <span class="k">else</span> <span class="n">sampled</span>
+        <span class="k">return</span> <span class="n">sampled</span><span class="o">.</span><span class="n">table</span><span class="p">()</span><span class="o">.</span><span class="n">reindex</span><span class="p">()</span> <span class="k">if</span> <span class="n">sampled</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="p">[</span><span class="n">ItemTable</span><span class="p">,</span> <span class="n">Table</span><span class="p">]</span> <span class="k">else</span> <span class="n">sampled</span><span class="o">.</span><span class="n">table</span><span class="p">()</span>
 
 </div>
-<div class="viewcode-block" id="HoloMap.reduce"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.reduce">[docs]</a>    <span class="k">def</span> <span class="nf">reduce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">reduce_map</span><span class="p">):</span>
+<div class="viewcode-block" id="HoloMap.reduce"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.reduce">[docs]</a>    <span class="k">def</span> <span class="nf">reduce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">reduce_map</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Reduce each Element in the HoloMap using a function supplied</span>
 <span class="sd">        via the kwargs, where the keyword has to match a particular</span>
 <span class="sd">        dimension in the Elements.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">reduced_items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="o">**</span><span class="n">reduce_map</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">reduced_items</span><span class="p">)</span>
+        <span class="n">reduced_items</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">reduce</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">function</span><span class="p">,</span> <span class="o">**</span><span class="n">reduce_map</span><span class="p">))</span>
+                         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">reduced_items</span><span class="p">)</span><span class="o">.</span><span class="n">table</span><span class="p">()</span>
 
 </div>
     <span class="nd">@property</span>

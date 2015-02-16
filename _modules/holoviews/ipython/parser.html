@@ -147,28 +147,21 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An OptsSpec is a string specification that describes an</span>
 <span class="sd">    OptionTree. It is a list of tree path specifications (using dotted</span>
-<span class="sd">    syntax) separated by keyword lists for any of the normalization,</span>
-<span class="sd">    plotting options or style options (in braces, square brackets and</span>
-<span class="sd">    parentheses respectively). All these option sets are optional, but</span>
-<span class="sd">    the style options must follow the plotting options which must</span>
-<span class="sd">    follow the normalization options.</span>
+<span class="sd">    syntax) separated by keyword lists for any of the style, plotting</span>
+<span class="sd">    or normalization options. These keyword lists are denoted</span>
+<span class="sd">    &#39;plot(..)&#39;, &#39;style(...)&#39; and &#39;norm(...)&#39;  respectively.  These</span>
+<span class="sd">    three groups may be specified even more concisely using keyword</span>
+<span class="sd">    lists delimited by square brackets, parentheses and braces</span>
+<span class="sd">    respectively.  All these sets are optional and may be supplied in</span>
+<span class="sd">    any order.</span>
 
 <span class="sd">    For instance, the following string:</span>
 
-<span class="sd">    Matrix [show_title=False] (interpolation=&#39;nearest&#39;) Curve color=&#39;r&#39;</span>
+<span class="sd">    Matrix (interpolation=None) plot(show_title=False) Curve style(color=&#39;r&#39;)</span>
 
-<span class="sd">    Would specify an OptionTree with Options(show_title=False) plot</span>
-<span class="sd">    options for Matrix and style options Options(color=&#39;r&#39;) for</span>
-<span class="sd">    Curve.</span>
-
-<span class="sd">    Note that the normalization options are just syntactic sugar for</span>
-<span class="sd">    the the normalization plotting option. In other words:</span>
-
-<span class="sd">    Matrix {-groupwise -mapwise}</span>
-
-<span class="sd">    Is equivalent to:</span>
-
-<span class="sd">    Matrix [normalization=3]</span>
+<span class="sd">    Would specify an OptionTree where Matrix has &quot;interpolation=None&quot;</span>
+<span class="sd">    for style and &#39;show_title=False&#39; for plot options. The Curve has a</span>
+<span class="sd">    style set such that color=&#39;r&#39;.</span>
 
 <span class="sd">    The parser is fairly forgiving; commas between keywords are</span>
 <span class="sd">    optional and additional spaces are often allowed. The only</span>
@@ -176,21 +169,42 @@
 <span class="sd">    &#39;=&#39; sign (no space).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">plot_options</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">nestedExpr</span><span class="p">(</span><span class="s">&#39;[&#39;</span><span class="p">,</span>
-                                 <span class="s">&#39;]&#39;</span><span class="p">,</span>
-                                 <span class="n">content</span><span class="o">=</span><span class="n">pp</span><span class="o">.</span><span class="n">OneOrMore</span><span class="p">(</span><span class="n">pp</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="n">allowed</span><span class="p">)</span> <span class="o">^</span> <span class="n">pp</span><span class="o">.</span><span class="n">quotedString</span><span class="p">)</span>
-                                 <span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&#39;plot_options&#39;</span><span class="p">)</span>
+    <span class="n">plot_options_short</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">nestedExpr</span><span class="p">(</span><span class="s">&#39;[&#39;</span><span class="p">,</span>
+                                       <span class="s">&#39;]&#39;</span><span class="p">,</span>
+                                       <span class="n">content</span><span class="o">=</span><span class="n">pp</span><span class="o">.</span><span class="n">OneOrMore</span><span class="p">(</span><span class="n">pp</span><span class="o">.</span><span class="n">Word</span><span class="p">(</span><span class="n">allowed</span><span class="p">)</span> <span class="o">^</span> <span class="n">pp</span><span class="o">.</span><span class="n">quotedString</span><span class="p">)</span>
+                                   <span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&#39;plot_options&#39;</span><span class="p">)</span>
 
-    <span class="n">style_options</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">nestedExpr</span><span class="p">(</span><span class="n">opener</span><span class="o">=</span><span class="s">&#39;(&#39;</span><span class="p">,</span>
-                                  <span class="n">closer</span><span class="o">=</span><span class="s">&#39;)&#39;</span><span class="p">,</span>
-                                  <span class="n">ignoreExpr</span><span class="o">=</span><span class="bp">None</span>
-                                  <span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&quot;style_options&quot;</span><span class="p">)</span>
+    <span class="n">plot_options_long</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">nestedExpr</span><span class="p">(</span><span class="s">&#39;plot(&#39;</span><span class="p">,</span>
+                                      <span class="s">&#39;)&#39;</span><span class="p">,</span>
+                                      <span class="n">ignoreExpr</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                                  <span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&#39;plot_options&#39;</span><span class="p">)</span>
 
-    <span class="n">norm_options</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">nestedExpr</span><span class="p">(</span><span class="n">opener</span><span class="o">=</span><span class="s">&#39;{&#39;</span><span class="p">,</span>
-                                 <span class="n">closer</span><span class="o">=</span><span class="s">&#39;}&#39;</span><span class="p">,</span>
-                                 <span class="n">ignoreExpr</span><span class="o">=</span><span class="bp">None</span>
-                                 <span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&quot;norm_options&quot;</span><span class="p">)</span>
+    <span class="n">plot_options</span> <span class="o">=</span> <span class="p">(</span><span class="n">plot_options_short</span> <span class="o">|</span> <span class="n">plot_options_long</span><span class="p">)</span>
 
+    <span class="n">style_options_short</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">nestedExpr</span><span class="p">(</span><span class="n">opener</span><span class="o">=</span><span class="s">&#39;(&#39;</span><span class="p">,</span>
+                                        <span class="n">closer</span><span class="o">=</span><span class="s">&#39;)&#39;</span><span class="p">,</span>
+                                        <span class="n">ignoreExpr</span><span class="o">=</span><span class="bp">None</span>
+                                    <span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&quot;style_options&quot;</span><span class="p">)</span>
+
+    <span class="n">style_options_long</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">nestedExpr</span><span class="p">(</span><span class="n">opener</span><span class="o">=</span><span class="s">&#39;style(&#39;</span><span class="p">,</span>
+                                       <span class="n">closer</span><span class="o">=</span><span class="s">&#39;)&#39;</span><span class="p">,</span>
+                                       <span class="n">ignoreExpr</span><span class="o">=</span><span class="bp">None</span>
+                                   <span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&quot;style_options&quot;</span><span class="p">)</span>
+
+    <span class="n">style_options</span> <span class="o">=</span> <span class="p">(</span><span class="n">style_options_short</span> <span class="o">|</span> <span class="n">style_options_long</span><span class="p">)</span>
+
+
+    <span class="n">norm_options_short</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">nestedExpr</span><span class="p">(</span><span class="n">opener</span><span class="o">=</span><span class="s">&#39;{&#39;</span><span class="p">,</span>
+                                       <span class="n">closer</span><span class="o">=</span><span class="s">&#39;}&#39;</span><span class="p">,</span>
+                                       <span class="n">ignoreExpr</span><span class="o">=</span><span class="bp">None</span>
+                                   <span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&quot;norm_options&quot;</span><span class="p">)</span>
+
+    <span class="n">norm_options_long</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">nestedExpr</span><span class="p">(</span><span class="n">opener</span><span class="o">=</span><span class="s">&#39;norm(&#39;</span><span class="p">,</span>
+                                      <span class="n">closer</span><span class="o">=</span><span class="s">&#39;)&#39;</span><span class="p">,</span>
+                                      <span class="n">ignoreExpr</span><span class="o">=</span><span class="bp">None</span>
+                                  <span class="p">)</span><span class="o">.</span><span class="n">setResultsName</span><span class="p">(</span><span class="s">&quot;norm_options&quot;</span><span class="p">)</span>
+
+    <span class="n">norm_options</span> <span class="o">=</span> <span class="p">(</span><span class="n">norm_options_short</span> <span class="o">|</span> <span class="n">norm_options_long</span><span class="p">)</span>
 
     <span class="n">compositor_ops</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">MatchFirst</span><span class="p">(</span>
         <span class="p">[</span><span class="n">pp</span><span class="o">.</span><span class="n">Literal</span><span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">Compositor</span><span class="o">.</span><span class="n">definitions</span><span class="p">])</span>
@@ -203,9 +217,9 @@
 
 
     <span class="n">spec_group</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">Group</span><span class="p">(</span><span class="n">pathspec</span>
-                          <span class="o">+</span> <span class="n">pp</span><span class="o">.</span><span class="n">Optional</span><span class="p">(</span><span class="n">norm_options</span><span class="p">)</span>
-                          <span class="o">+</span> <span class="n">pp</span><span class="o">.</span><span class="n">Optional</span><span class="p">(</span><span class="n">plot_options</span><span class="p">)</span>
-                          <span class="o">+</span> <span class="n">pp</span><span class="o">.</span><span class="n">Optional</span><span class="p">(</span><span class="n">style_options</span><span class="p">))</span>
+                          <span class="o">&amp;</span> <span class="n">pp</span><span class="o">.</span><span class="n">Optional</span><span class="p">(</span><span class="n">norm_options</span><span class="p">)</span>
+                          <span class="o">&amp;</span> <span class="n">pp</span><span class="o">.</span><span class="n">Optional</span><span class="p">(</span><span class="n">plot_options</span><span class="p">)</span>
+                          <span class="o">&amp;</span> <span class="n">pp</span><span class="o">.</span><span class="n">Optional</span><span class="p">(</span><span class="n">style_options</span><span class="p">))</span>
 
     <span class="n">opts_spec</span> <span class="o">=</span> <span class="n">pp</span><span class="o">.</span><span class="n">OneOrMore</span><span class="p">(</span><span class="n">spec_group</span><span class="p">)</span>
 
