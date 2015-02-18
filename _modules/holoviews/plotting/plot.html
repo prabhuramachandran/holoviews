@@ -75,7 +75,7 @@
 
 <span class="kn">import</span> <span class="nn">param</span>
 <span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">ViewableElement</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">,</span> \
-    <span class="n">AdjointLayout</span><span class="p">,</span> <span class="n">NdLayout</span><span class="p">,</span> <span class="n">AxisLayout</span><span class="p">,</span> <span class="n">LayoutTree</span><span class="p">,</span> <span class="n">Element</span><span class="p">,</span> <span class="n">CompositeOverlay</span>
+    <span class="n">AdjointLayout</span><span class="p">,</span> <span class="n">NdLayout</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">Element</span><span class="p">,</span> <span class="n">CompositeOverlay</span>
 <span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Store</span><span class="p">,</span> <span class="n">Compositor</span>
 <span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">traversal</span>
 <span class="kn">from</span> <span class="nn">..core.util</span> <span class="kn">import</span> <span class="n">find_minmax</span><span class="p">,</span> <span class="n">valid_identifier</span>
@@ -428,7 +428,7 @@
 </div>
 <div class="viewcode-block" id="GridPlot"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.plot.GridPlot">[docs]</a><span class="k">class</span> <span class="nc">GridPlot</span><span class="p">(</span><span class="n">CompositePlot</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Plot a group of elements in a grid layout based on a AxisLayout element</span>
+<span class="sd">    Plot a group of elements in a grid layout based on a GridSpace element</span>
 <span class="sd">    object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -444,8 +444,8 @@
 <span class="s">        Formatting string for the GridPlot ticklabels.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">AxisLayout</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;GridPlot only accepts AxisLayout.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;GridPlot only accepts GridSpace.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">cols</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rows</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">extra_opts</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">keys</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">dimensions</span><span class="p">:</span>
@@ -701,7 +701,7 @@
 </div>
 <div class="viewcode-block" id="LayoutPlot"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.plot.LayoutPlot">[docs]</a><span class="k">class</span> <span class="nc">LayoutPlot</span><span class="p">(</span><span class="n">CompositePlot</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A LayoutPlot accepts either a LayoutTree or a NdLayout and</span>
+<span class="sd">    A LayoutPlot accepts either a Layout or a NdLayout and</span>
 <span class="sd">    displays the elements in a cartesian grid in scanline order.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -720,8 +720,8 @@
 <span class="s">      Default value is set conservatively to avoid overlap of subplots.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="p">(</span><span class="n">NdLayout</span><span class="p">,</span> <span class="n">LayoutTree</span><span class="p">)):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;LayoutPlot only accepts LayoutTree objects.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="p">(</span><span class="n">NdLayout</span><span class="p">,</span> <span class="n">Layout</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;LayoutPlot only accepts Layout objects.&quot;</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">layout</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">Compositor</span><span class="o">.</span><span class="n">collapse_element</span><span class="p">,</span> <span class="p">[</span><span class="n">CompositeOverlay</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span> <span class="o">=</span> <span class="p">{}</span>
@@ -739,7 +739,7 @@
     <span class="k">def</span> <span class="nf">_compute_gridspec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layout</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Computes the tallest and widest cell for each row and column</span>
-<span class="sd">        by examining the Layouts in the AxisLayout. The GridSpec is then</span>
+<span class="sd">        by examining the Layouts in the GridSpace. The GridSpec is then</span>
 <span class="sd">        instantiated and the LayoutPlots are configured with the</span>
 <span class="sd">        appropriate embedded layout_types. The first element of the</span>
 <span class="sd">        returned tuple is a dictionary of all the LayoutPlots indexed</span>
@@ -920,7 +920,7 @@
             <span class="c"># Override the plotopts as required</span>
             <span class="n">plotopts</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">override_opts</span><span class="p">,</span> <span class="n">figure</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">])</span>
             <span class="n">vtype</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">type</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">)</span> <span class="k">else</span> <span class="n">view</span><span class="o">.</span><span class="n">__class__</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">AxisLayout</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">):</span>
                 <span class="n">raster_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="bp">True</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Raster</span><span class="p">)</span> <span class="ow">or</span> \
                                   <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Element</span><span class="p">))</span> <span class="k">else</span> <span class="bp">False</span>
                 <span class="n">all_raster</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="n">raster_fn</span><span class="p">))</span>
@@ -974,9 +974,9 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
 
 </div>
-<span class="n">Store</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">AxisLayout</span><span class="p">:</span> <span class="n">GridPlot</span><span class="p">,</span>
+<span class="n">Store</span><span class="o">.</span><span class="n">defaults</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">GridSpace</span><span class="p">:</span> <span class="n">GridPlot</span><span class="p">,</span>
                        <span class="n">NdLayout</span><span class="p">:</span> <span class="n">LayoutPlot</span><span class="p">,</span>
-                       <span class="n">LayoutTree</span><span class="p">:</span> <span class="n">LayoutPlot</span><span class="p">,</span>
+                       <span class="n">Layout</span><span class="p">:</span> <span class="n">LayoutPlot</span><span class="p">,</span>
                        <span class="n">AdjointLayout</span><span class="p">:</span> <span class="n">AdjointLayoutPlot</span><span class="p">})</span>
 </pre></div>
 

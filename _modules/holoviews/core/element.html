@@ -71,7 +71,7 @@
 <span class="kn">import</span> <span class="nn">param</span>
 
 <span class="kn">from</span> <span class="nn">.dimension</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">ViewableElement</span>
-<span class="kn">from</span> <span class="nn">.layout</span> <span class="kn">import</span> <span class="n">Composable</span><span class="p">,</span> <span class="n">LayoutTree</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">,</span> <span class="n">NdLayout</span>
+<span class="kn">from</span> <span class="nn">.layout</span> <span class="kn">import</span> <span class="n">Composable</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">,</span> <span class="n">NdLayout</span>
 <span class="kn">from</span> <span class="nn">.ndmapping</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">UniformNdMapping</span>
 <span class="kn">from</span> <span class="nn">.overlay</span> <span class="kn">import</span> <span class="n">Overlayable</span><span class="p">,</span> <span class="n">NdOverlay</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">CompositeOverlay</span>
 <span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">find_minmax</span>
@@ -196,7 +196,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span> <span class="ow">and</span> <span class="bp">None</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
@@ -210,7 +210,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span> <span class="ow">and</span> <span class="bp">None</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
@@ -268,7 +268,7 @@
 </div>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">zlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span> <span class="ow">and</span> <span class="bp">None</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
@@ -357,19 +357,19 @@
 </div>
 <div class="viewcode-block" id="HoloMap.grid"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.grid">[docs]</a>    <span class="k">def</span> <span class="nf">grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        AxisLayout takes a list of one or two dimensions, and lays out the containing</span>
-<span class="sd">        Views along these axes in a AxisLayout.</span>
+<span class="sd">        GridSpace takes a list of one or two dimensions, and lays out the containing</span>
+<span class="sd">        Views along these axes in a GridSpace.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">dimensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_valid_dimensions</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">AxisLayout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">container_type</span><span class="o">=</span><span class="n">AxisLayout</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">GridSpace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">container_type</span><span class="o">=</span><span class="n">GridSpace</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
 </div>
 <div class="viewcode-block" id="HoloMap.layout"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.layout">[docs]</a>    <span class="k">def</span> <span class="nf">layout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        AxisLayout takes a list of one or two dimensions, and lays out the containing</span>
-<span class="sd">        Views along these axes in a AxisLayout.</span>
+<span class="sd">        GridSpace takes a list of one or two dimensions, and lays out the containing</span>
+<span class="sd">        Views along these axes in a GridSpace.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">dimensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_valid_dimensions</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">dimensions</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">:</span>
@@ -488,7 +488,7 @@
 
 </div>
     <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">LayoutTree</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">+</span> <span class="n">LayoutTree</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">+</span> <span class="n">Layout</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">__lshift__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
@@ -605,7 +605,7 @@
 
 
 </div>
-<div class="viewcode-block" id="AxisLayout"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.AxisLayout">[docs]</a><span class="k">class</span> <span class="nc">AxisLayout</span><span class="p">(</span><span class="n">UniformNdMapping</span><span class="p">):</span>
+<div class="viewcode-block" id="GridSpace"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.GridSpace">[docs]</a><span class="k">class</span> <span class="nc">GridSpace</span><span class="p">(</span><span class="n">UniformNdMapping</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Grids are distinct from GridLayouts as they ensure all contained elements</span>
 <span class="sd">    to be of the same type. Unlike GridLayouts, which have integer keys,</span>
@@ -621,13 +621,13 @@
                                 <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial_items</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">AxisLayout</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">initial_items</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GridSpace</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">initial_items</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Grids can have no more than two dimensions.&#39;</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">AxisLayout</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
                 <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&quot;Can only overlay two ParameterGrids if their keys match&quot;</span><span class="p">)</span>
             <span class="n">zipped</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">other</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
@@ -679,13 +679,13 @@
         <span class="k">return</span> <span class="n">key</span>
 
 
-<div class="viewcode-block" id="AxisLayout.keys"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.AxisLayout.keys">[docs]</a>    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_grid</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+<div class="viewcode-block" id="GridSpace.keys"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.GridSpace.keys">[docs]</a>    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_grid</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns a complete set of keys on a AxisLayout, even when AxisLayout isn&#39;t fully</span>
+<span class="sd">        Returns a complete set of keys on a GridSpace, even when GridSpace isn&#39;t fully</span>
 <span class="sd">        populated. This makes it easier to identify missing elements in the</span>
-<span class="sd">        AxisLayout.</span>
+<span class="sd">        GridSpace.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">keys</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">AxisLayout</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">GridSpace</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">full_grid</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">keys</span>
         <span class="n">dim1_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">))</span>
@@ -694,9 +694,9 @@
 
 </div>
     <span class="nd">@property</span>
-<div class="viewcode-block" id="AxisLayout.last"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.AxisLayout.last">[docs]</a>    <span class="k">def</span> <span class="nf">last</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="GridSpace.last"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.GridSpace.last">[docs]</a>    <span class="k">def</span> <span class="nf">last</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The last of a AxisLayout is another AxisLayout</span>
+<span class="sd">        The last of a GridSpace is another GridSpace</span>
 <span class="sd">        constituted of the last of the individual elements. To access</span>
 <span class="sd">        the elements by their X,Y position, either index the position</span>
 <span class="sd">        directly or use the items() method.</span>
@@ -717,7 +717,7 @@
 
 
     <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">LayoutTree</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">+</span> <span class="n">LayoutTree</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Layout</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">+</span> <span class="n">Layout</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
 
 
     <span class="nd">@property</span>
@@ -762,10 +762,10 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">xdim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ydim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xdim</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ydim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
 
-<div class="viewcode-block" id="AxisLayout.dframe"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.AxisLayout.dframe">[docs]</a>    <span class="k">def</span> <span class="nf">dframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="GridSpace.dframe"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.GridSpace.dframe">[docs]</a>    <span class="k">def</span> <span class="nf">dframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Gets a Pandas dframe from each of the items in the AxisLayout, appends the</span>
-<span class="sd">        AxisLayout coordinates and concatenates all the dframes.</span>
+<span class="sd">        Gets a Pandas dframe from each of the items in the GridSpace, appends the</span>
+<span class="sd">        GridSpace coordinates and concatenates all the dframes.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">import</span> <span class="nn">pandas</span>
         <span class="n">dframes</span> <span class="o">=</span> <span class="p">[]</span>
