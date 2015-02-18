@@ -92,7 +92,7 @@
 <span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Store</span>
 <span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Element</span><span class="p">,</span> <span class="n">ViewableElement</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">,</span> <span class="n">NdLayout</span><span class="p">,</span>\
     <span class="n">NdOverlay</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">Overlay</span>
-<span class="kn">from</span> <span class="nn">..core.traversal</span> <span class="kn">import</span> <span class="n">unique_dimkeys</span>
+<span class="kn">from</span> <span class="nn">..core.traversal</span> <span class="kn">import</span> <span class="n">unique_dimkeys</span><span class="p">,</span> <span class="n">bijective</span>
 <span class="kn">from</span> <span class="nn">..element</span> <span class="kn">import</span> <span class="n">Raster</span>
 <span class="kn">from</span> <span class="nn">..plotting</span> <span class="kn">import</span> <span class="n">LayoutPlot</span><span class="p">,</span> <span class="n">GridPlot</span><span class="p">,</span> <span class="n">MatrixGridPlot</span><span class="p">,</span> <span class="n">Plot</span>
 <span class="kn">from</span> <span class="nn">.magics</span> <span class="kn">import</span> <span class="n">ViewMagic</span><span class="p">,</span> <span class="n">OptsMagic</span>
@@ -189,14 +189,14 @@
     <span class="k">assert</span> <span class="n">widget_mode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">,</span> <span class="s">&quot;Mistaken call to display_widgets method&quot;</span>
 
     <span class="n">isuniform</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">uniform</span>
+    <span class="n">islinear</span> <span class="o">=</span> <span class="n">bijective</span><span class="p">(</span><span class="n">plot</span><span class="o">.</span><span class="n">keys</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">isuniform</span> <span class="ow">and</span> <span class="n">widget_format</span> <span class="o">==</span> <span class="s">&#39;widgets&#39;</span><span class="p">:</span>
         <span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> is not uniform, falling back to scrubber widget.&quot;</span>
                                     <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
         <span class="n">widget_format</span> <span class="o">==</span> <span class="s">&#39;scrubber&#39;</span>
 
     <span class="k">if</span> <span class="n">widget_format</span> <span class="o">==</span> <span class="s">&#39;auto&#39;</span><span class="p">:</span>
-        <span class="n">dims</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">dimensions</span>
-        <span class="n">widget_format</span> <span class="o">=</span> <span class="s">&#39;scrubber&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dims</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">isuniform</span> <span class="k">else</span> <span class="s">&#39;widgets&#39;</span>
+        <span class="n">widget_format</span> <span class="o">=</span> <span class="s">&#39;scrubber&#39;</span> <span class="k">if</span> <span class="n">islinear</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">isuniform</span> <span class="k">else</span> <span class="s">&#39;widgets&#39;</span>
 
     <span class="k">if</span> <span class="n">widget_format</span> <span class="o">==</span> <span class="s">&#39;scrubber&#39;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">ScrubberWidget</span><span class="p">(</span><span class="n">plot</span><span class="p">)()</span>
