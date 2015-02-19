@@ -72,8 +72,9 @@
 
 <span class="kn">from</span> <span class="nn">.dimension</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">ViewableElement</span>
 <span class="kn">from</span> <span class="nn">.layout</span> <span class="kn">import</span> <span class="n">Composable</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">,</span> <span class="n">NdLayout</span>
-<span class="kn">from</span> <span class="nn">.ndmapping</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">UniformNdMapping</span>
+<span class="kn">from</span> <span class="nn">.ndmapping</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">,</span> <span class="n">NdMapping</span>
 <span class="kn">from</span> <span class="nn">.overlay</span> <span class="kn">import</span> <span class="n">Overlayable</span><span class="p">,</span> <span class="n">NdOverlay</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">CompositeOverlay</span>
+<span class="kn">from</span> <span class="nn">.tree</span> <span class="kn">import</span> <span class="n">AttrTree</span>
 <span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">find_minmax</span>
 
 
@@ -409,8 +410,8 @@
                     <span class="n">item_maps</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">el</span><span class="p">))</span>
 
         <span class="n">maps</span><span class="p">,</span> <span class="n">keys</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">item_maps</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="n">maps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">item_maps</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">layermap</span> <span class="ow">in</span> <span class="n">item_maps</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">maps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">layermap</span><span class="p">))</span>
             <span class="n">keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">keys</span><span class="p">,</span> <span class="n">maps</span>
 
@@ -617,6 +618,128 @@
             <span class="k">return</span> <span class="n">layout</span>
 
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span> <span class="o">&lt;&lt;</span> <span class="n">histmap</span><span class="p">)</span> <span class="k">if</span> <span class="n">adjoin</span> <span class="k">else</span> <span class="n">histmap</span>
+
+
+</div>
+<div class="viewcode-block" id="Collator"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.Collator">[docs]</a><span class="k">class</span> <span class="nc">Collator</span><span class="p">(</span><span class="n">NdMapping</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Collator is an NdMapping type which can merge any number</span>
+<span class="sd">    of HoloViews components with whatever level of nesting</span>
+<span class="sd">    by inserting the Collators key_dimensions on the HoloMaps.</span>
+<span class="sd">    If the items in the Collator do not contain HoloMaps</span>
+<span class="sd">    they will be created. Collator also supports filtering</span>
+<span class="sd">    of Tree structures and dropping of constant_dimensions.</span>
+
+<span class="sd">    Collator can also be subclassed to dynamically load data</span>
+<span class="sd">    from different locations. This only requires subclassing</span>
+<span class="sd">    the _process_data method, which should return the data</span>
+<span class="sd">    to be merged, e.g. the Collator may contain a number of</span>
+<span class="sd">    filenames as values, which the _process_data can</span>
+<span class="sd">    dynamically load (and then merge) during the call.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">drop</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        List of dimensions to drop when collating data, specified</span>
+<span class="s">        as strings.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">progress_bar</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">         The progress bar instance used to report progress. Set to</span>
+<span class="s">         None to disable progress bars.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">_deep_indexable</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_filters</span><span class="o">=</span><span class="p">[],</span> <span class="n">merge</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Filter each Layout in the Collator with the supplied</span>
+<span class="sd">        path_filters. If merge is set to True all LayoutTrees are</span>
+<span class="sd">        merged, otherwise an NdMapping containing all the</span>
+<span class="sd">        LayoutTrees is returned. Optionally a list of dimensions</span>
+<span class="sd">        to be ignored can be supplied.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">constant_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant_dimensions</span>
+        <span class="n">ndmapping</span> <span class="o">=</span> <span class="n">NdMapping</span><span class="p">(</span><span class="n">key_dimensions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">)</span>
+
+        <span class="n">num_elements</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">AttrTree</span><span class="p">):</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">path_filters</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">merge</span><span class="p">:</span>
+                <span class="n">dim_keys</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+                <span class="n">varying_keys</span> <span class="o">=</span> <span class="p">[(</span><span class="n">d</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">dim_keys</span>
+                                <span class="k">if</span> <span class="n">d</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">constant_dims</span><span class="p">]</span>
+                <span class="n">constant_keys</span> <span class="o">=</span> <span class="p">[(</span><span class="n">d</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">dim_keys</span>
+                                 <span class="k">if</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">constant_dims</span><span class="p">]</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_dimensions</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">varying_keys</span><span class="p">,</span>
+                                            <span class="nb">dict</span><span class="p">(</span><span class="n">constant_keys</span><span class="p">))</span>
+            <span class="n">ndmapping</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">progress_bar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">idx</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">num_elements</span><span class="o">*</span><span class="mi">100</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">merge</span><span class="p">:</span>
+            <span class="n">components</span> <span class="o">=</span> <span class="n">ndmapping</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="n">accumulator</span> <span class="o">=</span> <span class="n">ndmapping</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">components</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">components</span><span class="p">:</span>
+                <span class="n">accumulator</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">component</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">accumulator</span>
+        <span class="k">return</span> <span class="n">ndmapping</span>
+
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Collator.constant_dimensions"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.Collator.constant_dimensions">[docs]</a>    <span class="k">def</span> <span class="nf">constant_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return all constant dimensions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dimensions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dim</span><span class="o">.</span><span class="n">name</span><span class="p">)))</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">dimensions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dimensions</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">_add_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">constant_keys</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Recursively descend through an Layout and NdMapping objects</span>
+<span class="sd">        in order to add the supplied dimension values to all contained</span>
+<span class="sd">        HoloMaps.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">Layout</span><span class="p">):</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">fixed</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="n">dim_vals</span> <span class="o">=</span> <span class="p">[(</span><span class="n">dim</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop</span><span class="p">]</span>
+        <span class="n">dimensions</span><span class="p">,</span> <span class="n">key</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">dim_vals</span><span class="p">)</span>
+        <span class="n">new_item</span> <span class="o">=</span> <span class="n">item</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">):</span>
+            <span class="n">new_item</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">shared_data</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                                  <span class="n">constant_dimensions</span><span class="o">=</span><span class="n">constant_keys</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">dim_vals</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">]:</span>
+                        <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">add_dimension</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Items already contain dimensions </span><span class="si">%s</span><span class="s"> &quot;</span>
+                                         <span class="s">&quot;and cannot be collated.&quot;</span><span class="p">)</span>
+                <span class="n">new_item</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">ViewableElement</span><span class="p">):</span>
+                <span class="n">new_item</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">HoloMap</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="n">v</span><span class="p">},</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="n">dimensions</span><span class="p">,</span>
+                                      <span class="n">constant_dimensions</span><span class="o">=</span><span class="n">constant_keys</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_item</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_dimensions</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">dims</span><span class="p">,</span> <span class="n">constant_keys</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_item</span><span class="p">,</span> <span class="n">Layout</span><span class="p">):</span>
+            <span class="n">new_item</span><span class="o">.</span><span class="n">fixed</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="k">return</span> <span class="n">new_item</span>
+
+
+    <span class="k">def</span> <span class="nf">_process_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;&quot;</span>
+<span class="sd">        Subclassable to apply some processing to the data elements</span>
+<span class="sd">        before filtering and merging them.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">data</span>
 
 
 </div>
