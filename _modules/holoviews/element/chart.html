@@ -440,8 +440,6 @@
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%s</span><span class="s"> requires a minimum of </span><span class="si">%s</span><span class="s"> columns.&quot;</span>
                             <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min_dims</span><span class="p">))</span>
 
-
-
     <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
@@ -475,7 +473,7 @@
 <span class="sd">    A VectorField contains is a collection of vectors where each</span>
 <span class="sd">    vector has an associated position in sheet coordinates.</span>
 
-<span class="sd">    The constructor of VectorField is the same as the constructor of</span>
+<span class="sd">    The constructor of VectorField is similar to the constructor of</span>
 <span class="sd">    Points: the input data can be an NxM Numpy array where the first</span>
 <span class="sd">    two columns corresponds to the X,Y coordinates in sheet</span>
 <span class="sd">    coordinates, within the declared bounding region. As with Points,</span>
@@ -483,7 +481,10 @@
 <span class="sd">    be cast to arrays (the tuple elements are joined column-wise).</span>
 
 <span class="sd">    The third column maps to the vector angle which must be specified</span>
-<span class="sd">    in radians.</span>
+<span class="sd">    in radians. Note that it is possible to supply a collection which</span>
+<span class="sd">    isn&#39;t a numpy array, whereby each element of the collection is</span>
+<span class="sd">    assumed to be an iterable corresponding to a single column of the</span>
+<span class="sd">    NxM array.</span>
 
 <span class="sd">    The visualization of any additional columns is decided by the</span>
 <span class="sd">    plotting code. For instance, the fourth and fifth columns could</span>
@@ -502,7 +503,14 @@
                                            <span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;Magnitude&#39;</span><span class="p">)],</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
 
     <span class="n">_null_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]])</span><span class="o">.</span><span class="n">T</span> <span class="c"># For when data is None</span>
-    <span class="n">_min_dims</span> <span class="o">=</span> <span class="mi">3</span>                              <span class="c"># Minimum number of columns</span></div>
+    <span class="n">_min_dims</span> <span class="o">=</span> <span class="mi">3</span>                              <span class="c"># Minimum number of columns</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+                <span class="p">[</span><span class="n">el</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="p">(</span><span class="n">col</span><span class="o">.</span><span class="n">flat</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">col</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="k">else</span> <span class="n">col</span><span class="p">)]</span>
+                <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">data</span><span class="p">])</span><span class="o">.</span><span class="n">T</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">VectorField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span></div>
 </pre></div>
 
           </div>
