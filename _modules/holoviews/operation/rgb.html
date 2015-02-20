@@ -81,7 +81,7 @@
 <span class="kn">import</span> <span class="nn">param</span>
 
 <span class="kn">from</span> <span class="nn">..core.operation</span> <span class="kn">import</span> <span class="n">ElementOperation</span>
-<span class="kn">from</span> <span class="nn">..element</span> <span class="kn">import</span> <span class="n">Matrix</span><span class="p">,</span> <span class="n">RGB</span>
+<span class="kn">from</span> <span class="nn">..element</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">RGB</span>
 <span class="kn">from</span> <span class="nn">.normalization</span> <span class="kn">import</span> <span class="n">raster_normalization</span>
 <span class="kn">from</span> <span class="nn">.element</span> <span class="kn">import</span> <span class="n">split_raster</span>
 
@@ -95,7 +95,7 @@
 <span class="sd">    three layers are the R,G, B channels and the last layer (if</span>
 <span class="sd">    supplied) is the (optional) alpha channel.</span>
 
-<span class="sd">    Note that the values in the input Matrix elements are expected to</span>
+<span class="sd">    Note that the values in the input Image elements are expected to</span>
 <span class="sd">    be bounded between 0.0-1.0. If this isn&#39;t the case, the values of</span>
 <span class="sd">    these channels will be clipped into this range.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -109,15 +109,15 @@
     <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Requires 3 or 4 layers to convert to RGB(A)&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">Matrix</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All layers must be of type Matrix to convert to RGB&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">Image</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All layers must be of type Image to convert to RGB&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All Matrix elements must have single value&quot;</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All Image elements must have single value&quot;</span>
                             <span class="s">&quot; dimension for conversion to RGB&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">bounds</span> <span class="o">==</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bounds</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All input Matrix elements must have the same bounds.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All input Image elements must have the same bounds.&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">overlay</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All input Matrix must have data with matching shape.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All input Image must have data with matching shape.&quot;</span><span class="p">)</span>
 
         <span class="n">normfn</span> <span class="o">=</span> <span class="n">raster_normalization</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">input_ranges</span><span class="p">:</span>
@@ -204,7 +204,7 @@
 </div>
 <div class="viewcode-block" id="colormap"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.rgb.colormap">[docs]</a><span class="k">class</span> <span class="nc">colormap</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Applies a colormap on a Matrix input, returning the result as an</span>
+<span class="sd">    Applies a colormap on a Image input, returning the result as an</span>
 <span class="sd">    RGB element.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -226,7 +226,7 @@
             <span class="n">matrix</span> <span class="o">=</span> <span class="n">normfn</span><span class="o">.</span><span class="n">process_element</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Can only apply colour maps to Matrix&quot;</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Can only apply colour maps to Image&quot;</span>
                             <span class="s">&quot; with single value dimension.&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">RGB</span><span class="p">(</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">get_cmap</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">cmap</span><span class="p">)(</span><span class="n">matrix</span><span class="o">.</span><span class="n">data</span><span class="p">),</span>
@@ -238,7 +238,7 @@
 </div>
 <div class="viewcode-block" id="alpha_overlay"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.rgb.alpha_overlay">[docs]</a><span class="k">class</span> <span class="nc">alpha_overlay</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Accepts an overlay of a Matrix defined with a cmap and converts it</span>
+<span class="sd">    Accepts an overlay of a Image defined with a cmap and converts it</span>
 <span class="sd">    to an RGB element whereby the alpha channel of the result is</span>
 <span class="sd">    obtained from the second layer of the overlay.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -259,8 +259,8 @@
 </div>
 <div class="viewcode-block" id="colorizeHSV"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.rgb.colorizeHSV">[docs]</a><span class="k">class</span> <span class="nc">colorizeHSV</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Given an Overlay consisting of two Matrix elements, colorize the</span>
-<span class="sd">    data in the bottom Matrix with the data in the top Matrix using</span>
+<span class="sd">    Given an Overlay consisting of two Image elements, colorize the</span>
+<span class="sd">    data in the bottom Image with the data in the top Image using</span>
 <span class="sd">    the HSV color space.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -271,11 +271,11 @@
 
     <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;colorizeHSV required an overlay of two Matrix elements as input.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;colorizeHSV required an overlay of two Image elements as input.&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">))</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Each Matrix element must have single value dimension.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Each Image element must have single value dimension.&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Mismatch in the shapes of the data in the Matrix elements.&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Mismatch in the shapes of the data in the Image elements.&quot;</span><span class="p">)</span>
 
 
         <span class="n">hue</span> <span class="o">=</span> <span class="n">overlay</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
@@ -289,7 +289,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">S</span> <span class="o">=</span> <span class="n">normfn</span><span class="o">.</span><span class="n">process_element</span><span class="p">(</span><span class="n">overlay</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">key</span><span class="p">)</span>
 
-        <span class="n">C</span> <span class="o">=</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">hue</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>
+        <span class="n">C</span> <span class="o">=</span> <span class="n">Image</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">hue</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">),</span>
                    <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_overlay_extents</span><span class="p">(</span><span class="n">overlay</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="s">&#39;F&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;G&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">toHCS</span><span class="p">(</span><span class="n">H</span> <span class="o">*</span> <span class="n">C</span> <span class="o">*</span> <span class="n">S</span><span class="p">)</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">value</span><span class="p">)</span></div>
 </pre></div>

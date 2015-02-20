@@ -65,6 +65,7 @@
           <div class="body">
             
   <h1>Source code for holoviews.ipython.magics</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">time</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">IPython.core.magic</span> <span class="kn">import</span> <span class="n">Magics</span><span class="p">,</span> <span class="n">magics_class</span><span class="p">,</span> <span class="n">cell_magic</span><span class="p">,</span> <span class="n">line_magic</span><span class="p">,</span> <span class="n">line_cell_magic</span>
 <span class="k">except</span><span class="p">:</span>
@@ -558,7 +559,7 @@
 <span class="sd">        %%opts [ [path] [normalization] [plotting options] [style options]]+</span>
 
 <span class="sd">        path:             A dotted type.value.label specification</span>
-<span class="sd">                          (e.g. Matrix.Grayscale.Photo)</span>
+<span class="sd">                          (e.g. Image.Grayscale.Photo)</span>
 
 <span class="sd">        normalization:    List of normalization options delimited by braces.</span>
 <span class="sd">                          One of | -groupwise | -mapwise | +groupwise | +mapwise |</span>
@@ -594,8 +595,64 @@
                 <span class="n">display</span><span class="p">(</span><span class="n">HTML</span><span class="p">(</span><span class="n">OptsMagic</span><span class="o">.</span><span class="n">error_message</span><span class="p">))</span>
         <span class="n">OptsMagic</span><span class="o">.</span><span class="n">error_message</span> <span class="o">=</span> <span class="bp">None</span>
 
+
+</div></div>
+<span class="nd">@magics_class</span>
+<div class="viewcode-block" id="TimerMagic"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.magics.TimerMagic">[docs]</a><span class="k">class</span> <span class="nc">TimerMagic</span><span class="p">(</span><span class="n">Magics</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A line magic for measuring the execution time of multiple cells.</span>
+
+<span class="sd">    After you start/reset the timer with &#39;%timer start&#39; you may view</span>
+<span class="sd">    elapsed time with any subsequent calls to %timer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">start_time</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">elapsed_time</span><span class="p">():</span>
+        <span class="n">elapsed</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span>  <span class="n">TimerMagic</span><span class="o">.</span><span class="n">start_time</span>
+        <span class="n">minutes</span> <span class="o">=</span> <span class="n">elapsed</span> <span class="o">//</span> <span class="mi">60</span>
+        <span class="n">hours</span> <span class="o">=</span> <span class="n">minutes</span> <span class="o">//</span> <span class="mi">60</span>
+        <span class="n">seconds</span> <span class="o">=</span> <span class="n">elapsed</span> <span class="o">%</span> <span class="mi">60</span>
+        <span class="k">return</span> <span class="s">&quot;Timer elapsed: </span><span class="si">%02d</span><span class="s">:</span><span class="si">%02d</span><span class="s">:</span><span class="si">%02d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">hours</span><span class="p">,</span> <span class="n">minutes</span><span class="p">,</span> <span class="n">seconds</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">option_completer</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s">&#39;start&#39;</span><span class="p">]</span>
+
+    <span class="nd">@line_magic</span>
+<div class="viewcode-block" id="TimerMagic.timer"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.magics.TimerMagic.timer">[docs]</a>    <span class="k">def</span> <span class="nf">timer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Timer magic to print initial date/time information and</span>
+<span class="sd">        subsequent elapsed time intervals.</span>
+
+<span class="sd">        To start the timer, run:</span>
+
+<span class="sd">        %timer start</span>
+
+<span class="sd">        This will print the start date and time.</span>
+
+<span class="sd">        Subsequent calls to %timer will print the elapsed time</span>
+<span class="sd">        relative to the time when %timer start was called. Subsequent</span>
+<span class="sd">        calls to %timer start may also be used to reset the timer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="s">&#39;start&#39;</span><span class="p">]:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;Invalid argument to %timer. For more information consult %timer?&quot;</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">elif</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;start&#39;</span><span class="p">:</span>
+            <span class="n">TimerMagic</span><span class="o">.</span><span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">timestamp</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s">&quot;%Y/%m/</span><span class="si">%d</span><span class="s"> %H:%M:%S&quot;</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;Timer start: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">timestamp</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;Please start timer with %timer start. For more information consult %timer?&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">elapsed_time</span><span class="p">())</span>
+
 </div></div>
 <span class="k">def</span> <span class="nf">load_magics</span><span class="p">(</span><span class="n">ip</span><span class="p">):</span>
+    <span class="n">ip</span><span class="o">.</span><span class="n">register_magics</span><span class="p">(</span><span class="n">TimerMagic</span><span class="p">)</span>
     <span class="n">ip</span><span class="o">.</span><span class="n">register_magics</span><span class="p">(</span><span class="n">ViewMagic</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">pyparsing</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>  <span class="k">print</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%o</span><span class="s">pts magic unavailable (pyparsing cannot be imported)&quot;</span><span class="p">)</span>
@@ -606,6 +663,7 @@
 
 
     <span class="c"># Configuring tab completion</span>
+    <span class="n">ip</span><span class="o">.</span><span class="n">set_hook</span><span class="p">(</span><span class="s">&#39;complete_command&#39;</span><span class="p">,</span> <span class="n">TimerMagic</span><span class="o">.</span><span class="n">option_completer</span><span class="p">,</span> <span class="n">str_key</span> <span class="o">=</span> <span class="s">&#39;%timer&#39;</span><span class="p">)</span>
     <span class="n">ip</span><span class="o">.</span><span class="n">set_hook</span><span class="p">(</span><span class="s">&#39;complete_command&#39;</span><span class="p">,</span> <span class="n">CompositorMagic</span><span class="o">.</span><span class="n">option_completer</span><span class="p">,</span> <span class="n">str_key</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%c</span><span class="s">ompositor&#39;</span><span class="p">)</span>
 
     <span class="n">ip</span><span class="o">.</span><span class="n">set_hook</span><span class="p">(</span><span class="s">&#39;complete_command&#39;</span><span class="p">,</span> <span class="n">ViewMagic</span><span class="o">.</span><span class="n">option_completer</span><span class="p">,</span> <span class="n">str_key</span> <span class="o">=</span> <span class="s">&#39;%view&#39;</span><span class="p">)</span>

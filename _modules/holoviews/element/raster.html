@@ -67,7 +67,7 @@
   <h1>Source code for holoviews.element.raster</h1><div class="highlight"><pre>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-
+<span class="kn">import</span> <span class="nn">colorsys</span>
 <span class="kn">import</span> <span class="nn">param</span>
 
 <span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">Element2D</span>
@@ -79,11 +79,16 @@
 
 <div class="viewcode-block" id="Raster"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.Raster">[docs]</a><span class="k">class</span> <span class="nc">Raster</span><span class="p">(</span><span class="n">Element2D</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Raster is a basic 2D atomic Element type.</span>
+<span class="sd">    Raster is a basic 2D element type for presenting numpy arrays as</span>
+<span class="sd">    two dimensional raster images.</span>
 
-<span class="sd">    Arrays with a shape of (N,M) are valid inputs for Raster wheras</span>
-<span class="sd">    subclasses of Raster (e.g. RGB) may also accept 3D arrays</span>
-<span class="sd">    containing channel information.</span>
+<span class="sd">     Arrays with a shape of (N,M) are valid inputs for Raster wheras</span>
+<span class="sd">     subclasses of Raster (e.g. RGB) may also accept 3D arrays</span>
+<span class="sd">     containing channel information.</span>
+
+<span class="sd">    Raster does not support slicing like the Image or RGB subclasses</span>
+<span class="sd">    and the extents are in matrix coordinates if not explicitly</span>
+<span class="sd">    specified.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">key_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;x&#39;</span><span class="p">),</span> <span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;y&#39;</span><span class="p">)],</span>
@@ -96,7 +101,10 @@
     <span class="n">value_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;z&#39;</span><span class="p">)],</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        The dimension description of the data held in the data array.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">extents</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">extents</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">extents</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="p">)</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+            <span class="n">extents</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span> <span class="n">d2</span><span class="p">,</span> <span class="n">d1</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Raster</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">extents</span><span class="o">=</span><span class="n">extents</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
 
@@ -266,8 +274,13 @@
     <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;HeatMap&#39;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s">&#39;extents&#39;</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&quot;HeatMap only supports fixed extents of unit size.&quot;</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">dimensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_data</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">HeatMap</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">dimensions</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">HeatMap</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">array</span><span class="p">,</span>
+                                      <span class="n">extents</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span>
+                                      <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">dimensions</span><span class="p">))</span>
 
 
     <span class="k">def</span> <span class="nf">_process_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
@@ -352,9 +365,9 @@
         <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">),</span> <span class="nb">max</span><span class="p">(</span><span class="n">dim2_keys</span><span class="p">)</span>
 
 </div>
-<div class="viewcode-block" id="Matrix"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.Matrix">[docs]</a><span class="k">class</span> <span class="nc">Matrix</span><span class="p">(</span><span class="n">SheetCoordinateSystem</span><span class="p">,</span> <span class="n">Raster</span><span class="p">):</span>
+<div class="viewcode-block" id="Image"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.Image">[docs]</a><span class="k">class</span> <span class="nc">Image</span><span class="p">(</span><span class="n">SheetCoordinateSystem</span><span class="p">,</span> <span class="n">Raster</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Matrix is the atomic unit as which 2D data is stored, along with</span>
+<span class="sd">    Image is the atomic unit as which 2D data is stored, along with</span>
 <span class="sd">    its bounds object. The input data may be a numpy.matrix object or</span>
 <span class="sd">    a two-dimensional numpy array.</span>
 
@@ -365,9 +378,9 @@
     <span class="n">bounds</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ClassSelector</span><span class="p">(</span><span class="n">class_</span><span class="o">=</span><span class="n">BoundingRegion</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">BoundingBox</span><span class="p">(),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">       The bounding region in sheet coordinates containing the data.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Matrix&#39;</span><span class="p">)</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Image&#39;</span><span class="p">)</span>
 
-    <span class="n">value_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;Luminance&#39;</span><span class="p">)],</span>
+    <span class="n">value_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;z&#39;</span><span class="p">)],</span>
                                   <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        The dimension description of the data held in the matrix.&quot;&quot;&quot;</span><span class="p">)</span>
 
@@ -395,11 +408,11 @@
 
 
 
-<div class="viewcode-block" id="Matrix.closest"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.Matrix.closest">[docs]</a>    <span class="k">def</span> <span class="nf">closest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">):</span>
+<div class="viewcode-block" id="Image.closest"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.Image.closest">[docs]</a>    <span class="k">def</span> <span class="nf">closest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coords</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given a single coordinate tuple (or list of coordinates)</span>
 <span class="sd">        return the coordinate (or coordinatess) needed to address the</span>
-<span class="sd">        corresponding Matrix exactly.</span>
+<span class="sd">        corresponding Image exactly.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">closest_cell_center</span><span class="p">(</span><span class="o">*</span><span class="n">coords</span><span class="p">)</span>
@@ -449,7 +462,7 @@
             <span class="k">if</span> <span class="n">dim_idx</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Matrix</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">data_range</span><span class="o">=</span><span class="n">data_range</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">Image</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">data_range</span><span class="o">=</span><span class="n">data_range</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">_coord2matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="p">):</span>
@@ -462,13 +475,13 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">([</span><span class="n">Slice</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">submatrix</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="p">)])</span>
-        <span class="k">return</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Image</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 
 
 </div>
-<div class="viewcode-block" id="RGB"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.RGB">[docs]</a><span class="k">class</span> <span class="nc">RGB</span><span class="p">(</span><span class="n">Matrix</span><span class="p">):</span>
+<div class="viewcode-block" id="RGB"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.RGB">[docs]</a><span class="k">class</span> <span class="nc">RGB</span><span class="p">(</span><span class="n">Image</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    An RGB element is a Matrix containing channel data for the the</span>
+<span class="sd">    An RGB element is a Image containing channel data for the the</span>
 <span class="sd">    red, green, blue and (optionally) the alpha channels. The values</span>
 <span class="sd">    of each channel must be in the range 0.0 to 1.0.</span>
 
@@ -492,7 +505,18 @@
 <span class="s">        If an alpha channel is supplied, the defined alpha_dimension</span>
 <span class="s">        is automatically appended to this list.&quot;&quot;&quot;</span><span class="p">)</span>
 
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="RGB.rgb"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.RGB.rgb">[docs]</a>    <span class="k">def</span> <span class="nf">rgb</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the corresponding RGB element.</span>
 
+<span class="sd">        Other than the updating parameter definitions, this is the</span>
+<span class="sd">        only change needed to implemented an arbitrary colorspace as a</span>
+<span class="sd">        subclass of RGB.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+</div>
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="RGB.load_image"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.RGB.load_image">[docs]</a>    <span class="k">def</span> <span class="nf">load_image</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">array</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -547,11 +571,51 @@
             <span class="n">vidx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">value</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="n">val_index</span> <span class="o">=</span> <span class="n">vidx</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">sliced</span><span class="o">.</span><span class="n">data</span><span class="p">[:,:,</span> <span class="n">val_index</span><span class="p">]</span>
-            <span class="k">return</span> <span class="n">Matrix</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_param_values</span><span class="p">(</span><span class="n">onlychanged</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
+            <span class="k">return</span> <span class="n">Image</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_param_values</span><span class="p">(</span><span class="n">onlychanged</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
                                        <span class="n">value_dimensions</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">[</span><span class="n">val_index</span><span class="p">]]))</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">RGB</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__getitem__</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
-</pre></div></div>
+
+</div>
+<div class="viewcode-block" id="HSV"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.HSV">[docs]</a><span class="k">class</span> <span class="nc">HSV</span><span class="p">(</span><span class="n">RGB</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Example of a commonly used color space subclassed from RGB used</span>
+<span class="sd">    for working in a HSV (hue, saturation and value) color space.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">value</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;HSV&#39;</span><span class="p">)</span>
+
+    <span class="n">alpha_dimension</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ClassSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;A&#39;</span><span class="p">,</span><span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span>
+                                          <span class="n">class_</span><span class="o">=</span><span class="n">Dimension</span><span class="p">,</span> <span class="n">instantiate</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>  <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The alpha dimension definition to add the value_dimensions if</span>
+<span class="s">        an alpha channel is supplied.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">value_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;H&#39;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">cyclic</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
+                 <span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;S&#39;</span><span class="p">,</span><span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span>
+                 <span class="n">Dimension</span><span class="p">(</span><span class="s">&#39;V&#39;</span><span class="p">,</span> <span class="nb">range</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))],</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The dimension description of the data held in the array.</span>
+
+<span class="s">        If an alpha channel is supplied, the defined alpha_dimension</span>
+<span class="s">        is automatically appended to this list.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">hsv_to_rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">colorsys</span><span class="o">.</span><span class="n">hsv_to_rgb</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="HSV.rgb"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.HSV.rgb">[docs]</a>    <span class="k">def</span> <span class="nf">rgb</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Conversion from HSV to RGB.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">hsv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">hsv_to_rgb</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[:,:,</span><span class="mi">1</span><span class="p">],</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[:,:,</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="n">hsv</span> <span class="o">+=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[:,:,</span><span class="mi">3</span><span class="p">],)</span>
+
+        <span class="k">return</span> <span class="n">RGB</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">(</span><span class="n">hsv</span><span class="p">),</span> <span class="n">bounds</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">,</span>
+                   <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                   <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span></div></div>
+</pre></div>
 
           </div>
         </div>
