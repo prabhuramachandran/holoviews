@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>holoviews.element.raster &mdash; holoviews</title>
+    <title>holoviews.element.raster &mdash; HoloViews</title>
     
     <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
@@ -30,7 +30,7 @@
     <script type="text/javascript" src="../../../_static/custom.js"></script>
     <script type="text/javascript" src="../../../_static/require.js"></script>
     <script type="text/javascript" src="../../../_static/bootstrap.js"></script>
-    <link rel="top" title="holoviews" href="../../../index.html" />
+    <link rel="top" title="HoloViews" href="../../../index.html" />
     <link rel="up" title="holoviews.element" href="../element.html" /> 
   </head>
   <body>
@@ -113,8 +113,14 @@
 
 
     <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slices</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">__getitem__</span><span class="p">(</span><span class="n">slices</span><span class="p">))</span>
-
+        <span class="n">slc_types</span> <span class="o">=</span> <span class="p">[</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">sl</span><span class="p">,</span> <span class="nb">slice</span><span class="p">)</span> <span class="k">for</span> <span class="n">sl</span> <span class="ow">in</span> <span class="n">slices</span><span class="p">]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">__getitem__</span><span class="p">(</span><span class="n">slices</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">slc_types</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">slc_types</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">slc_types</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="bp">True</span><span class="p">)))</span>
 
     <span class="k">def</span> <span class="nf">_coord2matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">coord</span><span class="p">):</span>
         <span class="n">xd</span><span class="p">,</span> <span class="n">yd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span>
@@ -209,6 +215,25 @@
             <span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_param_values</span><span class="p">(</span><span class="n">onlychanged</span><span class="o">=</span><span class="bp">True</span><span class="p">)),</span>
                           <span class="n">key_dimensions</span><span class="o">=</span><span class="n">other_dimension</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">Table</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Raster.dimension_values"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.Raster.dimension_values">[docs]</a>    <span class="k">def</span> <span class="nf">dimension_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The set of samples available along a particular dimension.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dim_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dim_idx</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">dim_idx</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+            <span class="n">dim_min</span><span class="p">,</span> <span class="n">dim_max</span> <span class="o">=</span> <span class="p">[(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)][</span><span class="n">dim_idx</span><span class="p">]</span>
+            <span class="n">linspace</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">dim_min</span><span class="p">,</span> <span class="n">dim_max</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">coords</span> <span class="o">=</span> <span class="n">linspace</span> <span class="o">*</span> <span class="n">shape</span>
+            <span class="k">return</span> <span class="n">coords</span> <span class="k">if</span> <span class="n">dim_idx</span> <span class="k">else</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">dim_idx</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Dimension not found.&quot;</span><span class="p">)</span>
+
 </div>
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">depth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -229,27 +254,6 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Mode cannot be determined from the depth&quot;</span><span class="p">)</span>
 
-</div>
-<div class="viewcode-block" id="Raster.dimension_values"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.Raster.dimension_values">[docs]</a>    <span class="k">def</span> <span class="nf">dimension_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        The set of samples available along a particular dimension.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">dim_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">dim_idx</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
-            <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span>
-            <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">dim_idx</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
-            <span class="n">dim_min</span><span class="p">,</span> <span class="n">dim_max</span> <span class="o">=</span> <span class="p">[(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)][</span><span class="n">dim_idx</span><span class="p">]</span>
-            <span class="n">dim_len</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">dim_idx</span><span class="p">]</span>
-            <span class="n">half_unit</span> <span class="o">=</span> <span class="p">(</span><span class="n">dim_max</span> <span class="o">-</span> <span class="n">dim_min</span><span class="p">)</span><span class="o">/</span><span class="n">dim_len</span><span class="o">/</span><span class="mf">2.</span>
-            <span class="n">coord_fn</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span> <span class="k">if</span> <span class="n">dim_idx</span> <span class="k">else</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-            <span class="n">linspace</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">dim_min</span><span class="o">+</span><span class="n">half_unit</span><span class="p">,</span> <span class="n">dim_max</span><span class="o">-</span><span class="n">half_unit</span><span class="p">,</span> <span class="n">dim_len</span><span class="p">)</span>
-            <span class="n">coords</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">closest</span><span class="p">(</span><span class="n">coord_fn</span><span class="p">(</span><span class="n">v</span><span class="p">))[</span><span class="n">dim_idx</span><span class="p">]</span>
-                      <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">linspace</span><span class="p">]</span> <span class="o">*</span> <span class="n">shape</span>
-            <span class="k">return</span> <span class="n">coords</span> <span class="k">if</span> <span class="n">dim_idx</span> <span class="k">else</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">dim_idx</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Dimension not found.&quot;</span><span class="p">)</span>
 
 </div></div>
 <div class="viewcode-block" id="HeatMap"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.HeatMap">[docs]</a><span class="k">class</span> <span class="nc">HeatMap</span><span class="p">(</span><span class="n">Raster</span><span class="p">):</span>
@@ -461,16 +465,29 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">sheet2matrixidx</span><span class="p">(</span><span class="o">*</span><span class="n">coord</span><span class="p">)</span>
 
 
-    <span class="k">def</span> <span class="nf">get_roi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">Slice</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">submatrix</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+<div class="viewcode-block" id="Image.dimension_values"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.Image.dimension_values">[docs]</a>    <span class="k">def</span> <span class="nf">dimension_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The set of samples available along a particular dimension.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dim_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dim_idx</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">dim_idx</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+            <span class="n">dim_min</span><span class="p">,</span> <span class="n">dim_max</span> <span class="o">=</span> <span class="p">[(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)][</span><span class="n">dim_idx</span><span class="p">]</span>
+            <span class="n">dim_len</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">dim_idx</span><span class="p">]</span>
+            <span class="n">half_unit</span> <span class="o">=</span> <span class="p">(</span><span class="n">dim_max</span> <span class="o">-</span> <span class="n">dim_min</span><span class="p">)</span><span class="o">/</span><span class="n">dim_len</span><span class="o">/</span><span class="mf">2.</span>
+            <span class="n">coord_fn</span> <span class="o">=</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span> <span class="k">if</span> <span class="n">dim_idx</span> <span class="k">else</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">linspace</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">dim_min</span><span class="o">+</span><span class="n">half_unit</span><span class="p">,</span> <span class="n">dim_max</span><span class="o">-</span><span class="n">half_unit</span><span class="p">,</span> <span class="n">dim_len</span><span class="p">)</span>
+            <span class="n">coords</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">closest</span><span class="p">(</span><span class="n">coord_fn</span><span class="p">(</span><span class="n">v</span><span class="p">))[</span><span class="n">dim_idx</span><span class="p">]</span>
+                      <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">linspace</span><span class="p">]</span> <span class="o">*</span> <span class="n">shape</span>
+            <span class="k">return</span> <span class="n">coords</span> <span class="k">if</span> <span class="n">dim_idx</span> <span class="k">else</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">dim_idx</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">flipud</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">([</span><span class="n">Slice</span><span class="p">(</span><span class="n">bounds</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">submatrix</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="p">)])</span>
-        <span class="k">return</span> <span class="n">Image</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Dimension not found.&quot;</span><span class="p">)</span>
 
 
-</div>
+</div></div>
 <div class="viewcode-block" id="RGB"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.RGB">[docs]</a><span class="k">class</span> <span class="nc">RGB</span><span class="p">(</span><span class="n">Image</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An RGB element is a Image containing channel data for the the</span>
@@ -678,7 +695,7 @@
       </ul>
     </div>
     <div class="footer">
-        &copy; Copyright 2014, IOAM: Jean-Luc Stevens and Philipp Rudiger.
+        &copy; Copyright 2014IOAM: Jean-Luc R. Stevens and Philipp Rudiger.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
