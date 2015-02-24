@@ -361,7 +361,7 @@
             <span class="k">for</span> <span class="n">definition</span> <span class="ow">in</span> <span class="n">CompositorSpec</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()):</span>
                 <span class="n">group</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;style&#39;</span><span class="p">:</span><span class="n">Options</span><span class="p">(),</span> <span class="s">&#39;style&#39;</span><span class="p">:</span><span class="n">Options</span><span class="p">(),</span> <span class="s">&#39;norm&#39;</span><span class="p">:</span><span class="n">Options</span><span class="p">()}</span>
                 <span class="n">type_name</span> <span class="o">=</span> <span class="n">definition</span><span class="o">.</span><span class="n">output_type</span><span class="o">.</span><span class="n">__name__</span>
-                <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="n">type_name</span> <span class="o">+</span> <span class="s">&#39;.&#39;</span> <span class="o">+</span> <span class="n">definition</span><span class="o">.</span><span class="n">value</span><span class="p">]</span> <span class="o">=</span> <span class="n">group</span>
+                <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="n">type_name</span> <span class="o">+</span> <span class="s">&#39;.&#39;</span> <span class="o">+</span> <span class="n">definition</span><span class="o">.</span><span class="n">group</span><span class="p">]</span> <span class="o">=</span> <span class="n">group</span>
                 <span class="n">Compositor</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">definition</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">print</span><span class="p">(</span><span class="s">&quot;For help with the </span><span class="si">%c</span><span class="s">ompositor magic, call </span><span class="si">%c</span><span class="s">ompositor?</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
@@ -446,7 +446,7 @@
         <span class="n">sorted_keys</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">completions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="n">type_keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">sorted_keys</span> <span class="k">if</span> <span class="p">(</span><span class="s">&#39;.&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">k</span><span class="p">)]</span>
 
-        <span class="n">compositor_defs</span> <span class="o">=</span> <span class="p">{</span><span class="n">el</span><span class="o">.</span><span class="n">value</span><span class="p">:</span><span class="n">el</span><span class="o">.</span><span class="n">output_type</span><span class="o">.</span><span class="n">__name__</span>
+        <span class="n">compositor_defs</span> <span class="o">=</span> <span class="p">{</span><span class="n">el</span><span class="o">.</span><span class="n">group</span><span class="p">:</span><span class="n">el</span><span class="o">.</span><span class="n">output_type</span><span class="o">.</span><span class="n">__name__</span>
                            <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">Compositor</span><span class="o">.</span><span class="n">definitions</span><span class="p">}</span>
 
         <span class="n">completion_key</span><span class="p">,</span> <span class="n">suggestions</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">dotted_completion</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">sorted_keys</span><span class="p">,</span> <span class="n">compositor_defs</span><span class="p">)</span>
@@ -538,12 +538,12 @@
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="OptsMagic.expand_compositor_keys"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.magics.OptsMagic.expand_compositor_keys">[docs]</a>    <span class="k">def</span> <span class="nf">expand_compositor_keys</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Expands compositor definition keys into {type}.{value}</span>
-<span class="sd">        keys. For instance a compositor operation returning a value</span>
+<span class="sd">        Expands compositor definition keys into {type}.{group}</span>
+<span class="sd">        keys. For instance a compositor operation returning a group</span>
 <span class="sd">        string &#39;Image&#39; of element type RGB expands to &#39;RGB.Image&#39;.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">expanded_spec</span><span class="o">=</span><span class="p">{}</span>
-        <span class="n">compositor_defs</span> <span class="o">=</span> <span class="p">{</span><span class="n">el</span><span class="o">.</span><span class="n">value</span><span class="p">:</span><span class="n">el</span><span class="o">.</span><span class="n">output_type</span><span class="o">.</span><span class="n">__name__</span>
+        <span class="n">compositor_defs</span> <span class="o">=</span> <span class="p">{</span><span class="n">el</span><span class="o">.</span><span class="n">group</span><span class="p">:</span><span class="n">el</span><span class="o">.</span><span class="n">output_type</span><span class="o">.</span><span class="n">__name__</span>
                            <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">Compositor</span><span class="o">.</span><span class="n">definitions</span><span class="p">}</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">compositor_defs</span><span class="p">:</span>
@@ -562,7 +562,7 @@
 
 <span class="sd">        %%opts [ [path] [normalization] [plotting options] [style options]]+</span>
 
-<span class="sd">        path:             A dotted type.value.label specification</span>
+<span class="sd">        path:             A dotted type.group.label specification</span>
 <span class="sd">                          (e.g. Image.Grayscale.Photo)</span>
 
 <span class="sd">        normalization:    List of normalization options delimited by braces.</span>
