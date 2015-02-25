@@ -69,9 +69,13 @@
           <div class="body">
             
   <h1>Source code for holoviews.ipython.magics</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">string</span>
 <span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sha</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">IPython.core.magic</span> <span class="kn">import</span> <span class="n">Magics</span><span class="p">,</span> <span class="n">magics_class</span><span class="p">,</span> <span class="n">cell_magic</span><span class="p">,</span> <span class="n">line_magic</span><span class="p">,</span> <span class="n">line_cell_magic</span>
+    <span class="kn">from</span> <span class="nn">IPython.core.pylabtools</span> <span class="kn">import</span> <span class="n">print_figure</span>
 <span class="k">except</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">unittest</span> <span class="kn">import</span> <span class="n">SkipTest</span>
     <span class="k">raise</span> <span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;IPython extension requires IPython &gt;= 0.13&quot;</span><span class="p">)</span>
@@ -132,6 +136,7 @@
     <span class="c"># Codec or system-dependent format options</span>
     <span class="n">optional_formats</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;webm&#39;</span><span class="p">,</span><span class="s">&#39;h264&#39;</span><span class="p">,</span> <span class="s">&#39;gif&#39;</span><span class="p">]</span>
 
+    <span class="c"># Lists: strict options, Set: suggested options, Tuple: numeric bounds.</span>
     <span class="n">allowed</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;backend&#39;</span>     <span class="p">:</span> <span class="p">[</span><span class="s">&#39;mpl&#39;</span><span class="p">,</span><span class="s">&#39;d3&#39;</span><span class="p">],</span>
                <span class="s">&#39;fig&#39;</span>         <span class="p">:</span> <span class="p">[</span><span class="s">&#39;svg&#39;</span><span class="p">,</span> <span class="s">&#39;png&#39;</span><span class="p">],</span>
                <span class="s">&#39;holomap&#39;</span>     <span class="p">:</span> <span class="n">inbuilt_formats</span><span class="p">,</span>
@@ -141,7 +146,8 @@
                <span class="s">&#39;max_branches&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">)),</span>
                <span class="s">&#39;size&#39;</span>        <span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">)),</span>
                <span class="s">&#39;dpi&#39;</span>         <span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">)),</span>
-               <span class="s">&#39;charwidth&#39;</span>   <span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">))}</span>
+               <span class="s">&#39;charwidth&#39;</span>   <span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">)),</span>
+               <span class="s">&#39;filename&#39;</span>   <span class="p">:</span> <span class="p">{</span><span class="bp">None</span><span class="p">,</span> <span class="s">&#39;{type}-{group}-{label}&#39;</span><span class="p">}}</span>
 
     <span class="n">defaults</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">([(</span><span class="s">&#39;backend&#39;</span>     <span class="p">,</span> <span class="s">&#39;mpl&#39;</span><span class="p">),</span>
                             <span class="p">(</span><span class="s">&#39;fig&#39;</span>         <span class="p">,</span> <span class="s">&#39;png&#39;</span><span class="p">),</span>
@@ -152,7 +158,8 @@
                             <span class="p">(</span><span class="s">&#39;max_branches&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
                             <span class="p">(</span><span class="s">&#39;size&#39;</span>        <span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
                             <span class="p">(</span><span class="s">&#39;dpi&#39;</span>         <span class="p">,</span> <span class="mi">72</span><span class="p">),</span>
-                            <span class="p">(</span><span class="s">&#39;charwidth&#39;</span>   <span class="p">,</span> <span class="mi">80</span><span class="p">)])</span>
+                            <span class="p">(</span><span class="s">&#39;charwidth&#39;</span>   <span class="p">,</span> <span class="mi">80</span><span class="p">),</span>
+                            <span class="p">(</span><span class="s">&#39;filename&#39;</span>    <span class="p">,</span> <span class="bp">None</span><span class="p">)])</span>
 
     <span class="n">options</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="n">defaults</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
 
@@ -169,6 +176,9 @@
         <span class="s">&#39;scrubber&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;html&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;fps&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">},</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
     <span class="p">}</span>
 
+    <span class="n">_object_handle</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_generate_SHA</span> <span class="o">=</span> <span class="bp">False</span>   <span class="c"># For testing. Whether to compute SHA as output</span>
+    <span class="n">_SHA</span> <span class="o">=</span> <span class="bp">None</span>             <span class="c"># For testing purposes: the saved output SHA.</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">ViewMagic</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -204,8 +214,9 @@
                   <span class="o">%</span> <span class="n">cls</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="s">&#39;dpi&#39;</span><span class="p">])</span>
         <span class="n">chars</span> <span class="o">=</span>  <span class="p">(</span><span class="s">&quot;charwidth    : The max character width view magic options display (default </span><span class="si">%r</span><span class="s">)&quot;</span>
                   <span class="o">%</span> <span class="n">cls</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="s">&#39;charwidth&#39;</span><span class="p">])</span>
-
-        <span class="n">descriptions</span> <span class="o">=</span> <span class="p">[</span><span class="n">backend</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">holomap</span><span class="p">,</span> <span class="n">widgets</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">branches</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">dpi</span><span class="p">,</span> <span class="n">chars</span><span class="p">]</span>
+        <span class="n">fname</span> <span class="o">=</span>  <span class="p">(</span><span class="s">&quot;filename    : The filename of the saved output, if any (default </span><span class="si">%r</span><span class="s">)&quot;</span>
+                  <span class="o">%</span> <span class="n">cls</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="s">&#39;filename&#39;</span><span class="p">])</span>
+        <span class="n">descriptions</span> <span class="o">=</span> <span class="p">[</span><span class="n">backend</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">holomap</span><span class="p">,</span> <span class="n">widgets</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">branches</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">dpi</span><span class="p">,</span> <span class="n">chars</span><span class="p">,</span> <span class="n">fname</span><span class="p">]</span>
         <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">intro</span> <span class="o">+</span> <span class="n">descriptions</span><span class="p">)</span>
 
 
@@ -239,6 +250,20 @@
                 <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span><span class="s">&quot;Could not evaluate keyword: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">keyword</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">items</span>
 
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_filename_fields</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="s">&quot;Returns valid filename format fields otherwise raise exception&quot;</span>
+        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="p">[]</span>
+        <span class="n">valid_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="s">&#39;group&#39;</span><span class="p">,</span> <span class="s">&#39;label&#39;</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parse</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">Formatter</span><span class="p">()</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+            <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">parse</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span><span class="s">&quot;Could not parse filename string formatter&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_fields</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Valid formatters for the filename are: </span><span class="si">%s</span><span class="s">&quot;</span>
+                             <span class="o">%</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">valid_fields</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">fields</span>
 
     <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
         <span class="s">&quot;Validation of edge cases and incompatible options&quot;</span>
@@ -255,6 +280,8 @@
             <span class="ow">and</span> <span class="n">options</span><span class="p">[</span><span class="s">&#39;widgets&#39;</span><span class="p">]</span><span class="o">!=</span><span class="s">&#39;embed&#39;</span>
             <span class="ow">and</span> <span class="n">options</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;svg&#39;</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;SVG mode not supported by widgets unless in embed mode&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename_fields</span><span class="p">(</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;filename&#39;</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">options</span>
 
 
@@ -265,7 +292,8 @@
             <span class="k">if</span> <span class="n">keyword</span> <span class="ow">in</span> <span class="n">items</span><span class="p">:</span>
                 <span class="n">value</span> <span class="o">=</span> <span class="n">items</span><span class="p">[</span><span class="n">keyword</span><span class="p">]</span>
                 <span class="n">allowed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">allowed</span><span class="p">[</span><span class="n">keyword</span><span class="p">]</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">allowed</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">allowed</span><span class="p">,</span> <span class="nb">set</span><span class="p">):</span>  <span class="k">pass</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">allowed</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Value </span><span class="si">%r</span><span class="s"> for key </span><span class="si">%r</span><span class="s"> not one of </span><span class="si">%s</span><span class="s">&quot;</span>
                                      <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">keyword</span><span class="p">,</span> <span class="n">allowed</span><span class="p">))</span>
                 <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">allowed</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
@@ -339,6 +367,58 @@
         <span class="k">if</span> <span class="n">cell</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">shell</span><span class="o">.</span><span class="n">run_cell</span><span class="p">(</span><span class="n">cell</span><span class="p">,</span> <span class="n">store_history</span><span class="o">=</span><span class="n">STORE_HISTORY</span><span class="p">)</span>
             <span class="n">ViewMagic</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">restore_copy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_object_handle</span><span class="o">=</span><span class="bp">None</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">register_object</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">_object_handle</span> <span class="o">=</span> <span class="n">obj</span>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_basename</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">formatter</span><span class="p">):</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;group&#39;</span><span class="p">:</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">_object_handle</span><span class="p">,</span> <span class="s">&#39;group&#39;</span><span class="p">,</span> <span class="s">&#39;group&#39;</span><span class="p">),</span>
+                <span class="s">&#39;label&#39;</span><span class="p">:</span><span class="nb">getattr</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">_object_handle</span><span class="p">,</span> <span class="s">&#39;label&#39;</span><span class="p">,</span> <span class="s">&#39;label&#39;</span><span class="p">),</span>
+                <span class="s">&#39;type&#39;</span><span class="p">:</span><span class="n">cls</span><span class="o">.</span><span class="n">_object_handle</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">}</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">info</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">_filename_fields</span><span class="p">(</span><span class="n">formatter</span><span class="p">)}</span>
+        <span class="k">return</span> <span class="n">formatter</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">filtered</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_save_filename</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">fmt</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;filename&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="bp">None</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_basename</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;filename&#39;</span><span class="p">])</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
+        <span class="n">counter</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+            <span class="n">basename</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">-</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">counter</span><span class="p">)</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
+            <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">filename</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_digest</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">_generate_SHA</span><span class="p">:</span>
+            <span class="n">hashfn</span> <span class="o">=</span> <span class="n">sha</span><span class="o">.</span><span class="n">new</span><span class="p">()</span>
+            <span class="n">hashfn</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">_SHA</span>  <span class="o">=</span> <span class="n">hashfn</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">save_fig</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">figure_format</span><span class="p">,</span> <span class="n">dpi</span><span class="p">):</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_save_filename</span><span class="p">(</span><span class="n">figure_format</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
+        <span class="n">figure_data</span> <span class="o">=</span> <span class="n">print_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">figure_format</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">_digest</span><span class="p">(</span><span class="n">figure_data</span><span class="p">):</span> <span class="k">return</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">figure_data</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">save_anim</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">anim</span><span class="p">,</span> <span class="n">mime_type</span><span class="p">,</span> <span class="n">writer</span><span class="p">,</span> <span class="n">dpi</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">):</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_save_filename</span><span class="p">(</span><span class="n">mime_type</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
+        <span class="n">anim</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">writer</span><span class="o">=</span><span class="n">writer</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">)</span>
 
 
 </div>
@@ -747,7 +827,7 @@
       </ul>
     </div>
     <div class="footer">
-        &copy; Copyright 2014IOAM: Jean-Luc R. Stevens and Philipp Rudiger.
+        &copy; Copyright 2014 IOAM: Jean-Luc R. Stevens and Philipp Rudiger.
       Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.2.
     </div>
   </body>
