@@ -103,6 +103,8 @@
 <span class="sd">   extension together.</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">string</span><span class="o">,</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha256</span>
 
 <span class="kn">import</span> <span class="nn">param</span>
 <span class="kn">from</span> <span class="nn">.tree</span> <span class="kn">import</span> <span class="n">AttrTree</span>
@@ -686,7 +688,119 @@
                                   <span class="n">groups</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;style&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(),</span>
                                           <span class="s">&#39;plot&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(),</span>
                                           <span class="s">&#39;norm&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">()})</span>
-</pre></div></div></div>
+
+</div></div>
+<div class="viewcode-block" id="SaveOptions"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.SaveOptions">[docs]</a><span class="k">class</span> <span class="nc">SaveOptions</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stores preferences for saving output to disk, including file</span>
+<span class="sd">    format preferences.</span>
+
+<span class="sd">    In addition, this class offers utilities for saving files with</span>
+<span class="sd">    automatically generated file- and directory names.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">auto</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">      Enable or disable automatic saving of output using dynamically</span>
+<span class="s">      generated file and directory names.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="c"># Support {dimensions} formatter!</span>
+    <span class="n">formatter</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s">&#39;{group}-{label}&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">      A string formatter for output filename based on the HoloViews</span>
+<span class="s">      object that is being rendered to disk. Available fields are</span>
+<span class="s">      {type}, {group}, {label} and {timestamp}.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">timestamp_format</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s">&quot;%Y_%m_</span><span class="si">%d</span><span class="s">-%H_%M_%S&quot;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The timestamp format that will be substituted for the</span>
+<span class="s">       {timestamp} field.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">time</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Tuple</span><span class="p">((</span><span class="mi">0</span><span class="p">,)</span><span class="o">*</span><span class="mi">9</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The time used in the timestamp field. If not set, the time of</span>
+<span class="s">        instantiation (or the time of setting the options with</span>
+<span class="s">        set_options) is used.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">directory</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s">&#39;./{timestamp}&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The absolute or relative directory path in which output is to</span>
+<span class="s">        be saved.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">filename_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="s">&#39;group&#39;</span><span class="p">,</span> <span class="s">&#39;label&#39;</span><span class="p">,</span> <span class="s">&#39;timestamp&#39;</span><span class="p">]</span>
+    <span class="n">directory_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;timestamp&#39;</span><span class="p">]</span>
+    <span class="n">_generate_SHA</span> <span class="o">=</span> <span class="bp">False</span>   <span class="c"># For testing. Whether to compute SHA as output</span>
+    <span class="n">_SHA</span> <span class="o">=</span> <span class="bp">None</span>             <span class="c"># For testing purposes: the saved output SHA.</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SaveOptions</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">==</span> <span class="p">(</span><span class="mi">0</span><span class="p">,)</span><span class="o">*</span><span class="mi">9</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">localtime</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp_format</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">set_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp_format</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="SaveOptions.parse_fields"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.SaveOptions.parse_fields">[docs]</a>    <span class="k">def</span> <span class="nf">parse_fields</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="s">&quot;Returns valid filename format fields otherwise raise exception&quot;</span>
+        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">parse</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">Formatter</span><span class="p">()</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">filename</span><span class="p">))</span>
+            <span class="k">return</span>  <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">parse</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">]</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span><span class="s">&quot;Could not parse filename string formatter&quot;</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">validate_fields</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">fields</span><span class="p">,</span> <span class="n">component</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">component</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;filename&#39;</span><span class="p">,</span> <span class="s">&#39;directory&#39;</span><span class="p">]</span>
+        <span class="n">allowed</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">filename_fields</span> <span class="k">if</span> <span class="n">component</span><span class="o">==</span><span class="s">&#39;filename&#39;</span> <span class="k">else</span> <span class="n">cls</span><span class="o">.</span><span class="n">directory_fields</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fields</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Valid formatters for the </span><span class="si">%s</span><span class="s"> are: </span><span class="si">%s</span><span class="s">&quot;</span>
+                             <span class="o">%</span> <span class="p">(</span><span class="n">component</span><span class="p">,</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">allowed</span><span class="p">)))</span>
+
+    <span class="k">def</span> <span class="nf">_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">formatter</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;group&#39;</span><span class="p">:</span><span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;group&#39;</span><span class="p">,</span> <span class="s">&#39;group&#39;</span><span class="p">),</span>
+                <span class="s">&#39;label&#39;</span><span class="p">:</span><span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;label&#39;</span><span class="p">,</span> <span class="s">&#39;label&#39;</span><span class="p">),</span>
+                <span class="s">&#39;type&#39;</span><span class="p">:</span><span class="n">obj</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
+                <span class="s">&#39;timestamp&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="p">}</span>
+        <span class="n">filtered</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">info</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_fields</span><span class="p">(</span><span class="n">formatter</span><span class="p">)}</span>
+        <span class="k">return</span> <span class="n">formatter</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="n">filtered</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SaveOptions.filename"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.SaveOptions.filename">[docs]</a>    <span class="k">def</span> <span class="nf">filename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">override</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Find an appropriate filename for a given file format and</span>
+<span class="sd">        object if no explicit override supplied.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">override</span><span class="p">:</span>      <span class="k">return</span> <span class="n">override</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto</span><span class="p">:</span> <span class="k">return</span> <span class="bp">None</span>
+        <span class="n">directory</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">directory</span><span class="p">,</span> <span class="n">obj</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">directory</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">directory</span><span class="p">)</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">formatter</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">directory</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
+        <span class="n">counter</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+            <span class="n">basename</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">-</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">counter</span><span class="p">)</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
+            <span class="n">counter</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">filename</span>
+</div>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_digest</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">_generate_SHA</span><span class="p">:</span>
+            <span class="n">hashfn</span> <span class="o">=</span> <span class="n">sha256</span><span class="p">()</span>
+            <span class="n">hashfn</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">_SHA</span>  <span class="o">=</span> <span class="n">hashfn</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+<span class="c"># Global save options object</span></div>
+<span class="n">save_options</span> <span class="o">=</span> <span class="n">SaveOptions</span><span class="p">()</span>
+</pre></div>
 
           </div>
         </div>
