@@ -44,7 +44,7 @@
       <script type="text/javascript" src='../../_static/require.js'></script>
       <script type="text/javascript" src='../../_static/bootstrap.js'></script>
       <script type="text/javascript" src='../../_static/custom.js'></script>
-      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
 
   
@@ -126,12 +126,11 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 <span class="kn">from</span> <span class="nn">tempfile</span> <span class="kn">import</span> <span class="n">NamedTemporaryFile</span>
-<span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha256</span>
 
 <span class="kn">import</span> <span class="nn">param</span>
 
 <span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Cycle</span><span class="p">,</span> <span class="n">Options</span><span class="p">,</span> <span class="n">Store</span><span class="p">,</span>  <span class="n">SaveOptions</span><span class="p">,</span> <span class="n">save_options</span>
-<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">NdLayout</span><span class="p">,</span> <span class="n">GridSpace</span>
+<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">NdLayout</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">,</span> <span class="n">HoloMap</span>
 <span class="kn">from</span> <span class="nn">.annotation</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
 <span class="kn">from</span> <span class="nn">.chart</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
 <span class="kn">from</span> <span class="nn">.chart3d</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
@@ -218,16 +217,26 @@
 <span class="sd">    figure and animation objects respectively (typically the return</span>
 <span class="sd">    types from plotting class using matplotlib).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="n">obj</span> <span class="o">=</span> <span class="bp">None</span>
-    <span class="n">SHA</span> <span class="o">=</span> <span class="bp">None</span>     <span class="c"># For testing purposes: the output SHA.</span>
-    <span class="n">SHA_mode</span> <span class="o">=</span> <span class="mi">0</span>   <span class="c"># 0: No SHA, 1: SHA (file not saved), 2: SHA (file saved)</span>
+    <span class="n">captured_data</span> <span class="o">=</span> <span class="bp">None</span> <span class="c"># For testing purposes: the display data</span>
+    <span class="n">capture_mode</span> <span class="o">=</span> <span class="mi">0</span>     <span class="c"># 0: No capture, 1: capture (file not saved), 2: capture (file saved)</span>
 
+    <span class="n">save_options</span> <span class="o">=</span> <span class="n">save_options</span>  <span class="c"># Default save_options object</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">register_object</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Public interface for registering an object at the class</span>
+<span class="sd">        level. This functionality may be used if the HoloViews object</span>
+<span class="sd">        is not available when a matplotlib figure or animation is</span>
+<span class="sd">        saved (e.g. in the IPython display hooks).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">basename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
              <span class="n">fig_default</span><span class="o">=</span><span class="s">&#39;svg&#39;</span><span class="p">,</span> <span class="n">holomap_default</span><span class="o">=</span><span class="s">&#39;gif&#39;</span><span class="p">,</span>
-             <span class="n">size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">save_options</span><span class="o">=</span><span class="n">save_options</span><span class="p">):</span>
+             <span class="n">size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">save_options</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save a HoloViews object to file, either to image format (png or</span>
 <span class="sd">        svg) or animation format (webm, h264, gif).</span>
@@ -251,6 +260,7 @@
         <span class="n">figure_formats</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;png&#39;</span><span class="p">,</span> <span class="s">&#39;svg&#39;</span><span class="p">]</span>
         <span class="n">formats</span> <span class="o">=</span> <span class="n">animation_formats</span> <span class="o">+</span> <span class="n">figure_formats</span>
 
+        <span class="n">save_options</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">save_options</span> <span class="k">if</span> <span class="n">save_options</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">save_options</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">save_options</span><span class="p">,</span> <span class="n">SaveOptions</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;The save_options argument must be an instance of SaveOptions.&quot;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="p">(</span><span class="n">save_options</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">basename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">):</span>
@@ -259,8 +269,10 @@
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">):</span>
             <span class="n">obj</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+        <span class="n">element_type</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">type</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">)</span> <span class="k">else</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">plotclass</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)]</span>
+            <span class="n">plotclass</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="n">element_type</span><span class="p">]</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;No corresponding plot type found for </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
 
@@ -283,38 +295,48 @@
             <span class="n">cls</span><span class="o">.</span><span class="n">save_fig</span><span class="p">(</span><span class="n">plot</span><span class="p">(),</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">basename</span><span class="o">=</span><span class="n">basename</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">,</span> <span class="n">auto</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">save_fig</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">figure</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">basename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">auto</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">save_fig</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">figure</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">basename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">auto</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">save_options</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save a matplotlib figure object in the specified format.</span>
 
 <span class="sd">        A filename may be automatically generated from the supplied</span>
 <span class="sd">        object (if auto is enabled). If auto is enabled and no object</span>
-<span class="sd">        is supplied, cls.obj is consulted.</span>
+<span class="sd">        is supplied, any object registered at the class level is</span>
+<span class="sd">        consulted.</span>
 
 <span class="sd">        If dpi is None, the default dpi is taken from matplotlib</span>
 <span class="sd">        rcParams.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">obj</span> <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">obj</span>
         <span class="n">filename</span> <span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span> <span class="k">if</span> <span class="n">basename</span> <span class="k">else</span> <span class="bp">None</span>
+        <span class="n">save_options</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">save_options</span> <span class="k">if</span> <span class="n">save_options</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">save_options</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span> <span class="ow">and</span> <span class="n">auto</span><span class="p">:</span>
             <span class="n">filename</span> <span class="o">=</span> <span class="n">save_options</span><span class="o">.</span><span class="n">filename</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
 
         <span class="n">figure_data</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">figure_data</span><span class="p">(</span><span class="n">figure</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span>
                                       <span class="o">**</span><span class="p">({</span><span class="s">&#39;dpi&#39;</span><span class="p">:</span><span class="n">dpi</span><span class="p">}</span> <span class="k">if</span> <span class="n">dpi</span> <span class="k">else</span> <span class="p">{}))</span>
-        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">digest</span><span class="p">(</span><span class="n">figure_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="k">return</span>
+        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">capture</span><span class="p">(</span><span class="n">figure_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="k">return</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">figure_data</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">capture</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">captured_data</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span> <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">capture_mode</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">capture_mode</span>
+
+
+    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">save_anim</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">anim</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">writer</span><span class="p">,</span>  <span class="n">basename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                  <span class="n">obj</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">auto</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">):</span>
+                  <span class="n">obj</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">auto</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">save_options</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save a matplotlib animation object in the specified format.</span>
 
 <span class="sd">        A filename may be automatically generated from the supplied</span>
 <span class="sd">        object (if auto is enabled). If auto is enabled and no object</span>
-<span class="sd">        is supplied, cls.obj is consulted.</span>
+<span class="sd">        is supplied, any object registered at the class level is</span>
+<span class="sd">        consulted.</span>
 
 <span class="sd">        The writer argument is the matplotlib animation writer and the</span>
 <span class="sd">        anim_kwargs.</span>
@@ -324,17 +346,18 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">obj</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">obj</span> <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">obj</span>
         <span class="n">filename</span> <span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span> <span class="k">if</span> <span class="n">basename</span> <span class="k">else</span> <span class="bp">None</span>
+        <span class="n">save_options</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">save_options</span> <span class="k">if</span> <span class="n">save_options</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">save_options</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span> <span class="ow">and</span> <span class="n">auto</span><span class="p">:</span>
             <span class="n">filename</span> <span class="o">=</span> <span class="n">save_options</span><span class="o">.</span><span class="n">filename</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
 
         <span class="k">if</span> <span class="n">dpi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">anim_kwargs</span><span class="p">[</span><span class="s">&#39;dpi&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dpi</span>
-        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">SHA_mode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">capture_mode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">anim</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">writer</span><span class="o">=</span><span class="n">writer</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">anim_data</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">anim_data</span><span class="p">(</span><span class="n">anim</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">writer</span><span class="p">,</span> <span class="n">dpi</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">digest</span><span class="p">(</span><span class="n">anim_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="k">return</span>
+            <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">capture</span><span class="p">(</span><span class="n">anim_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="k">return</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
                 <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">anim_data</span><span class="p">)</span>
 
@@ -374,22 +397,6 @@
         <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s">&#39;svg&#39;</span><span class="p">:</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span>
-
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">digest</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Sets the SHA hexdigest for the data to cls.SHA and returns the</span>
-<span class="sd">        SHA_mode.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">SHA_mode</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">hashfn</span> <span class="o">=</span> <span class="n">sha256</span><span class="p">()</span>
-            <span class="n">hashfn</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-            <span class="n">cls</span><span class="o">.</span><span class="n">SHA</span>  <span class="o">=</span> <span class="n">hashfn</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">cls</span><span class="o">.</span><span class="n">SHA</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">SHA_mode</span>
-
 
 
 
