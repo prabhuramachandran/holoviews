@@ -165,11 +165,58 @@
 <span class="p">}</span>
 
 
+<span class="k">def</span> <span class="nf">opts</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+    <span class="s">&quot;Returns the plot options with supplied size (if not overridden)&quot;</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">figure_size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="o">**</span><span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">get_plot_size</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">percent_size</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a holoviews object and a percentage size, apply heuristics</span>
+<span class="sd">    to compute a suitable figure size. For instance, scaling layouts</span>
+<span class="sd">    and grids linearly can result in unwieldy figure sizes when there</span>
+<span class="sd">    are a large number of elements. As ad hoc heuristics are used,</span>
+<span class="sd">    this functionality is kept separate from the plotting classes</span>
+<span class="sd">    themselves.</span>
+
+<span class="sd">    Used by the IPython Notebook display hooks and the save</span>
+<span class="sd">    utility. Note that this can be overridden explicitly per object</span>
+<span class="sd">    using the figure_size and size plot options.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">):</span>
+        <span class="n">factor</span> <span class="o">=</span> <span class="n">percent_size</span> <span class="o">/</span> <span class="mf">100.0</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">Plot</span><span class="o">.</span><span class="n">figure_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">factor</span><span class="p">,</span>
+                <span class="n">Plot</span><span class="o">.</span><span class="n">figure_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">factor</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">Layout</span><span class="p">,</span> <span class="n">NdLayout</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">):</span>
+        <span class="n">max_dim</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="c"># Reduce plot size as GridSpace gets larger</span>
+        <span class="n">shape_factor</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">max_dim</span>
+        <span class="c"># Expand small grids to a sensible viewing size</span>
+        <span class="n">expand_factor</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">max_dim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>
+        <span class="n">scale_factor</span> <span class="o">=</span> <span class="n">expand_factor</span> <span class="o">*</span> <span class="n">shape_factor</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">scale_factor</span> <span class="o">*</span> <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="n">scale_factor</span> <span class="o">*</span> <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">)</span>
+
+
 
 <span class="k">class</span> <span class="nc">Export</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Collection of class methods used for rendering data from</span>
-<span class="sd">    matplotlib, either to a stream or directly to file.</span>
+<span class="sd">    matplotlib, either to a stream or directly to file. Includes</span>
+<span class="sd">    facilities to enable automated testing.</span>
+
+<span class="sd">    The save classmethod is particularly useful for saving HoloViews</span>
+<span class="sd">    objects to disk, including filename generation via SaveOptions.</span>
+
+<span class="sd">    The save_fig and save_anim methods are used to save matplotlib</span>
+<span class="sd">    figure and animation objects respectively (typically the return</span>
+<span class="sd">    types from plotting class using matplotlib).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">obj</span> <span class="o">=</span> <span class="bp">None</span>
@@ -178,25 +225,113 @@
 
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">save_fig</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">figure</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">basename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">72</span><span class="p">,</span> <span class="n">auto</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">basename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+             <span class="n">fig_default</span><span class="o">=</span><span class="s">&#39;svg&#39;</span><span class="p">,</span> <span class="n">holomap_default</span><span class="o">=</span><span class="s">&#39;gif&#39;</span><span class="p">,</span>
+             <span class="n">size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">save_options</span><span class="o">=</span><span class="n">save_options</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save a HoloViews object to file, either to image format (png or</span>
+<span class="sd">        svg) or animation format (webm, h264, gif).</span>
+
+<span class="sd">        Both basename and the format may be explicitly specified,</span>
+<span class="sd">        otherwise they will be autogenerated using the supplied</span>
+<span class="sd">        save_options object and defaults respectively. In particular, the</span>
+<span class="sd">        file format will be specified as fig_default argument for static</span>
+<span class="sd">        figures and will be the holomap_default argument for holomaps with</span>
+<span class="sd">        multiple keys.</span>
+
+<span class="sd">        Note that the default save_options argument correspond to the</span>
+<span class="sd">        global object of the same name. This object has the timestamp set</span>
+<span class="sd">        when HoloViews is first imported into the active session.</span>
+
+<span class="sd">        The remaining options are size (specified as a percentage), a</span>
+<span class="sd">        custom dpi (resolution in dots per inch) and the fps (frames</span>
+<span class="sd">        per second) option for animated formats.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">animation_formats</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;webm&#39;</span><span class="p">,</span><span class="s">&#39;h264&#39;</span><span class="p">,</span> <span class="s">&#39;gif&#39;</span><span class="p">]</span>
+        <span class="n">figure_formats</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;png&#39;</span><span class="p">,</span> <span class="s">&#39;svg&#39;</span><span class="p">]</span>
+        <span class="n">formats</span> <span class="o">=</span> <span class="n">animation_formats</span> <span class="o">+</span> <span class="n">figure_formats</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">save_options</span><span class="p">,</span> <span class="n">SaveOptions</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;The save_options argument must be an instance of SaveOptions.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">save_options</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">basename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;No filename can be selected as no basename &quot;</span>
+                            <span class="s">&quot;supplied and no SaveOptions instance specified either.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">):</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">plotclass</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;No corresponding plot type found for </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+
+        <span class="n">plot</span> <span class="o">=</span> <span class="n">plotclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">opts</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span>  <span class="n">get_plot_size</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">size</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="n">fmt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="n">holomap_default</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">fig_default</span>
+        <span class="k">if</span> <span class="n">fmt</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">formats</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;File format must be one of </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">formats</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">fmt</span> <span class="ow">in</span> <span class="n">animation_formats</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">mime_type</span><span class="p">,</span> <span class="n">anim_kwargs</span><span class="p">,</span> <span class="n">extra_args</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span> <span class="o">=</span> <span class="n">ANIMATION_OPTS</span><span class="p">[</span><span class="n">fmt</span><span class="p">]</span>
+            <span class="n">anim_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">anim_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="p">({</span><span class="s">&#39;fps&#39;</span><span class="p">:</span><span class="n">fps</span><span class="p">}</span> <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span><span class="s">&#39;gif&#39;</span> <span class="k">else</span> <span class="p">{}))</span>
+            <span class="n">anim</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">anim</span><span class="p">(</span><span class="n">fps</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">extra_args</span> <span class="o">!=</span> <span class="p">[]:</span>
+                <span class="n">anim_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">anim_kwargs</span><span class="p">,</span> <span class="n">extra_args</span><span class="o">=</span><span class="n">extra_args</span><span class="p">)</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">save_anim</span><span class="p">(</span><span class="n">anim</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">writer</span><span class="p">,</span> <span class="n">basename</span><span class="o">=</span><span class="n">basename</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">,</span>
+                          <span class="n">obj</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span> <span class="n">auto</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">save_fig</span><span class="p">(</span><span class="n">plot</span><span class="p">(),</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">basename</span><span class="o">=</span><span class="n">basename</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="n">obj</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">,</span> <span class="n">auto</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">save_fig</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">figure</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">basename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">auto</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save a matplotlib figure object in the specified format.</span>
+
+<span class="sd">        A filename may be automatically generated from the supplied</span>
+<span class="sd">        object (if auto is enabled). If auto is enabled and no object</span>
+<span class="sd">        is supplied, cls.obj is consulted.</span>
+
+<span class="sd">        If dpi is None, the default dpi is taken from matplotlib</span>
+<span class="sd">        rcParams.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">obj</span> <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">obj</span>
         <span class="n">filename</span> <span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span> <span class="k">if</span> <span class="n">basename</span> <span class="k">else</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span> <span class="ow">and</span> <span class="n">auto</span><span class="p">:</span>
-            <span class="n">filename</span> <span class="o">=</span> <span class="n">save_options</span><span class="o">.</span><span class="n">filename</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">save_options</span><span class="o">.</span><span class="n">filename</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
 
-        <span class="n">figure_data</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">figure_data</span><span class="p">(</span><span class="n">figure</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">)</span>
+        <span class="n">figure_data</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">figure_data</span><span class="p">(</span><span class="n">figure</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span>
+                                      <span class="o">**</span><span class="p">({</span><span class="s">&#39;dpi&#39;</span><span class="p">:</span><span class="n">dpi</span><span class="p">}</span> <span class="k">if</span> <span class="n">dpi</span> <span class="k">else</span> <span class="p">{}))</span>
         <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">digest</span><span class="p">(</span><span class="n">figure_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="k">return</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">figure_data</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">save_anim</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">anim</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">writer</span><span class="p">,</span> <span class="n">basename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">72</span><span class="p">,</span> <span class="n">auto</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">save_anim</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">anim</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">writer</span><span class="p">,</span>  <span class="n">basename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                  <span class="n">obj</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">auto</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save a matplotlib animation object in the specified format.</span>
+
+<span class="sd">        A filename may be automatically generated from the supplied</span>
+<span class="sd">        object (if auto is enabled). If auto is enabled and no object</span>
+<span class="sd">        is supplied, cls.obj is consulted.</span>
+
+<span class="sd">        The writer argument is the matplotlib animation writer and the</span>
+<span class="sd">        anim_kwargs.</span>
+
+<span class="sd">        If dpi is None, the default dpi is taken from matplotlib</span>
+<span class="sd">        rcParams.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">obj</span> <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">obj</span>
         <span class="n">filename</span> <span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span> <span class="k">if</span> <span class="n">basename</span> <span class="k">else</span> <span class="bp">None</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span> <span class="ow">and</span> <span class="n">auto</span><span class="p">:</span>
-            <span class="n">filename</span> <span class="o">=</span> <span class="n">save_options</span><span class="o">.</span><span class="n">filename</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">save_options</span><span class="o">.</span><span class="n">filename</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">dpi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">anim_kwargs</span><span class="p">[</span><span class="s">&#39;dpi&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dpi</span>
         <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">SHA_mode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">anim</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">writer</span><span class="o">=</span><span class="n">writer</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">)</span>
+            <span class="n">anim</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">writer</span><span class="o">=</span><span class="n">writer</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">anim_data</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">anim_data</span><span class="p">(</span><span class="n">anim</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">writer</span><span class="p">,</span> <span class="n">dpi</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">digest</span><span class="p">(</span><span class="n">anim_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="k">return</span>
@@ -256,111 +391,6 @@
         <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">SHA_mode</span>
 
 
-
-<span class="k">def</span> <span class="nf">opts</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
-    <span class="s">&quot;Returns the plot options with supplied size (if not overridden)&quot;</span>
-    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">figure_size</span><span class="o">=</span><span class="n">size</span><span class="p">,</span> <span class="o">**</span><span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
-
-<span class="k">def</span> <span class="nf">get_plot_size</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">percent_size</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Given a holoviews object and a percentage size, apply heuristics</span>
-<span class="sd">    to compute a suitable figure size. For instance, scaling layouts</span>
-<span class="sd">    and grids linearly can result in unwieldy figure sizes when there</span>
-<span class="sd">    are a large number of elements. As ad hoc heuristics are used,</span>
-<span class="sd">    this functionality is kept separate from the plotting classes</span>
-<span class="sd">    themselves.</span>
-
-<span class="sd">    Used by the IPython Notebook display hooks and the save</span>
-<span class="sd">    utility. Note that this can be overridden explicitly per object</span>
-<span class="sd">    using the figure_size and size plot options.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">):</span>
-        <span class="n">factor</span> <span class="o">=</span> <span class="n">percent_size</span> <span class="o">/</span> <span class="mf">100.0</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">Plot</span><span class="o">.</span><span class="n">figure_size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">factor</span><span class="p">,</span>
-                <span class="n">Plot</span><span class="o">.</span><span class="n">figure_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">factor</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">Layout</span><span class="p">,</span> <span class="n">NdLayout</span><span class="p">)):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
-                <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">):</span>
-        <span class="n">max_dim</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-        <span class="c"># Reduce plot size as GridSpace gets larger</span>
-        <span class="n">shape_factor</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">max_dim</span>
-        <span class="c"># Expand small grids to a sensible viewing size</span>
-        <span class="n">expand_factor</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">max_dim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>
-        <span class="n">scale_factor</span> <span class="o">=</span> <span class="n">expand_factor</span> <span class="o">*</span> <span class="n">shape_factor</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">scale_factor</span> <span class="o">*</span> <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
-                <span class="n">scale_factor</span> <span class="o">*</span> <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">basename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-         <span class="n">fig_default</span><span class="o">=</span><span class="s">&#39;svg&#39;</span><span class="p">,</span> <span class="n">holomap_default</span><span class="o">=</span><span class="s">&#39;gif&#39;</span><span class="p">,</span>
-         <span class="n">size</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">72</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">save_options</span><span class="o">=</span><span class="n">save_options</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Save a HoloViews object to file, either to image format (png or</span>
-<span class="sd">    svg) or animation format (webm, h264, gif).</span>
-
-<span class="sd">    Both basename and the format may be explicitly specified,</span>
-<span class="sd">    otherwise they will be autogenerated using the supplied</span>
-<span class="sd">    save_options object and defaults respectively. In particular, the</span>
-<span class="sd">    file format will be specified as fig_default argument for static</span>
-<span class="sd">    figures and will be the holomap_default argument for holomaps with</span>
-<span class="sd">    multiple keys.</span>
-
-<span class="sd">    Note that the default save_options argument correspond to the</span>
-<span class="sd">    global object of the same name. This object has the timestamp set</span>
-<span class="sd">    when HoloViews is first imported into the active session.</span>
-
-<span class="sd">    The remaining options are size (specified as a percentage), dpi</span>
-<span class="sd">    (resolution in dots per inch) and the fps (frames per second)</span>
-<span class="sd">    option for animated formats.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">animation_formats</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;webm&#39;</span><span class="p">,</span><span class="s">&#39;h264&#39;</span><span class="p">,</span> <span class="s">&#39;gif&#39;</span><span class="p">]</span>
-    <span class="n">figure_formats</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;png&#39;</span><span class="p">,</span> <span class="s">&#39;svg&#39;</span><span class="p">]</span>
-    <span class="n">formats</span> <span class="o">=</span> <span class="n">animation_formats</span> <span class="o">+</span> <span class="n">figure_formats</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">save_options</span><span class="p">,</span> <span class="n">SaveOptions</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;The save_options argument must be an instance of SaveOptions.&quot;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">):</span>
-        <span class="n">obj</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-    <span class="k">try</span><span class="p">:</span>
-        <span class="n">plotclass</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)]</span>
-    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;No corresponding plot type found for </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
-
-    <span class="n">plot</span> <span class="o">=</span> <span class="n">plotclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">opts</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span>  <span class="n">get_plot_size</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">size</span><span class="p">)))</span>
-
-    <span class="k">if</span> <span class="n">fmt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">fmt</span> <span class="o">=</span> <span class="n">holomap_default</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">fig_default</span>
-    <span class="k">if</span> <span class="n">fmt</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">formats</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;File format must be one of </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">formats</span><span class="p">))</span>
-
-    <span class="k">if</span> <span class="n">basename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">save_options</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;No filename can be selected as no basename &quot;</span>
-                        <span class="s">&quot;supplied and no SaveOptions instance specified.&quot;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">filename</span> <span class="o">=</span> <span class="n">save_options</span><span class="o">.</span><span class="n">filename</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">fmt</span> <span class="ow">in</span> <span class="n">animation_formats</span><span class="p">:</span>
-        <span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">mime_type</span><span class="p">,</span> <span class="n">anim_kwargs</span><span class="p">,</span> <span class="n">extra_args</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span> <span class="o">=</span> <span class="n">ANIMATION_OPTS</span><span class="p">[</span><span class="n">fmt</span><span class="p">]</span>
-        <span class="n">anim_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">anim_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="p">({</span><span class="s">&#39;fps&#39;</span><span class="p">:</span><span class="n">fps</span><span class="p">}</span> <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span><span class="s">&#39;gif&#39;</span> <span class="k">else</span> <span class="p">{}))</span>
-        <span class="n">anim</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">anim</span><span class="p">(</span><span class="n">fps</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">extra_args</span> <span class="o">!=</span> <span class="p">[]:</span>
-            <span class="n">anim_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">anim_kwargs</span><span class="p">,</span> <span class="n">extra_args</span><span class="o">=</span><span class="n">extra_args</span><span class="p">)</span>
-        <span class="n">anim</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">writer</span><span class="o">=</span><span class="n">writer</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">fig</span> <span class="o">=</span> <span class="n">plot</span><span class="p">()</span>
-        <span class="n">kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-            <span class="n">format</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">,</span>
-            <span class="n">facecolor</span><span class="o">=</span><span class="n">fig</span><span class="o">.</span><span class="n">get_facecolor</span><span class="p">(),</span>
-            <span class="n">edgecolor</span><span class="o">=</span><span class="n">fig</span><span class="o">.</span><span class="n">get_edgecolor</span><span class="p">())</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">print_figure</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
 
 
 <span class="n">Store</span><span class="o">.</span><span class="n">register_plots</span><span class="p">()</span>
