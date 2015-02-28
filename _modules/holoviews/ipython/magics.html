@@ -130,7 +130,6 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">IPython.core.magic</span> <span class="kn">import</span> <span class="n">Magics</span><span class="p">,</span> <span class="n">magics_class</span><span class="p">,</span> <span class="n">cell_magic</span><span class="p">,</span> <span class="n">line_magic</span><span class="p">,</span> <span class="n">line_cell_magic</span>
-    <span class="kn">from</span> <span class="nn">IPython.core.pylabtools</span> <span class="kn">import</span> <span class="n">print_figure</span>
 <span class="k">except</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">unittest</span> <span class="kn">import</span> <span class="n">SkipTest</span>
     <span class="k">raise</span> <span class="n">SkipTest</span><span class="p">(</span><span class="s">&quot;IPython extension requires IPython &gt;= 0.13&quot;</span><span class="p">)</span>
@@ -417,7 +416,6 @@
 <span class="sd">    Consult %export? for more information.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">magic_name</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%e</span><span class="s">xport&#39;</span>
-    <span class="n">_obj</span> <span class="o">=</span> <span class="bp">None</span>           <span class="c"># Handle on the HoloViews object that may be saved</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">SaverMagic</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -521,37 +519,8 @@
             <span class="k">print</span><span class="p">(</span><span class="s">&#39;Error: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
             <span class="k">print</span><span class="p">(</span><span class="s">&quot;For help with the </span><span class="si">%e</span><span class="s">xport magic, call </span><span class="si">%e</span><span class="s">xport?</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">)</span>
             <span class="k">return</span>
-</div>
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">register_object</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">_obj</span> <span class="o">=</span> <span class="n">obj</span>
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">save_fig</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">fig_format</span><span class="p">,</span> <span class="n">dpi</span><span class="p">):</span>
-        <span class="n">fname</span><span class="p">,</span> <span class="n">fmt</span> <span class="o">=</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;filename&#39;</span><span class="p">],</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
-        <span class="n">filename</span> <span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span> <span class="k">if</span> <span class="n">fname</span> <span class="k">else</span> <span class="bp">None</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span> <span class="ow">and</span> <span class="n">cls</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;enabled&#39;</span><span class="p">]:</span>
-            <span class="n">filename</span> <span class="o">=</span> <span class="n">save_options</span><span class="o">.</span><span class="n">filename</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">_obj</span><span class="p">,</span> <span class="n">fig_format</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
-
-        <span class="n">figure_data</span> <span class="o">=</span> <span class="n">print_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">fig_format</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">save_options</span><span class="o">.</span><span class="n">_digest</span><span class="p">(</span><span class="n">figure_data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="k">return</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">figure_data</span><span class="p">)</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">_obj</span><span class="o">=</span><span class="bp">None</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">save_anim</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">anim</span><span class="p">,</span> <span class="n">mime_type</span><span class="p">,</span> <span class="n">writer</span><span class="p">,</span> <span class="n">dpi</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">):</span>
-        <span class="n">fname</span><span class="p">,</span> <span class="n">fmt</span> <span class="o">=</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;filename&#39;</span><span class="p">],</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;holomap&#39;</span><span class="p">]</span>
-        <span class="n">filename</span> <span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span> <span class="k">if</span> <span class="n">fname</span> <span class="k">else</span> <span class="bp">None</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span> <span class="ow">and</span> <span class="n">cls</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;enabled&#39;</span><span class="p">]:</span>
-            <span class="n">filename</span> <span class="o">=</span> <span class="n">save_options</span><span class="o">.</span><span class="n">filename</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">_obj</span><span class="p">,</span> <span class="n">mime_type</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
-
-        <span class="n">anim</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">writer</span><span class="o">=</span><span class="n">writer</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">)</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">_obj</span><span class="o">=</span><span class="bp">None</span>
-
-</div>
+</div></div>
 <span class="nd">@magics_class</span>
 <div class="viewcode-block" id="CompositorMagic"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.magics.CompositorMagic">[docs]</a><span class="k">class</span> <span class="nc">CompositorMagic</span><span class="p">(</span><span class="n">Magics</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
