@@ -77,6 +77,7 @@
         
         
             <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">Tutorials</a><ul class="simple">
 </ul>
 </li>
@@ -418,10 +419,12 @@
 <span class="sd">        plotting options as well.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">obj_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">obj_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">Store</span><span class="o">.</span><span class="n">save_option_state</span> <span class="ow">and</span> <span class="p">(</span><span class="n">obj_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">):</span>
             <span class="n">custom_key</span> <span class="o">=</span> <span class="s">&#39;_custom_option_</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">obj_dict</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">custom_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">obj_dict</span><span class="p">:</span>
                 <span class="n">obj_dict</span><span class="p">[</span><span class="n">custom_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">[</span><span class="n">obj_dict</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">obj_dict</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">return</span> <span class="n">obj_dict</span>
 
 
@@ -430,12 +433,17 @@
 <span class="sd">        When unpickled, restore the saved style and plotting options</span>
 <span class="sd">        to ViewableElement.options.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">matches</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_custom_option&#39;</span><span class="p">)]</span>
-        <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
-            <span class="n">custom_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-            <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">[</span><span class="n">custom_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">match</span><span class="p">]</span>
-            <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">match</span><span class="p">)</span>
-
+        <span class="n">load_options</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">load_counter_offset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">load_options</span><span class="p">:</span>
+            <span class="n">matches</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span> <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_custom_option&#39;</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
+                <span class="n">custom_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">[</span><span class="n">Store</span><span class="o">.</span><span class="n">load_counter_offset</span> <span class="o">+</span> <span class="n">custom_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">match</span><span class="p">]</span>
+                <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">match</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">d</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">d</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">Store</span><span class="o">.</span><span class="n">load_counter_offset</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
 
 
