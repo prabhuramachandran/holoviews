@@ -47,7 +47,6 @@
     <script type="text/javascript" src='../../../_static/bootstrap.js'></script>
     <script type="text/javascript" src='../../../_static/custom.js'></script>
     <script type="text/javascript" src='../../../_static/js/theme.js'></script>
-    <script type="text/javascript" src="//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 
 
 
@@ -565,6 +564,7 @@
         <span class="k">elif</span> <span class="s">&#39;[&#39;</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[</span><span class="s">&#39;]&#39;</span><span class="p">]</span>
 
+
 </div>
 <div class="viewcode-block" id="OptsCompleter"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.magics.OptsCompleter">[docs]</a><span class="k">class</span> <span class="nc">OptsCompleter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -617,6 +617,11 @@
         <span class="k">return</span> <span class="n">completion_key</span><span class="p">,</span> <span class="n">suggestions</span>
 </div>
     <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_inside_delims</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">opener</span><span class="p">,</span> <span class="n">closer</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">closer</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">opener</span><span class="p">)</span> <span class="o">-</span> <span class="n">line</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="n">closer</span><span class="p">))</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="OptsCompleter.option_completer"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.magics.OptsCompleter.option_completer">[docs]</a>    <span class="k">def</span> <span class="nf">option_completer</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">):</span>
         <span class="s">&quot;Tab completion hook for the </span><span class="si">%%</span><span class="s">opts cell magic.&quot;</span>
         <span class="n">line</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">text_until_cursor</span>
@@ -630,22 +635,23 @@
 
         <span class="n">completion_key</span><span class="p">,</span> <span class="n">suggestions</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">dotted_completion</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">sorted_keys</span><span class="p">,</span> <span class="n">compositor_defs</span><span class="p">)</span>
 
+        <span class="n">verbose_openers</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;style(&#39;</span><span class="p">,</span> <span class="s">&#39;plot[&#39;</span><span class="p">,</span> <span class="s">&#39;norm{&#39;</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">suggestions</span> <span class="ow">and</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">[</span><span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">completion_key</span><span class="p">,</span> <span class="n">el</span><span class="p">])</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">suggestions</span><span class="p">]</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">completion_key</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">type_keys</span> <span class="o">+</span> <span class="n">compositor_defs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">type_keys</span> <span class="o">+</span> <span class="n">compositor_defs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">+</span> <span class="n">verbose_openers</span>
 
-        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;]&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;[&#39;</span><span class="p">)</span> <span class="o">-</span> <span class="n">line</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;]&#39;</span><span class="p">))</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
-            <span class="n">kws</span> <span class="o">=</span> <span class="n">completions</span><span class="p">[</span><span class="n">completion_key</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">return</span> <span class="p">[</span><span class="n">kw</span><span class="o">+</span><span class="s">&#39;=&#39;</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">kws</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">_inside_delims</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="s">&#39;[&#39;</span><span class="p">,</span> <span class="s">&#39;]&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">cls</span><span class="o">.</span><span class="n">_inside_delims</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="s">&#39;plot[&#39;</span><span class="p">,</span> <span class="s">&#39;]&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">kw</span><span class="o">+</span><span class="s">&#39;=&#39;</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">completions</span><span class="p">[</span><span class="n">completion_key</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span>
 
-        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;}&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;{&#39;</span><span class="p">)</span> <span class="o">-</span> <span class="n">line</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;}&#39;</span><span class="p">))</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">_inside_delims</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="s">&#39;{&#39;</span><span class="p">,</span> <span class="s">&#39;}&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">cls</span><span class="o">.</span><span class="n">_inside_delims</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="s">&#39;norm{&#39;</span><span class="p">,</span> <span class="s">&#39;}&#39;</span><span class="p">):</span>
             <span class="k">return</span> <span class="p">[</span><span class="s">&#39;-groupwise&#39;</span><span class="p">,</span> <span class="s">&#39;-mapwise&#39;</span><span class="p">]</span>
 
         <span class="n">style_completions</span> <span class="o">=</span> <span class="p">[</span><span class="n">kw</span><span class="o">+</span><span class="s">&#39;=&#39;</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">completions</span><span class="p">[</span><span class="n">completion_key</span><span class="p">][</span><span class="mi">1</span><span class="p">]]</span>
-        <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;)&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;(&#39;</span><span class="p">)</span> <span class="o">-</span> <span class="n">line</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;)&#39;</span><span class="p">))</span> <span class="o">%</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">_inside_delims</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="s">&#39;(&#39;</span><span class="p">,</span> <span class="s">&#39;)&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">cls</span><span class="o">.</span><span class="n">_inside_delims</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="s">&#39;style(&#39;</span><span class="p">,</span> <span class="s">&#39;)&#39;</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">style_completions</span>
-        <span class="k">return</span> <span class="n">style_completions</span> <span class="o">+</span> <span class="n">type_keys</span> <span class="o">+</span> <span class="n">compositor_defs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">style_completions</span> <span class="o">+</span> <span class="n">type_keys</span> <span class="o">+</span> <span class="n">compositor_defs</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">+</span> <span class="n">verbose_openers</span>
 
 
 </div></div>
