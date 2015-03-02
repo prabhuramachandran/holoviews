@@ -87,7 +87,6 @@
 <li class="toctree-l2"><a class="reference internal" href="../../Reference_Manual/holoviews.ipython.html">ipython</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../Reference_Manual/holoviews.operation.html">operation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="../../Reference_Manual/holoviews.plotting.html">plotting</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../../Reference_Manual/holoviews.styles.html">style</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference external" href="http://github.com/ioam/holoviews">Github source</a></li>
@@ -130,10 +129,14 @@
 <span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 <span class="kn">from</span> <span class="nn">tempfile</span> <span class="kn">import</span> <span class="n">NamedTemporaryFile</span>
 
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">rc_params_from_file</span>
+<span class="kn">from</span> <span class="nn">matplotlib.ticker</span> <span class="kn">import</span> <span class="n">FormatStrFormatter</span>
+
 <span class="kn">import</span> <span class="nn">param</span>
 
 <span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Cycle</span><span class="p">,</span> <span class="n">Options</span><span class="p">,</span> <span class="n">Store</span><span class="p">,</span>  <span class="n">SaveOptions</span><span class="p">,</span> <span class="n">save_options</span>
-<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">NdLayout</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">,</span> <span class="n">HoloMap</span>
+<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">NdLayout</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">,</span> <span class="n">HoloMap</span>
 <span class="kn">from</span> <span class="nn">.annotation</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
 <span class="kn">from</span> <span class="nn">.chart</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
 <span class="kn">from</span> <span class="nn">.chart3d</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
@@ -402,7 +405,37 @@
         <span class="k">return</span> <span class="n">data</span>
 
 
+<span class="c"># Define default type formatters</span>
+<span class="n">Dimension</span><span class="o">.</span><span class="n">type_formatters</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">FormatStrFormatter</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%d</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="n">Dimension</span><span class="o">.</span><span class="n">type_formatters</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">FormatStrFormatter</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%.3g</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="n">Dimension</span><span class="o">.</span><span class="n">type_formatters</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">]</span> <span class="o">=</span> <span class="n">FormatStrFormatter</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%.3g</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="n">Dimension</span><span class="o">.</span><span class="n">type_formatters</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">FormatStrFormatter</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%.3g</span><span class="s">&quot;</span><span class="p">)</span>
 
+<span class="k">def</span> <span class="nf">set_style</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Select a style by name, e.g. set_style(&#39;default&#39;). To revert to the</span>
+<span class="sd">    previous style use the key &#39;unset&#39; or False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">key</span> <span class="ow">or</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;unset&#39;</span><span class="p">,</span> <span class="s">&#39;backup&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="s">&#39;backup&#39;</span> <span class="ow">in</span> <span class="n">styles</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">styles</span><span class="p">[</span><span class="s">&#39;backup&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;No style backed up to restore&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">styles</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%r</span><span class="s"> not in available styles.&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">__file__</span><span class="p">),</span> <span class="n">styles</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+        <span class="n">new_style</span> <span class="o">=</span> <span class="n">rc_params_from_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">styles</span><span class="p">[</span><span class="s">&#39;backup&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">)</span>
+
+        <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">new_style</span><span class="p">)</span>
+
+<span class="n">styles</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;default&#39;</span><span class="p">:</span> <span class="s">&#39;./default.mplstyle&#39;</span><span class="p">}</span>
+<span class="n">set_style</span><span class="p">(</span><span class="s">&#39;default&#39;</span><span class="p">)</span>
+
+<span class="c"># Register default Element options</span>
 <span class="n">Store</span><span class="o">.</span><span class="n">register_plots</span><span class="p">()</span>
 
 <span class="c"># Charts</span>
@@ -436,14 +469,6 @@
 <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">Ellipse</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">Cycle</span><span class="p">())</span>
 <span class="c"># Interface</span>
 <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">TimeSeries</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">Cycle</span><span class="p">())</span>
-
-
-<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Dimension</span>
-<span class="kn">from</span> <span class="nn">matplotlib.ticker</span> <span class="kn">import</span> <span class="n">FormatStrFormatter</span>
-<span class="n">Dimension</span><span class="o">.</span><span class="n">type_formatters</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">FormatStrFormatter</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%d</span><span class="s">&quot;</span><span class="p">)</span>
-<span class="n">Dimension</span><span class="o">.</span><span class="n">type_formatters</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">FormatStrFormatter</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%.3g</span><span class="s">&quot;</span><span class="p">)</span>
-<span class="n">Dimension</span><span class="o">.</span><span class="n">type_formatters</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">]</span> <span class="o">=</span> <span class="n">FormatStrFormatter</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%.3g</span><span class="s">&quot;</span><span class="p">)</span>
-<span class="n">Dimension</span><span class="o">.</span><span class="n">type_formatters</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span> <span class="o">=</span> <span class="n">FormatStrFormatter</span><span class="p">(</span><span class="s">&quot;</span><span class="si">%.3g</span><span class="s">&quot;</span><span class="p">)</span>
 
 <span class="c"># Defining the most common style options for HoloViews</span>
 <span class="n">GrayNearest</span> <span class="o">=</span> <span class="n">Options</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s">&#39;gray&#39;</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s">&#39;nearest&#39;</span><span class="p">)</span>
