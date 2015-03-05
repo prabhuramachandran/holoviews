@@ -175,6 +175,9 @@
     <span class="n">rescale_individually</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        Whether to use redraw the axes per map or per element.&quot;&quot;&quot;</span><span class="p">)</span>
 
+    <span class="n">show_legend</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether to show legend for the plot.&quot;&quot;&quot;</span><span class="p">)</span>
+
     <span class="n">show_grid</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        Whether to show a Cartesian grid on the plot.&quot;&quot;&quot;</span><span class="p">)</span>
 
@@ -300,7 +303,7 @@
 
 
     <span class="k">def</span> <span class="nf">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">xticks</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">yticks</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                       <span class="n">xlabel</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+                       <span class="n">xlabel</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">zlabel</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Applies all the axis settings before the axis or figure is returned.</span>
 <span class="sd">        Only plots with zorder 0 get to apply their settings.</span>
@@ -315,13 +318,15 @@
         <span class="n">subplots</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span> <span class="k">else</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">title</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">view</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="p">(</span><span class="n">Table</span><span class="p">,</span> <span class="n">ItemTable</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">view</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="n">view</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="n">Table</span><span class="p">,</span> <span class="n">ItemTable</span><span class="p">]:</span>
 
                 <span class="c"># Axis labels</span>
                 <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="s">&#39;xlabel&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">xlabel</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="n">xlabel</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">xlabel</span>
                 <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="s">&#39;ylabel&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">ylabel</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="n">ylabel</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">ylabel</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="s">&#39;zlabel&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">zlabel</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">ylabel</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">zlabel</span>
 
                 <span class="c"># Extents</span>
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_databounds</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">apply_databounds</span> <span class="k">for</span> <span class="n">sp</span> <span class="ow">in</span> <span class="n">subplots</span><span class="p">):</span>
@@ -353,10 +358,9 @@
                 <span class="k">if</span> <span class="n">yformat</span><span class="p">:</span>
                     <span class="n">axis</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">yformat</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">overlaid</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">OverlayPlot</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_legend</span><span class="p">:</span>
                 <span class="n">legend</span> <span class="o">=</span> <span class="n">axis</span><span class="o">.</span><span class="n">get_legend</span><span class="p">()</span>
-                <span class="k">if</span> <span class="n">legend</span><span class="p">:</span>
-                    <span class="n">legend</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">legend</span><span class="p">:</span> <span class="n">legend</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">show_grid</span><span class="p">:</span>
                 <span class="n">axis</span><span class="o">.</span><span class="n">get_xaxis</span><span class="p">()</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
@@ -399,7 +403,7 @@
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">aspect</span> <span class="o">==</span> <span class="s">&#39;square&#39;</span><span class="p">:</span>
                 <span class="n">axis</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">((</span><span class="mf">1.</span><span class="o">/</span><span class="n">axis</span><span class="o">.</span><span class="n">get_data_ratio</span><span class="p">()))</span>
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">aspect</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="s">&#39;square&#39;</span><span class="p">]:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aspect</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aspect</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
                     <span class="n">axis</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aspect</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">axis</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(((</span><span class="mf">1.</span><span class="o">/</span><span class="n">axis</span><span class="o">.</span><span class="n">get_data_ratio</span><span class="p">()))</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">aspect</span><span class="p">)</span>
