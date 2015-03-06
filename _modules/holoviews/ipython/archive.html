@@ -1,0 +1,388 @@
+
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>holoviews.ipython.archive &mdash; HoloViews</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../../../_static/bootstrap.css" type="text/css" />
+  
+    <link rel="stylesheet" href="../../../_static/codehilite.css" type="text/css" />
+  
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+    <link rel="stylesheet" href="../../../_static/rtd_bootstrap.css" type="text/css" />
+  
+    <link rel="top" title="HoloViews" href="../../../index.html"/>
+        <link rel="up" title="holoviews.ipython" href="../ipython.html"/>
+    <script type="text/javascript" src='../../../_static/jquery.js'></script>
+    <script type="text/javascript" src='../../../_static/underscore.js'></script>
+    <script type="text/javascript" src='../../../_static/doctools.js'></script>
+    <script type="text/javascript" src='../../../_static/require.js'></script>
+    <script type="text/javascript" src='../../../_static/bootstrap.js'></script>
+    <script type="text/javascript" src='../../../_static/custom.js'></script>
+    <script type="text/javascript" src='../../../_static/js/theme.js'></script>
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../../index.html" class="fa"> HoloViews</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">Tutorials</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Reference_Manual/index.html">Reference Manual</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.core.html">core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.element.html">element</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.interface.html">interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.ipython.html">ipython</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.operation.html">operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.plotting.html">plotting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference external" href="http://github.com/ioam/holoviews">Github source</a></li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">HoloViews</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+          <li><a href="../ipython.html">holoviews.ipython</a> &raquo;</li>
+      
+    <li>holoviews.ipython.archive</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for holoviews.ipython.archive</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
+
+<span class="kn">from</span> <span class="nn">IPython.nbformat</span> <span class="kn">import</span> <span class="n">reader</span>
+<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">Javascript</span><span class="p">,</span> <span class="n">display</span>
+
+<span class="kn">from</span> <span class="nn">IPython.nbconvert.preprocessors</span> <span class="kn">import</span> <span class="n">Preprocessor</span>
+<span class="kn">from</span> <span class="nn">IPython.nbconvert</span> <span class="kn">import</span> <span class="n">HTMLExporter</span>
+
+<span class="kn">import</span> <span class="nn">param</span>
+<span class="kn">from</span> <span class="nn">..core.io</span> <span class="kn">import</span> <span class="n">FileArchive</span>
+<span class="kn">from</span> <span class="nn">..plotting</span> <span class="kn">import</span> <span class="n">PlotRenderer</span><span class="p">,</span> <span class="n">HTML_TAGS</span>
+
+<span class="kn">import</span> <span class="nn">threading</span>
+
+<span class="k">class</span> <span class="nc">NotebookArchive</span><span class="p">(</span><span class="n">FileArchive</span><span class="p">):</span>
+
+    <span class="n">export_timeout</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       A timeout in seconds between when the export method is run and</span>
+<span class="s">       when export actually occurs.</span>
+
+<span class="s">       When &#39;Run All&#39; is used in the notebook, all cells have to</span>
+<span class="s">       either execute or an Exception has to occurs before the export</span>
+<span class="s">       can occur. This timeout helps avoid exporting stale or partial</span>
+<span class="s">       notebooks and can be avoided by making sure the call to export</span>
+<span class="s">       is the last code cell in your notebook.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">exporter</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">PlotRenderer</span><span class="p">)</span>
+
+    <span class="n">namespace</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s">&#39;holoviews.archive&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The name of the current in the NotebookArchive instance in the</span>
+<span class="s">        IPython namespace that must be available.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">snapshot_name</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s">&#39;snapshot&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The basename of the exported notebook snapshot (html)&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">auto</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="c"># Used for debugging to view Exceptions raised from Javascript!</span>
+    <span class="n">traceback</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">NotebookArchive</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notebook</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nbversion</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_replacements</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exported</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cancel</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tags</span> <span class="o">=</span> <span class="p">{</span><span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span><span class="n">val</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">HTML_TAGS</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+                      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="o">==</span><span class="mi">2</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">_timeout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Timeout run in a separate thread to allow the notebook to keep</span>
+<span class="sd">        running after export is called.</span>
+
+<span class="sd">        If you click &#39;Run All&#39; in the notebook, all code cells are</span>
+<span class="sd">        queued which means export may never actually happen (e.g. if</span>
+<span class="sd">        an Exception occurs between the export and the end of the</span>
+<span class="sd">        notebook. This method helps ensure the exported data isn&#39;t</span>
+<span class="sd">        stale and generates a warning if the timeout is exceeded.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">export_timeout</span><span class="p">):</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">parent</span><span class="o">.</span><span class="n">_exported</span><span class="p">:</span> <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">_cancel</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&quot;Export cancelled: export_timeout exceed.</span><span class="se">\n</span><span class="s">&quot;</span>
+                           <span class="s">&quot;Make sure to export at the end of your notebook.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">export</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the current notebook data and export.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cancel</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exported</span> <span class="o">=</span> <span class="bp">False</span><span class="p">,</span> <span class="bp">False</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">namespace</span>
+        <span class="c"># Unfortunate javascript hacks to get at notebook data</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="p">(</span><span class="s">r&#39;var kernel = IPython.notebook.kernel;&#39;</span>
+               <span class="s">r&#39;var json_data = IPython.notebook.toJSON();&#39;</span>
+               <span class="s">r&#39;var json_string = JSON.stringify(json_data);&#39;</span>
+               <span class="o">+</span> <span class="p">(</span><span class="s">r&quot;var command = &#39;</span><span class="si">%s</span><span class="s">.notebook.write(r</span><span class="se">\&quot;\&quot;\&quot;</span><span class="s">&#39;+json_string+&#39;</span><span class="se">\&quot;\&quot;\&quot;</span><span class="s">.encode(\&#39;utf-8\&#39;))&#39;;&quot;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+               <span class="o">+</span> <span class="s">&quot;var pycmd = command + &#39;;</span><span class="si">%s</span><span class="s">._export_with_html()&#39;;&quot;</span> <span class="o">%</span> <span class="n">name</span>
+               <span class="o">+</span> <span class="s">r&quot;kernel.execute(pycmd)&quot;</span><span class="p">)</span>
+        <span class="n">display</span><span class="p">(</span><span class="n">Javascript</span><span class="p">(</span><span class="n">cmd</span><span class="p">))</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,))</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="p">{},</span> <span class="n">html</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">NotebookArchive</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+            <span class="n">last_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="o">.</span><span class="n">keys</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_replacements</span><span class="p">[</span><span class="n">last_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">html</span>
+
+
+    <span class="k">def</span> <span class="nf">_export_with_html</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">&quot;Use nbconvert with Substitute preprocessor&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exported</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tval</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">localtime</span><span class="p">())</span>
+            <span class="n">tstamp</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp_format</span><span class="p">,</span> <span class="n">tval</span><span class="p">)</span>
+
+            <span class="n">substitutions</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="p">),</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="o">=</span> <span class="n">entry</span>
+                <span class="n">html_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replacements</span><span class="p">[(</span><span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="p">)]</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format</span><span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;timestamp&#39;</span><span class="p">:</span><span class="n">tstamp</span><span class="p">})</span>
+                <span class="n">fpath</span> <span class="o">=</span> <span class="n">filename</span><span class="o">+</span><span class="p">((</span><span class="s">&#39;.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">ext</span><span class="p">)</span> <span class="k">if</span> <span class="n">ext</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;&lt;center&gt;&lt;b&gt;</span><span class="si">%s</span><span class="s">&lt;/b&gt;&lt;center/&gt;&quot;</span>
+                <span class="k">if</span> <span class="s">&#39;mime_type&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">info</span><span class="p">:</span>
+                    <span class="n">link_html</span> <span class="o">=</span> <span class="n">msg</span> <span class="o">%</span> <span class="s">&quot;Could not determine data mime-type&quot;</span>
+                <span class="k">if</span> <span class="n">info</span><span class="p">[</span><span class="s">&#39;mime_type&#39;</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tags</span><span class="p">:</span>
+                    <span class="n">link_html</span> <span class="o">=</span> <span class="n">msg</span> <span class="o">%</span> <span class="s">&#39;Could not determine HTML tag from mime-type&#39;</span>
+
+                <span class="n">info</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;src&#39;</span><span class="p">:</span><span class="n">fpath</span><span class="p">,</span> <span class="s">&#39;mime_type&#39;</span><span class="p">:</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;mime_type&#39;</span><span class="p">]}</span>
+                <span class="n">link_html</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_tags</span><span class="p">[</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;mime_type&#39;</span><span class="p">]],</span>
+                                         <span class="p">{</span><span class="s">&#39;src&#39;</span><span class="p">:</span><span class="n">fpath</span><span class="p">,</span> <span class="s">&#39;mime_type&#39;</span><span class="p">:</span><span class="n">info</span><span class="p">[</span><span class="s">&#39;mime_type&#39;</span><span class="p">]})</span>
+                <span class="n">substitutions</span><span class="p">[</span><span class="n">html_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">link_html</span><span class="p">,</span> <span class="n">fpath</span><span class="p">)</span>
+
+
+            <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_notebook_node</span><span class="p">()</span>
+            <span class="n">exporter</span> <span class="o">=</span> <span class="n">HTMLExporter</span><span class="p">()</span>
+            <span class="n">exporter</span><span class="o">.</span><span class="n">register_preprocessor</span><span class="p">(</span><span class="n">Substitute</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nbversion</span><span class="p">,</span>
+                                                      <span class="n">substitutions</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cancel</span><span class="p">:</span>
+                <span class="n">html</span><span class="p">,</span><span class="n">_</span> <span class="o">=</span> <span class="n">exporter</span><span class="o">.</span><span class="n">from_notebook_node</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">html</span> <span class="o">=</span> <span class="s">&quot;Exception: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">html</span> <span class="o">+=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">snapshot_name</span> <span class="k">if</span> <span class="p">(</span><span class="n">filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="k">else</span> <span class="n">filename</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">NotebookArchive</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">,</span>
+                                             <span class="n">data</span><span class="o">=</span><span class="n">html</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;file-ext&#39;</span><span class="p">:</span><span class="s">&#39;html&#39;</span><span class="p">,</span>
+                                                              <span class="s">&#39;mime_type&#39;</span><span class="p">:</span><span class="s">&#39;text/html&#39;</span><span class="p">})</span>
+            <span class="c"># If store cleared_notebook... save here</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">NotebookArchive</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">timestamp</span><span class="o">=</span><span class="n">tval</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">traceback</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_notebook_node</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">&quot;Load captured notebook node&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notebook</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">SEEK_END</span><span class="p">)</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">notebook</span><span class="o">.</span><span class="n">tell</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Captured buffer size for notebook node is zero.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notebook</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">reads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">notebook</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nbversion</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">get_version</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notebook</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">node</span>
+
+
+
+<div class="viewcode-block" id="Substitute"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.archive.Substitute">[docs]</a><span class="k">class</span> <span class="nc">Substitute</span><span class="p">(</span><span class="n">Preprocessor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An nbconvert preprocessor that substitutes one set of HTML data</span>
+<span class="sd">    output for another, adding annotation to the output as required.</span>
+
+<span class="sd">    The constructor accepts the notebook format version and a</span>
+<span class="sd">    substitutions dictionary:</span>
+
+<span class="sd">    {source_html:(target_html, annotation)}</span>
+
+<span class="sd">    Where the annotation may be None (i.e. no annotation).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">annotation</span> <span class="o">=</span> <span class="s">&#39;&lt;center&gt;&lt;b&gt;</span><span class="si">%s</span><span class="s">&lt;/b&gt;&lt;/center&gt;&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">substitutions</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nbversion</span> <span class="o">=</span> <span class="n">version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">substitutions</span> <span class="o">=</span> <span class="n">substitutions</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Preprocessor</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nb</span><span class="p">,</span> <span class="n">resources</span><span class="p">):</span> <span class="c"># Temporary hack around &#39;enabled&#39; flag</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">preprocess</span><span class="p">(</span><span class="n">nb</span><span class="p">,</span><span class="n">resources</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Substitute.replace"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.archive.Substitute.replace">[docs]</a>    <span class="k">def</span> <span class="nf">replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src</span><span class="p">):</span>
+        <span class="s">&quot;Given some source html substitute and annotated as applicable&quot;</span>
+        <span class="k">for</span> <span class="n">html</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">substitutions</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">src</span> <span class="o">==</span> <span class="n">html</span><span class="p">:</span>
+                <span class="n">annotation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">annotation</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">substitutions</span><span class="p">[</span><span class="n">src</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">return</span> <span class="n">annotation</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">substitutions</span><span class="p">[</span><span class="n">src</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">src</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">preprocess_cell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cell</span><span class="p">,</span> <span class="n">resources</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="n">v4</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nbversion</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">cell</span><span class="p">[</span><span class="s">&#39;cell_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;code&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">outputs</span> <span class="ow">in</span> <span class="n">cell</span><span class="p">[</span><span class="s">&#39;outputs&#39;</span><span class="p">]:</span>
+                <span class="n">output_key</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;execute_result&#39;</span> <span class="k">if</span> <span class="n">v4</span> <span class="k">else</span> <span class="s">&#39;pyout&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">outputs</span><span class="p">[</span><span class="s">&#39;output_type&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">output_key</span><span class="p">:</span>
+                    <span class="c"># V1-3</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">v4</span> <span class="ow">and</span> <span class="s">&#39;html&#39;</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">:</span>
+                        <span class="n">outputs</span><span class="p">[</span><span class="s">&#39;html&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">outputs</span><span class="p">[</span><span class="s">&#39;html&#39;</span><span class="p">])</span>
+                    <span class="c"># V4</span>
+                    <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;data&#39;</span><span class="p">,[]):</span>
+                        <span class="k">if</span> <span class="n">v4</span> <span class="ow">and</span> <span class="n">data</span> <span class="o">==</span> <span class="s">&#39;text/html&#39;</span><span class="p">:</span>
+                            <span class="n">substitution</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">outputs</span><span class="p">[</span><span class="s">&#39;data&#39;</span><span class="p">][</span><span class="s">&#39;text/html&#39;</span><span class="p">])</span>
+                            <span class="n">outputs</span><span class="p">[</span><span class="s">&#39;data&#39;</span><span class="p">][</span><span class="s">&#39;text/html&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">substitution</span>
+        <span class="k">return</span> <span class="n">cell</span><span class="p">,</span> <span class="n">resources</span>
+
+</div>
+<span class="n">notebook_archive</span> <span class="o">=</span> <span class="n">NotebookArchive</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014 IOAM: Jean-Luc R. Stevens and Philipp Rudiger.
+    </p>
+  </div>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'2014.05.14',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
