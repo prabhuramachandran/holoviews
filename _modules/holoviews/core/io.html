@@ -262,7 +262,7 @@
 <span class="s">       the value used in the {obj} field of the filename</span>
 <span class="s">       formatter.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">filename_formatter</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s">&#39;{group}-{label}-{obj}&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+    <span class="n">filename_formatter</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s">&#39;{group}-{label}-{obj:.40}&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">         A string formatter for output filename based on the HoloViews</span>
 <span class="s">         object that is being rendered to disk.</span>
 
@@ -316,7 +316,7 @@
             <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span><span class="s">&quot;Could not parse formatter </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">formatter</span><span class="p">)</span>
 
     <span class="c"># Mime-types that need encoding as utf-8 before archiving.</span></div>
-    <span class="n">_utf8_mime_types</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;image/svg+xml&#39;</span><span class="p">]</span>
+    <span class="n">_utf16_mime_types</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;image/svg+xml&#39;</span><span class="p">,</span> <span class="s">&#39;text/html&#39;</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">FileArchive</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
@@ -360,7 +360,7 @@
 
         <span class="n">hashfn</span> <span class="o">=</span> <span class="n">sha256</span><span class="p">()</span>
         <span class="n">obj_str</span> <span class="o">=</span> <span class="s">&#39;None&#39;</span> <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_formatter</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-        <span class="n">hashfn</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">obj_str</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span>
+        <span class="n">hashfn</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">obj_str</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-16&#39;</span><span class="p">))</span>
         <span class="n">format_values</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;timestamp&#39;</span><span class="p">:</span> <span class="s">&#39;{timestamp}&#39;</span><span class="p">,</span>
                          <span class="s">&#39;group&#39;</span><span class="p">:</span>   <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;group&#39;</span><span class="p">,</span> <span class="s">&#39;no-group&#39;</span><span class="p">),</span>
                          <span class="s">&#39;label&#39;</span><span class="p">:</span>   <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;label&#39;</span><span class="p">,</span> <span class="s">&#39;no-label&#39;</span><span class="p">),</span>
@@ -382,8 +382,8 @@
 </div>
     <span class="k">def</span> <span class="nf">_encoding</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
         <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="o">=</span> <span class="n">entry</span>
-        <span class="k">if</span> <span class="n">info</span><span class="p">[</span><span class="s">&#39;mime_type&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_utf8_mime_types</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">info</span><span class="p">[</span><span class="s">&#39;mime_type&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_utf16_mime_types</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-16&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">data</span>
 
