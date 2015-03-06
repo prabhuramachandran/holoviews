@@ -237,12 +237,14 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">fig</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;svg&#39;</span><span class="p">,</span>
-                               <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;png&#39;</span><span class="p">,</span> <span class="s">&#39;svg&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">        Output render format for static figures.&quot;&quot;&quot;</span><span class="p">)</span>
+                               <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;png&#39;</span><span class="p">,</span> <span class="s">&#39;svg&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Output render format for static figures. If None, no figure</span>
+<span class="s">        rendering will occur. &quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">holomap</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;gif&#39;</span><span class="p">,</span>
-                                   <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;webm&#39;</span><span class="p">,</span><span class="s">&#39;h264&#39;</span><span class="p">,</span> <span class="s">&#39;gif&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">        Output render multi-frame (typically animated) format&quot;&quot;&quot;</span><span class="p">)</span>
+                                   <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;webm&#39;</span><span class="p">,</span><span class="s">&#39;h264&#39;</span><span class="p">,</span> <span class="s">&#39;gif&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Output render multi-frame (typically animated) format. If</span>
+<span class="s">        None, no multi-frame rendering will occur.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">size</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        The rendered size as a percentage size&quot;&quot;&quot;</span><span class="p">)</span>
@@ -276,6 +278,7 @@
 
         <span class="k">if</span> <span class="n">fmt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">fmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">holomap</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span>
+            <span class="k">if</span> <span class="n">fmt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
             <span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">anim_kwargs</span><span class="p">,</span> <span class="n">extra_args</span><span class="p">)</span> <span class="o">=</span> <span class="n">ANIMATION_OPTS</span><span class="p">[</span><span class="n">fmt</span><span class="p">]</span>
@@ -298,11 +301,12 @@
 <span class="sd">        Save a HoloViews object to file, either using an explicitly</span>
 <span class="sd">        supplied format or to the appropriate deafult.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">data</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
+        <span class="n">rendered</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rendered</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
         <span class="n">filename</span> <span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_capture_mode</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="k">return</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">rendered</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 </div>
 <div class="viewcode-block" id="PlotRenderer.anim_data"><a class="viewcode-back" href="../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.PlotRenderer.anim_data">[docs]</a>    <span class="k">def</span> <span class="nf">anim_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anim</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">writer</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
