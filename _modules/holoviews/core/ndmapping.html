@@ -134,16 +134,12 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">itemgetter</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">cyordereddict</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
-<span class="k">except</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
 <span class="kn">import</span> <span class="nn">param</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">traversal</span>
-<span class="kn">from</span> <span class="nn">.dimension</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">Dimensioned</span><span class="p">,</span> <span class="n">ViewableElement</span>
+<span class="kn">from</span> <span class="nn">.dimension</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">Dimensioned</span><span class="p">,</span> <span class="n">ViewableElement</span>
 <span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">unique_iterator</span>
 
 
@@ -399,14 +395,13 @@
             <span class="n">dimension</span> <span class="o">=</span> <span class="n">all_dims</span><span class="p">[</span><span class="n">dimension</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="n">dimension</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">:</span>
-            <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">dimension</span><span class="p">)]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">k</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">dimension</span><span class="p">)]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
         <span class="k">elif</span> <span class="n">dimension</span> <span class="ow">in</span> <span class="n">all_dims</span><span class="p">:</span>
             <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">el</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dimension</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span>
                       <span class="k">if</span> <span class="n">dimension</span> <span class="ow">in</span> <span class="n">el</span><span class="o">.</span><span class="n">dimensions</span><span class="p">()]</span>
-            <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Dimension </span><span class="si">%s</span><span class="s"> not found.&#39;</span> <span class="o">%</span> <span class="n">dimension</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">values</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">NdIndexableMapping</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dimension</span><span class="p">)</span>
 
 </div>
 <div class="viewcode-block" id="MultiDimensionalMapping.reindex"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.ndmapping.MultiDimensionalMapping.reindex">[docs]</a>    <span class="k">def</span> <span class="nf">reindex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimension_labels</span><span class="o">=</span><span class="p">[],</span> <span class="n">force</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
