@@ -142,12 +142,8 @@
 <span class="sd">          HoloViews objects to dump to HDF5.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">time</span>
-<span class="kn">import</span> <span class="nn">string</span>
-<span class="kn">import</span> <span class="nn">pickle</span>
-<span class="kn">import</span> <span class="nn">zipfile</span>
-<span class="kn">import</span> <span class="nn">tarfile</span>
+
+<span class="kn">import</span> <span class="nn">re</span><span class="o">,</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">string</span><span class="o">,</span> <span class="nn">pickle</span><span class="o">,</span> <span class="nn">zipfile</span><span class="o">,</span> <span class="nn">tarfile</span><span class="o">,</span> <span class="nn">shutil</span><span class="o">,</span> <span class="nn">itertools</span>
 
 <span class="kn">from</span> <span class="nn">io</span> <span class="kn">import</span> <span class="n">BytesIO</span>
 <span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha256</span>
@@ -156,7 +152,7 @@
 
 <span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">unique_iterator</span>
 <span class="kn">from</span> <span class="nn">.ndmapping</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">UniformNdMapping</span>
-
+<span class="kn">from</span> <span class="nn">.dimension</span> <span class="kn">import</span> <span class="n">LabelledData</span>
 
 <div class="viewcode-block" id="Exporter"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Exporter">[docs]</a><span class="k">class</span> <span class="nc">Exporter</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">ParameterizedFunction</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -169,6 +165,23 @@
 <span class="sd">    Storage:    Databases (e.g SQL), HDF5 etc.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="c"># Mime-types that need encoding as utf-8 upon export</span>
+    <span class="n">utf8_mime_types</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;image/svg+xml&#39;</span><span class="p">,</span> <span class="s">&#39;text/html&#39;</span><span class="p">]</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Exporter.encode"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Exporter.encode">[docs]</a>    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Classmethod that applies conditional encoding based on</span>
+<span class="sd">        mime-type. Given an entry as returned by __call__ return the</span>
+<span class="sd">        data in the appropriate encoding.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="o">=</span> <span class="n">entry</span>
+        <span class="k">if</span> <span class="n">info</span><span class="p">[</span><span class="s">&#39;mime_type&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">utf8_mime_types</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data</span>
+
+</div>
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given a HoloViews object return the raw exported data and</span>
@@ -201,8 +214,8 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">protocol</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">      The pickling protocol where 0 is ASCII, 1 supports old Python</span>
-<span class="s">      versions and 2 is efficient for new style classes.&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">        The pickling protocol where 0 is ASCII, 1 supports old Python</span>
+<span class="s">        versions and 2 is efficient for new style classes.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">)</span>
@@ -228,22 +241,8 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">exporter</span><span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ClassSelector</span><span class="p">(</span><span class="n">class_</span><span class="o">=</span><span class="n">Exporter</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">      The exporter function used to convert HoloViews objects into the</span>
-<span class="s">      appropriate format.&quot;&quot;&quot;</span>  <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Archive</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
-        <span class="n">keywords</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">=</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__call__</span><span class="o">.</span><span class="n">__func__</span><span class="o">.</span><span class="n">__doc__</span> <span class="o">=</span> <span class="s">&#39;__call__(</span><span class="si">%s</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">keywords</span><span class="p">)</span>
-
-
-    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Convenience method for setting multiple parameters on an</span>
-<span class="sd">        Archive instance.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">set_param</span><span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span>
+<span class="s">        The exporter function used to convert HoloViews objects into the</span>
+<span class="s">        appropriate format.&quot;&quot;&quot;</span>  <span class="p">)</span>
 
 <div class="viewcode-block" id="Archive.add"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Archive.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -259,10 +258,28 @@
 
 
 </div></div>
-<span class="k">def</span> <span class="nf">name_generator</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
-    <span class="k">return</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">group</span>
-                                            <span class="o">+</span> <span class="p">(</span><span class="s">&#39;-&#39;</span>  <span class="o">+</span><span class="n">x</span><span class="o">.</span><span class="n">label</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">label</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">))))</span>
+<div class="viewcode-block" id="simple_name_generator"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.simple_name_generator">[docs]</a><span class="k">def</span> <span class="nf">simple_name_generator</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simple name_generator designed for HoloViews objects.</span>
 
+<span class="sd">    Objects are labeled with {group}-{label} for each nested</span>
+<span class="sd">    object, based on a depth-first search.  Adjacent objects with</span>
+<span class="sd">    identical representations yield only a single copy of the</span>
+<span class="sd">    representation, to avoid long names for the common case of</span>
+<span class="sd">    a container whose element(s) share the same group and label.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">LabelledData</span><span class="p">):</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span>
+                              <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">group</span> <span class="o">+</span> <span class="p">(</span><span class="s">&#39;-&#39;</span>  <span class="o">+</span><span class="n">x</span><span class="o">.</span><span class="n">label</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">label</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">)))</span>
+        <span class="n">labels</span><span class="o">=</span><span class="p">[</span><span class="n">l</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">labels</span><span class="p">)]</span>
+        <span class="n">obj_str</span> <span class="o">=</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">obj_str</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">obj_str</span>
+
+
+</div>
 <div class="viewcode-block" id="FileArchive"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.FileArchive">[docs]</a><span class="k">class</span> <span class="nc">FileArchive</span><span class="p">(</span><span class="n">Archive</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A file archive stores files on disk, either unpacked in a</span>
@@ -279,13 +296,13 @@
 <span class="s">        Valid fields are the {name}, {range} and {unit} of the</span>
 <span class="s">        dimensions.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">object_formatter</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">name_generator</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+    <span class="n">object_formatter</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">simple_name_generator</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        Callable that given an object returns a string suitable for</span>
 <span class="s">        inclusion in file and directory names. This is what generates</span>
 <span class="s">        the value used in the {obj} field of the filename</span>
 <span class="s">        formatter.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">filename_formatter</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s">&#39;{dimensions}-{group}-{label}-{obj}&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+    <span class="n">filename_formatter</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s">&#39;{dimensions},{obj}&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        A string formatter for output filename based on the HoloViews</span>
 <span class="s">        object that is being rendered to disk.</span>
 
@@ -309,14 +326,14 @@
 <span class="s">        The archive format to use if there are multiple files and pack</span>
 <span class="s">        is set to True &quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">pack</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+    <span class="n">pack</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        Whether or not to pack to contents into the specified archive</span>
 <span class="s">        format. If pack is False, the contents will be output to a</span>
 <span class="s">        directory.</span>
 
 <span class="s">        Note that if there is only a single file in the archive, no</span>
 <span class="s">        packing will occur and no directory is created. Instead, the</span>
-<span class="s">        file is treated as a single-file archive. &quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">        file is treated as a single-file archive.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">export_name</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;{timestamp}&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        The name assigned to the overall export. If an archive file is</span>
@@ -328,10 +345,19 @@
 <span class="s">        The {timestamp} field is available to include the timestamp at</span>
 <span class="s">        the time of export in the chosen timestamp format.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">unique_name</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+    <span class="n">unique_name</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">       Whether the export name should be made unique with a numeric</span>
 <span class="s">       suffix. If set to False, any existing export of the same name</span>
 <span class="s">       will be removed and replaced.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">max_filename</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="bp">None</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Maximum length to enforce on generated filenames.  100 is the</span>
+<span class="s">       practical maximum for zip and tar file generation, but you may</span>
+<span class="s">       wish to use a lower value to avoid long filenames.&quot;&quot;&quot;</span><span class="p">)</span>
+
+
+    <span class="n">ffields</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="s">&#39;group&#39;</span><span class="p">,</span> <span class="s">&#39;label&#39;</span><span class="p">,</span> <span class="s">&#39;obj&#39;</span><span class="p">,</span> <span class="s">&#39;SHA&#39;</span><span class="p">,</span> <span class="s">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s">&#39;dimensions&#39;</span><span class="p">}</span>
+    <span class="n">efields</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;timestamp&#39;</span><span class="p">}</span>
 
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="FileArchive.parse_fields"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.FileArchive.parse_fields">[docs]</a>    <span class="k">def</span> <span class="nf">parse_fields</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">formatter</span><span class="p">):</span>
@@ -342,10 +368,7 @@
             <span class="k">return</span>  <span class="nb">set</span><span class="p">(</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">parse</span><span class="p">))[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">except</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span><span class="s">&quot;Could not parse formatter </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">formatter</span><span class="p">)</span>
-
-    <span class="c"># Mime-types that need encoding as utf-8 before archiving.</span></div>
-    <span class="n">_utf8_mime_types</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;image/svg+xml&#39;</span><span class="p">,</span> <span class="s">&#39;text/html&#39;</span><span class="p">]</span>
-
+</div>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">FileArchive</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
         <span class="c">#  Items with key: (basename,ext) and value: (data, info)</span>
@@ -376,12 +399,10 @@
 
 
     <span class="k">def</span> <span class="nf">_validate_formatters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">ffields</span> <span class="o">=</span>   <span class="p">{</span><span class="s">&#39;type&#39;</span><span class="p">,</span> <span class="s">&#39;group&#39;</span><span class="p">,</span> <span class="s">&#39;label&#39;</span><span class="p">,</span> <span class="s">&#39;obj&#39;</span><span class="p">,</span> <span class="s">&#39;SHA&#39;</span><span class="p">,</span> <span class="s">&#39;timestamp&#39;</span><span class="p">,</span> <span class="s">&#39;dimensions&#39;</span><span class="p">}</span>
-        <span class="n">efields</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;timestamp&#39;</span><span class="p">}</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_fields</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename_formatter</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">ffields</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Valid filename fields are: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">ffields</span><span class="p">)))</span>
-        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_fields</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">export_name</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">efields</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Valid export fields are: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">efields</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_fields</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename_formatter</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ffields</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Valid filename fields are: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ffields</span><span class="p">)))</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_fields</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">export_name</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">efields</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Valid export fields are: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">efields</span><span class="p">)))</span>
         <span class="k">try</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp_format</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">localtime</span><span class="p">()))</span>
         <span class="k">except</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Timestamp format invalid&quot;</span><span class="p">)</span>
 
@@ -407,13 +428,14 @@
         <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">rendered</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exporter</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">rendered</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
-            <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="o">=</span> <span class="n">rendered</span>
+            <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">new_info</span><span class="p">)</span> <span class="o">=</span> <span class="n">rendered</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="o">**</span><span class="n">new_info</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_formatters</span><span class="p">()</span>
 
         <span class="n">hashfn</span> <span class="o">=</span> <span class="n">sha256</span><span class="p">()</span>
         <span class="n">obj_str</span> <span class="o">=</span> <span class="s">&#39;None&#39;</span> <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_formatter</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
         <span class="n">dimensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim_formatter</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-        <span class="n">dimensions</span> <span class="o">=</span> <span class="n">dimensions</span> <span class="k">if</span> <span class="n">dimensions</span> <span class="k">else</span> <span class="s">&#39;no-dimensions&#39;</span>
+        <span class="n">dimensions</span> <span class="o">=</span> <span class="n">dimensions</span> <span class="k">if</span> <span class="n">dimensions</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
 
         <span class="n">hashfn</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">obj_str</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span>
         <span class="n">format_values</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;timestamp&#39;</span><span class="p">:</span> <span class="s">&#39;{timestamp}&#39;</span><span class="p">,</span>
@@ -425,37 +447,54 @@
                          <span class="s">&#39;SHA&#39;</span><span class="p">:</span>     <span class="n">hashfn</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()}</span>
 
         <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename_formatter</span><span class="p">,</span> <span class="n">format_values</span><span class="p">)</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename_formatter</span><span class="p">,</span>
+                                    <span class="nb">dict</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="o">**</span><span class="n">format_values</span><span class="p">))</span>
+
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_name</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
 
         <span class="n">ext</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;file-ext&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
         <span class="p">(</span><span class="n">unique_key</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unique_name</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">ext</span><span class="p">,</span>
                                               <span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">force</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="p">[(</span><span class="n">unique_key</span><span class="p">,</span> <span class="n">ext</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
 </div>
-    <span class="k">def</span> <span class="nf">_encoding</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
-        <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="o">=</span> <span class="n">entry</span>
-        <span class="k">if</span> <span class="n">info</span><span class="p">[</span><span class="s">&#39;mime_type&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_utf8_mime_types</span><span class="p">:</span>
-            <span class="n">utf_data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">utf_data</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">data</span>
-
     <span class="k">def</span> <span class="nf">_zip_archive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">export_name</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="n">archname</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unique_name</span><span class="p">(</span><span class="n">export_name</span><span class="p">,</span> <span class="s">&#39;zip&#39;</span><span class="p">,</span> <span class="n">root</span><span class="p">))</span>
         <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">archname</span><span class="p">),</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">zipf</span><span class="p">:</span>
             <span class="k">for</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="p">),</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
-                <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_name</span><span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span>
-                <span class="n">zipf</span><span class="o">.</span><span class="n">writestr</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">export_name</span><span class="p">,</span> <span class="n">filename</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="p">(</span><span class="n">entry</span><span class="p">))</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_truncate_name</span><span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span>
+                <span class="n">zipf</span><span class="o">.</span><span class="n">writestr</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">export_name</span><span class="p">,</span> <span class="n">filename</span><span class="p">)),</span><span class="n">Exporter</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">entry</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">_tar_archive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">export_name</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="n">archname</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unique_name</span><span class="p">(</span><span class="n">export_name</span><span class="p">,</span> <span class="s">&#39;tar&#39;</span><span class="p">,</span> <span class="n">root</span><span class="p">))</span>
         <span class="k">with</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarFile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">archname</span><span class="p">),</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tarf</span><span class="p">:</span>
             <span class="k">for</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="p">),</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
-                <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_name</span><span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_truncate_name</span><span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span>
                 <span class="n">tarinfo</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarInfo</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">export_name</span><span class="p">,</span> <span class="n">filename</span><span class="p">))</span>
-                <span class="n">filedata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encoding</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+                <span class="n">filedata</span> <span class="o">=</span> <span class="n">Exporter</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
                 <span class="n">tarinfo</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">filedata</span><span class="p">)</span>
                 <span class="n">tarf</span><span class="o">.</span><span class="n">addfile</span><span class="p">(</span><span class="n">tarinfo</span><span class="p">,</span> <span class="n">BytesIO</span><span class="p">(</span><span class="n">filedata</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_single_file_archive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">export_name</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="p">((</span><span class="n">_</span><span class="p">,</span> <span class="n">ext</span><span class="p">),</span> <span class="n">entry</span><span class="p">)</span> <span class="o">=</span> <span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="o">=</span> <span class="n">entry</span>
+        <span class="n">unique_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unique_name</span><span class="p">(</span><span class="n">export_name</span><span class="p">,</span> <span class="n">ext</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_truncate_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_normalize_name</span><span class="p">(</span><span class="o">*</span><span class="n">unique_name</span><span class="p">))</span>
+        <span class="n">fpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">Exporter</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">entry</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_directory_archive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">export_name</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+        <span class="n">output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unique_name</span><span class="p">(</span><span class="n">export_name</span><span class="p">,</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">root</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">output_dir</span><span class="p">):</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="p">),</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="o">=</span> <span class="n">entry</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_truncate_name</span><span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span>
+            <span class="n">fpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">Exporter</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">entry</span><span class="p">))</span>
 
 
     <span class="k">def</span> <span class="nf">_unique_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="p">,</span> <span class="n">existing</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
@@ -484,44 +523,41 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">new_name</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span>
 
 
-    <span class="k">def</span> <span class="nf">_normalize_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">tail</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">join</span><span class="o">=</span><span class="s">&#39;...&#39;</span><span class="p">,</span> <span class="n">maxlen</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_truncate_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">tail</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">join</span><span class="o">=</span><span class="s">&#39;...&#39;</span><span class="p">,</span> <span class="n">maxlen</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">maxlen</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_filename</span> <span class="k">if</span> <span class="n">maxlen</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">maxlen</span>
         <span class="n">max_len</span> <span class="o">=</span> <span class="n">maxlen</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">basename</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_len</span><span class="p">:</span>
             <span class="n">start</span> <span class="o">=</span> <span class="n">basename</span><span class="p">[:</span><span class="n">max_len</span><span class="o">-</span><span class="p">(</span><span class="n">tail</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">join</span><span class="p">))]</span>
             <span class="n">end</span> <span class="o">=</span> <span class="n">basename</span><span class="p">[</span><span class="o">-</span><span class="n">tail</span><span class="p">:]</span>
             <span class="n">basename</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">join</span> <span class="o">+</span> <span class="n">end</span>
         <span class="n">filename</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span> <span class="k">if</span> <span class="n">ext</span> <span class="k">else</span> <span class="n">basename</span>
-        <span class="k">return</span> <span class="n">filename</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">filename</span>
 
 
-<div class="viewcode-block" id="FileArchive.export"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.FileArchive.export">[docs]</a>    <span class="k">def</span> <span class="nf">export</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_normalize_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">basename</span><span class="p">):</span>
+        <span class="n">basename</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&#39;-+&#39;</span><span class="p">,</span><span class="s">&#39;-&#39;</span><span class="p">,</span><span class="n">basename</span><span class="p">)</span>
+        <span class="n">basename</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&#39;^[-,_]&#39;</span><span class="p">,</span><span class="s">&#39;&#39;</span><span class="p">,</span><span class="n">basename</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">basename</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="FileArchive.export"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.FileArchive.export">[docs]</a>    <span class="k">def</span> <span class="nf">export</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="p">{}):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Export the archive, directory or file.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">tval</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">localtime</span><span class="p">())</span> <span class="k">if</span> <span class="n">timestamp</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">timestamp</span>
         <span class="n">tstamp</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timestamp_format</span><span class="p">,</span> <span class="n">tval</span><span class="p">)</span>
-        <span class="n">export_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">export_name</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;timestamp&#39;</span><span class="p">:</span><span class="n">tstamp</span><span class="p">})</span>
-        <span class="n">files</span> <span class="o">=</span> <span class="p">[((</span><span class="bp">self</span><span class="o">.</span><span class="n">_format</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;timestamp&#39;</span><span class="p">:</span><span class="n">tstamp</span><span class="p">}),</span> <span class="n">ext</span><span class="p">),</span> <span class="n">val</span><span class="p">)</span>
+
+        <span class="n">info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">timestamp</span><span class="o">=</span><span class="n">tstamp</span><span class="p">)</span>
+        <span class="n">export_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">export_name</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="p">[((</span><span class="bp">self</span><span class="o">.</span><span class="n">_format</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">info</span><span class="p">),</span> <span class="n">ext</span><span class="p">),</span> <span class="n">val</span><span class="p">)</span>
                  <span class="k">for</span> <span class="p">((</span><span class="n">base</span><span class="p">,</span> <span class="n">ext</span><span class="p">),</span> <span class="n">val</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
         <span class="n">root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">)</span>
         <span class="c"># Make directory and populate if multiple files and not packed</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pack</span><span class="p">:</span>
-            <span class="n">output_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span>
-                                      <span class="bp">self</span><span class="o">.</span><span class="n">_unique_name</span><span class="p">(</span><span class="n">export_name</span><span class="p">,</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">root</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
-            <span class="k">for</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="p">),</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
-                <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="o">=</span> <span class="n">entry</span>
-
-                <span class="n">filename</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span> <span class="k">if</span> <span class="n">ext</span> <span class="k">else</span> <span class="n">basename</span>
-                <span class="n">fpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
-                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_directory_archive</span><span class="p">(</span><span class="n">export_name</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="p">((</span><span class="n">_</span><span class="p">,</span> <span class="n">ext</span><span class="p">),</span> <span class="n">entry</span><span class="p">)</span> <span class="o">=</span> <span class="n">files</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="o">=</span> <span class="n">entry</span>
-            <span class="n">unique_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unique_name</span><span class="p">(</span><span class="n">export_name</span><span class="p">,</span> <span class="n">ext</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
-            <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_name</span><span class="p">(</span><span class="o">*</span><span class="n">unique_name</span><span class="p">)</span>
-            <span class="n">fpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
-            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_single_file_archive</span><span class="p">(</span><span class="n">export_name</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">archive_format</span> <span class="o">==</span> <span class="s">&#39;zip&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_zip_archive</span><span class="p">(</span><span class="n">export_name</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">root</span><span class="p">)</span>
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">archive_format</span> <span class="o">==</span> <span class="s">&#39;tar&#39;</span><span class="p">:</span>
@@ -538,7 +574,21 @@
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pprint</span><span class="p">()</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pprint</span><span class="p">()</span>
+
+<div class="viewcode-block" id="FileArchive.contents"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.FileArchive.contents">[docs]</a>    <span class="k">def</span> <span class="nf">contents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">maxlen</span><span class="o">=</span><span class="mi">40</span><span class="p">):</span>
+        <span class="s">&quot;Print the current (unexported) contents of the archive&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s">&quot;Empty </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">fnames</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_truncate_name</span><span class="p">(</span><span class="n">maxlen</span><span class="o">=</span><span class="n">maxlen</span><span class="p">,</span> <span class="o">*</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="p">]</span>
+        <span class="n">max_len</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fnames</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">fnames</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="n">mime_type</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;mime_type&#39;</span><span class="p">,</span> <span class="s">&#39;no mime type&#39;</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;- </span><span class="si">%s</span><span class="s"> : </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">max_len</span><span class="p">),</span> <span class="n">mime_type</span><span class="p">))</span>
+        <span class="k">print</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">))</span></div></div>
 </pre></div>
 
           </div>

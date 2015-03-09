@@ -127,7 +127,10 @@
           <div role="main">
             
   <h1>Source code for holoviews.core.util</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">string</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">param</span>
 
 <div class="viewcode-block" id="find_minmax"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.find_minmax">[docs]</a><span class="k">def</span> <span class="nf">find_minmax</span><span class="p">(</span><span class="n">lims</span><span class="p">,</span> <span class="n">olims</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -159,20 +162,40 @@
    <span class="k">return</span> <span class="n">result</span>
 
 
-<div class="viewcode-block" id="valid_identifier"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.valid_identifier">[docs]</a><span class="k">def</span> <span class="nf">valid_identifier</span><span class="p">(</span><span class="n">identifier</span><span class="p">):</span>
+<span class="n">UNDERSCORE_TOKEN</span> <span class="o">=</span> <span class="s">&#39;UNDERSCORE&#39;</span>
+
+<div class="viewcode-block" id="sanitize_identifier"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.sanitize_identifier">[docs]</a><span class="k">def</span> <span class="nf">sanitize_identifier</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Replace spaces with underscores and returns value after</span>
-<span class="sd">    checking validity.</span>
+<span class="sd">    Sanitizes group/label values for use in AttrTree</span>
+<span class="sd">    attribute access</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">identifier</span><span class="p">:</span> <span class="k">return</span>
-    <span class="n">identifier</span> <span class="o">=</span> <span class="n">identifier</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
-    <span class="n">invalid_chars</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="n">el</span><span class="o">.</span><span class="n">isalnum</span><span class="p">()</span> <span class="ow">and</span> <span class="n">el</span><span class="o">!=</span><span class="s">&#39;_&#39;</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">identifier</span><span class="p">)</span>
-    <span class="n">valid_first_char</span> <span class="o">=</span> <span class="n">identifier</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()</span> <span class="ow">or</span> <span class="n">identifier</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;_&#39;</span>
-    <span class="k">if</span> <span class="n">invalid_chars</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">valid_first_char</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">SyntaxError</span><span class="p">(</span><span class="s">&quot;Invalid Python identifier: </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">identifier</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">identifier</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="s">&#39;&#39;</span>
+    <span class="n">valid_chars</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span><span class="o">+</span><span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="o">+</span><span class="s">&#39;_&#39;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
+    <span class="n">chars</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">islower</span><span class="p">():</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">upper</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="n">name</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_chars</span><span class="p">:</span>
+            <span class="n">chars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;_</span><span class="si">%s</span><span class="s">_&#39;</span> <span class="o">%</span> <span class="nb">hex</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">chars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">escape</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span> <span class="ow">and</span> <span class="n">chars</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;_&#39;</span><span class="p">:</span>
+        <span class="n">chars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">UNDERSCORE_TOKEN</span> <span class="o">+</span> <span class="n">chars</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span>
 
 </div>
+<span class="k">def</span> <span class="nf">unescape_identifier</span><span class="p">(</span><span class="n">identifier</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">identifier</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">UNDERSCORE_TOKEN</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">allowable</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="n">valid_second_chars</span><span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span><span class="o">+</span><span class="n">string</span><span class="o">.</span><span class="n">digits</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_second_chars</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">False</span>
+    <span class="k">return</span> <span class="bp">True</span>
+
+
 <div class="viewcode-block" id="unique_iterator"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.unique_iterator">[docs]</a><span class="k">def</span> <span class="nf">unique_iterator</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Returns an iterator containing all non-duplicate elements</span>
@@ -182,7 +205,27 @@
     <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
             <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
-            <span class="k">yield</span> <span class="n">item</span></div>
+            <span class="k">yield</span> <span class="n">item</span>
+
+
+</div>
+<div class="viewcode-block" id="ProgressIndicator"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.ProgressIndicator">[docs]</a><span class="k">class</span> <span class="nc">ProgressIndicator</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Baseclass for any ProgressIndicator that indicates progress</span>
+<span class="sd">    as a completion percentage.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">percent_range</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">NumericTuple</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The total percentage spanned by the progress bar when called</span>
+<span class="s">        with a value between 0% and 100%. This allows an overall</span>
+<span class="s">        completion in percent to be broken down into smaller sub-tasks</span>
+<span class="s">        that individually complete to 100 percent.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">label</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Progress&#39;</span><span class="p">,</span> <span class="n">allow_None</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The label of the current progress bar.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">completion</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
 </pre></div>
 
           </div>

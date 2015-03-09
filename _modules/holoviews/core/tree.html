@@ -133,7 +133,7 @@
     <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 
 <span class="kn">from</span> <span class="nn">.pprint</span> <span class="kn">import</span> <span class="n">PrettyPrinter</span>
-<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">valid_identifier</span>
+<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">sanitize_identifier</span><span class="p">,</span> <span class="n">unescape_identifier</span>
 
 
 <div class="viewcode-block" id="AttrTree"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.tree.AttrTree">[docs]</a><span class="k">class</span> <span class="nc">AttrTree</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -170,7 +170,7 @@
 <span class="sd">        require an identifier.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;parent&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;identifier&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">valid_identifier</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;identifier&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sanitize_identifier</span><span class="p">(</span><span class="n">identifier</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;children&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_fixed&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
 
@@ -305,7 +305,6 @@
 
 
     <span class="k">def</span> <span class="nf">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
-        <span class="n">identifier</span> <span class="o">=</span> <span class="n">valid_identifier</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
         <span class="c"># Getattr is skipped for root and first set of children</span>
         <span class="n">shallow</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">identifier</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isupper</span><span class="p">()</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed</span> <span class="ow">and</span> <span class="n">shallow</span><span class="p">:</span>
@@ -314,6 +313,7 @@
         <span class="nb">super</span><span class="p">(</span><span class="n">AttrTree</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">identifier</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">identifier</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
+            <span class="n">identifier</span> <span class="o">=</span> <span class="n">unescape_identifier</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_propagate</span><span class="p">((</span><span class="n">identifier</span><span class="p">,),</span> <span class="n">val</span><span class="p">)</span>
@@ -328,14 +328,15 @@
             <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">AttrTree</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__getattr__</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span> <span class="k">pass</span>
 
-        <span class="k">if</span> <span class="n">identifier</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>   <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">identifier</span><span class="p">))</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="o">==</span><span class="bp">True</span><span class="p">:</span>           <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fixed_error</span> <span class="o">%</span> <span class="n">identifier</span><span class="p">)</span>
-        <span class="n">identifier</span> <span class="o">=</span> <span class="n">valid_identifier</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="o">==</span><span class="bp">True</span><span class="p">:</span>           <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fixed_error</span> <span class="o">%</span> <span class="n">identifier</span><span class="p">)</span>
+        <span class="n">identifier</span> <span class="o">=</span> <span class="n">sanitize_identifier</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">identifier</span><span class="p">]</span>
+        <span class="n">unescaped_identifier</span> <span class="o">=</span> <span class="n">unescape_identifier</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unescaped_identifier</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">unescaped_identifier</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="n">identifier</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
+            <span class="n">identifier</span> <span class="o">=</span> <span class="n">unescaped_identifier</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
             <span class="n">child_tree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="n">identifier</span><span class="o">=</span><span class="n">identifier</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">identifier</span><span class="p">]</span> <span class="o">=</span> <span class="n">child_tree</span>

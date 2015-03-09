@@ -624,36 +624,23 @@ and export it to disk via the display hooks.</p>
 display hooks and automatically adds a notebook HTML snapshot to
 the archive upon export.</p>
 <dl class="docutils">
-<dt><em>param Boolean</em> <tt class="docutils literal"><span class="pre">unique_name</span></tt> (<em>allow_None=False, bounds=(0, 1), constant=False, default=True, instantiate=False, pickle_default_value=True, precedence=None, readonly=False</em>)</dt>
+<dt><em>param Boolean</em> <tt class="docutils literal"><span class="pre">unique_name</span></tt> (<em>allow_None=False, bounds=(0, 1), constant=False, default=False, instantiate=False, pickle_default_value=True, precedence=None, readonly=False</em>)</dt>
 <dd>Whether the export name should be made unique with a numeric
        suffix. If set to False, any existing export of the same name
        will be removed and replaced.</dd>
 <dt><em>param Callable</em> <tt class="docutils literal"><span class="pre">exporter</span></tt> (<em>allow_None=False, constant=False, default=PlotRenderer(), instantiate=True, pickle_default_value=True, precedence=None, readonly=False</em>)</dt>
 <dd>The exporter function used to convert HoloViews objects into the
         appropriate format.</dd>
-</dl>
-<p><em>param Boolean</em> <tt class="docutils literal"><span class="pre">auto</span></tt> (<em>allow_None=False, bounds=(0, 1), constant=False, default=False, instantiate=False, pickle_default_value=True, precedence=None, readonly=False</em>)</p>
-<dl class="docutils">
-<dt><em>param String</em> <tt class="docutils literal"><span class="pre">filename_formatter</span></tt> (<em>allow_None=False, constant=False, default={dimensions}-{group}-{label}-{obj}, instantiate=False, pickle_default_value=True, precedence=None, readonly=False</em>)</dt>
-<dd>A string formatter for output filename based on the HoloViews
-        object that is being rendered to disk.
-
-        The available fields are the {type}, {group}, {label}, {obj}
-        of the holoviews object added to the archive as well as
-        {timestamp}, {obj} and {SHA}. The {timestamp} is the export
-        timestamp using timestamp_format, {obj} is the object
-        representation as returned by object_formatter and {SHA} is
-        the SHA of the {obj} value used to compress it into a shorter
-        string.</dd>
-<dt><em>param String</em> <tt class="docutils literal"><span class="pre">export_name</span></tt> (<em>allow_None=False, constant=False, default={timestamp}, instantiate=False, pickle_default_value=True, precedence=None, readonly=False</em>)</dt>
-<dd>The name assigned to the overall export. If an archive file is
-        used, this is the correspond filename (e.g of the exporter zip
-        file). Alternatively, if unpack=False, this is the name of the
-        output directory. Lastly, for archives of a single file, this
-        is the basename of the output file.
-
-        The {timestamp} field is available to include the timestamp at
-        the time of export in the chosen timestamp format.</dd>
+<dt><em>param Integer</em> <tt class="docutils literal"><span class="pre">max_filename</span></tt> (<em>allow_None=False, bounds=(0, None), constant=False, default=100, inclusive_bounds=(True, True), instantiate=False, pickle_default_value=True, precedence=None, readonly=False, time_dependent=False, time_fn=&lt;Time Time00001&gt;</em>)</dt>
+<dd>Maximum length to enforce on generated filenames.  100 is the
+       practical maximum for zip and tar file generation, but you may
+       wish to use a lower value to avoid long filenames.</dd>
+<dt><em>param String</em> <tt class="docutils literal"><span class="pre">filename_formatter</span></tt> (<em>allow_None=False, constant=False, default={dimensions},{obj}, instantiate=False, pickle_default_value=True, precedence=None, readonly=False</em>)</dt>
+<dd>Similar to FileArchive.filename_formatter except with support
+        for the notebook name field as {notebook}.</dd>
+<dt><em>param String</em> <tt class="docutils literal"><span class="pre">export_name</span></tt> (<em>allow_None=False, constant=False, default={notebook}, instantiate=False, pickle_default_value=True, precedence=None, readonly=False</em>)</dt>
+<dd>Similar to FileArchive.filename_formatter except with support
+        for the notebook name field as {notebook}.</dd>
 <dt><em>param String</em> <tt class="docutils literal"><span class="pre">namespace</span></tt> (<em>allow_None=False, constant=False, default=holoviews.archive, instantiate=False, pickle_default_value=True, precedence=None, readonly=False</em>)</dt>
 <dd>The name of the current in the NotebookArchive instance in the
         IPython namespace that must be available.</dd>
@@ -668,10 +655,6 @@ the archive upon export.</p>
 <dt><em>param ObjectSelector</em> <tt class="docutils literal"><span class="pre">archive_format</span></tt> (<em>allow_None=None, check_on_set=True, compute_default_fn=None, constant=False, default=zip, instantiate=False, objects=[&#8216;zip&#8217;, &#8216;tar&#8217;], pickle_default_value=True, precedence=None, readonly=False</em>)</dt>
 <dd>The archive format to use if there are multiple files and pack
         is set to True</dd>
-<dt><em>param Integer</em> <tt class="docutils literal"><span class="pre">export_timeout</span></tt> (<em>allow_None=False, bounds=None, constant=False, default=15, inclusive_bounds=(True, True), instantiate=False, pickle_default_value=True, precedence=None, readonly=False, time_dependent=False, time_fn=&lt;Time Time00001&gt;</em>)</dt>
-<dd>A timeout limit (in seconds) between when the export method is
-       run and when the export process begins. Note that a few more
-       seconds may elapse before the files actually appear on disk.</dd>
 <dt><em>param String</em> <tt class="docutils literal"><span class="pre">root</span></tt> (<em>allow_None=False, constant=False, default=., instantiate=False, pickle_default_value=True, precedence=None, readonly=False</em>)</dt>
 <dd>The root directory in which the output directory is
         located. May be an absolute or relative path.</dd>
@@ -683,7 +666,7 @@ the archive upon export.</p>
 <dt><em>param String</em> <tt class="docutils literal"><span class="pre">timestamp_format</span></tt> (<em>allow_None=False, constant=False, default=%Y_%m_%d-%H_%M_%S, instantiate=False, pickle_default_value=True, precedence=None, readonly=False</em>)</dt>
 <dd>The timestamp format that will be substituted for the
         {timestamp} field in the export name.</dd>
-<dt><em>param Boolean</em> <tt class="docutils literal"><span class="pre">pack</span></tt> (<em>allow_None=False, bounds=(0, 1), constant=False, default=True, instantiate=False, pickle_default_value=True, precedence=None, readonly=False</em>)</dt>
+<dt><em>param Boolean</em> <tt class="docutils literal"><span class="pre">pack</span></tt> (<em>allow_None=False, bounds=(0, 1), constant=False, default=False, instantiate=False, pickle_default_value=True, precedence=None, readonly=False</em>)</dt>
 <dd>Whether or not to pack to contents into the specified archive
         format. If pack is False, the contents will be output to a
         directory.
@@ -696,6 +679,17 @@ the archive upon export.</p>
 <dt id="holoviews.ipython.archive.NotebookArchive.add">
 <tt class="descname">add</tt><big>(</big><em>obj=None</em>, <em>filename=None</em>, <em>data=None</em>, <em>info={}</em>, <em>html=None</em><big>)</big><a class="reference internal" href="../_modules/holoviews/ipython/archive.html#NotebookArchive.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.add" title="Permalink to this definition">¶</a></dt>
 <dd><p>Similar to FileArchive.add but accepts html strings for substitution</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="holoviews.ipython.archive.NotebookArchive.auto">
+<tt class="descname">auto</tt><big>(</big><em>enabled=Boolean</em>, <em>unique_name=Boolean</em>, <em>exporter=Callable</em>, <em>name=String</em>, <em>max_filename=Integer</em>, <em>filename_formatter=String</em>, <em>export_name=String</em>, <em>namespace=String</em>, <em>snapshot_name=String</em>, <em>dimension_formatter=String</em>, <em>archive_format=ObjectSelector</em>, <em>root=String</em>, <em>object_formatter=Callable</em>, <em>timestamp_format=String</em>, <em>pack=Boolean</em><big>)</big><a class="reference internal" href="../_modules/holoviews/ipython/archive.html#NotebookArchive.auto"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.auto" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="holoviews.ipython.archive.NotebookArchive.contents">
+<tt class="descname">contents</tt><big>(</big><em>maxlen=40</em><big>)</big><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.contents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print the current (unexported) contents of the archive</p>
 </dd></dl>
 
 <dl class="method">
@@ -715,13 +709,13 @@ instantiated.</p>
 
 <dl class="method">
 <dt id="holoviews.ipython.archive.NotebookArchive.export">
-<tt class="descname">export</tt><big>(</big><em>export_timeout=None</em>, <em>timestamp=None</em><big>)</big><a class="reference internal" href="../_modules/holoviews/ipython/archive.html#NotebookArchive.export"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.export" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">export</tt><big>(</big><em>timestamp=None</em><big>)</big><a class="reference internal" href="../_modules/holoviews/ipython/archive.html#NotebookArchive.export"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.export" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the current notebook data and export.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.archive.NotebookArchive.force_new_dynamic_value">
-<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5e8a470&gt;</em><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b899528a368&gt;</em><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -735,18 +729,35 @@ equal to the default value.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.archive.NotebookArchive.get_value_generator">
-<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5e8a208&gt;</em><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.get_value_generator" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b899528a208&gt;</em><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.get_value_generator" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.archive.NotebookArchive.inspect_value">
-<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5e8a4c8&gt;</em><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.inspect_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b899528a470&gt;</em><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.inspect_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="holoviews.ipython.archive.NotebookArchive.last_export_status">
+<tt class="descname">last_export_status</tt><big>(</big><big>)</big><a class="reference internal" href="../_modules/holoviews/ipython/archive.html#NotebookArchive.last_export_status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.last_export_status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper to show the status of the last call to the export method.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="holoviews.ipython.archive.NotebookArchive.message">
 <tt class="descname">message</tt><big>(</big><em>msg</em>, <em>*args</em>, <em>**kw</em><big>)</big><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.message" title="Permalink to this definition">¶</a></dt>
 <dd><p>Print the arguments as a message.</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="holoviews.ipython.archive.NotebookArchive.object_formatter">
+<em class="property">static </em><tt class="descname">object_formatter</tt><big>(</big><em>obj</em><big>)</big><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.object_formatter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simple name_generator designed for HoloViews objects.</p>
+<p>Objects are labeled with {group}-{label} for each nested
+object, based on a depth-first search.  Adjacent objects with
+identical representations yield only a single copy of the
+representation, to avoid long names for the common case of
+a container whose element(s) share the same group and label.</p>
 </dd></dl>
 
 <dl class="classmethod">
@@ -762,6 +773,18 @@ superclasses.</p>
 <dt id="holoviews.ipython.archive.NotebookArchive.parse_fields">
 <em class="property">classmethod </em><tt class="descname">parse_fields</tt><big>(</big><em>formatter</em><big>)</big><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.parse_fields" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns the format fields otherwise raise exception</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="holoviews.ipython.archive.NotebookArchive.pprint">
+<tt class="descname">pprint</tt><big>(</big><em>imports=['import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews', 'import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews'], prefix=' ', unknown_value='&lt;?&gt;', qualify=False</em><big>)</big><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.pprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>(Experimental) Pretty printed representation that may be
+evaluated with eval. Similar to repr except introspection of the
+constructor (__init__) ensures a valid and succinct representation
+is generated.</p>
+<p>See pprint() function for more details.</p>
+<p>NOTE: pprint will replace script_repr in a future version of
+param, but is not yet a complete replacement for script_repr.</p>
 </dd></dl>
 
 <dl class="classmethod">
@@ -791,12 +814,12 @@ superclasses.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.archive.NotebookArchive.set_dynamic_time_fn">
-<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5e8a418&gt;</em><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b899528a418&gt;</em><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.archive.NotebookArchive.set_param">
-<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5e8a628&gt;</em><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.set_param" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b899528a578&gt;</em><a class="headerlink" href="#holoviews.ipython.archive.NotebookArchive.set_param" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -2188,17 +2211,18 @@ namespace) used to update the class-level namespace.</p>
 <div class="section" id="widgets-module">
 <h2><tt class="xref py py-mod docutils literal"><span class="pre">widgets</span></tt> Module<a class="headerlink" href="#widgets-module" title="Permalink to this headline">¶</a></h2>
 <p class="graphviz">
-<img src="../_images/inheritance-9bff5498b4aadab7c9709280072ed03b6218f3d5.png" alt="Inheritance diagram of holoviews.ipython.widgets" usemap="#inheritance646aa5a76d" class="inheritance"/>
+<img src="../_images/inheritance-d0e7c1bbded57463030c0d41bd55d3195e9814f2.png" alt="Inheritance diagram of holoviews.ipython.widgets" usemap="#inheritance646aa5a76d" class="inheritance"/>
 <map id="inheritance646aa5a76d" name="inheritance646aa5a76d">
-<area shape="rect" id="node2" href="#holoviews.ipython.widgets.FixedValueSliderWidget" title="Subclass of FloatSliderWidget that jumps discretely" alt="" coords="321,122,589,142"/>
-<area shape="rect" id="node3" href="#holoviews.ipython.widgets.IPySelectionWidget" title="Interactive widget to select and view ViewableElement objects contained" alt="" coords="628,4,875,24"/>
-<area shape="rect" id="node4" href="#holoviews.ipython.widgets.NdWidget" title="NdWidget is an abstract base class implementing a method to" alt="" coords="355,43,555,63"/>
-<area shape="rect" id="node9" href="#holoviews.ipython.widgets.ScrubberWidget" title="ScrubberWidget generates a basic animation widget with a slider" alt="" coords="636,43,867,63"/>
-<area shape="rect" id="node5" title="params(name=String)" alt="" coords="40,63,247,83"/>
-<area shape="rect" id="node6" href="#holoviews.ipython.widgets.ProgressBar" title="A simple text progress bar suitable for both the IPython notebook" alt="" coords="348,82,562,103"/>
-<area shape="rect" id="node7" href="#holoviews.ipython.widgets.RemoteProgress" title="Connect to a progress bar in a separate process with output_mode" alt="" coords="634,82,869,103"/>
-<area shape="rect" id="node8" href="#holoviews.ipython.widgets.RunProgress" title="RunProgress breaks up the execution of a slow running command so" alt="" coords="644,122,859,142"/>
-<area shape="rect" id="node10" href="#holoviews.ipython.widgets.SelectionWidget" title="Javascript based widget to select and view ViewableElement objects contained" alt="" coords="914,43,1147,63"/>
+<area shape="rect" id="node4" href="#holoviews.ipython.widgets.FixedValueSliderWidget" title="Subclass of FloatSliderWidget that jumps discretely" alt="" coords="320,101,588,121"/>
+<area shape="rect" id="node2" href="holoviews.core.html#holoviews.core.util.ProgressIndicator" title="Baseclass for any ProgressIndicator that indicates progress" alt="" coords="353,23,555,43"/>
+<area shape="rect" id="node7" href="#holoviews.ipython.widgets.ProgressBar" title="A simple text progress bar suitable for both the IPython notebook" alt="" coords="643,23,857,43"/>
+<area shape="rect" id="node3" title="params(name=String)" alt="" coords="40,43,246,63"/>
+<area shape="rect" id="node6" href="#holoviews.ipython.widgets.NdWidget" title="NdWidget is an abstract base class implementing a method to" alt="" coords="354,62,554,82"/>
+<area shape="rect" id="node5" href="#holoviews.ipython.widgets.IPySelectionWidget" title="Interactive widget to select and view ViewableElement objects contained" alt="" coords="626,62,874,82"/>
+<area shape="rect" id="node10" href="#holoviews.ipython.widgets.ScrubberWidget" title="ScrubberWidget generates a basic animation widget with a slider" alt="" coords="634,101,866,121"/>
+<area shape="rect" id="node8" href="#holoviews.ipython.widgets.RemoteProgress" title="Connect to a progress bar in a separate process with output_mode" alt="" coords="913,4,1147,24"/>
+<area shape="rect" id="node9" href="#holoviews.ipython.widgets.RunProgress" title="RunProgress breaks up the execution of a slow running command so" alt="" coords="923,43,1137,63"/>
+<area shape="rect" id="node11" href="#holoviews.ipython.widgets.SelectionWidget" title="Javascript based widget to select and view ViewableElement objects contained" alt="" coords="914,101,1146,121"/>
 </map>
 </p>
 <span class="target" id="module-holoviews.ipython.widgets"></span><dl class="class">
@@ -2519,7 +2543,7 @@ instantiated.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.IPySelectionWidget.force_new_dynamic_value">
-<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb58833c0&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.IPySelectionWidget.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3418&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.IPySelectionWidget.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -2533,12 +2557,12 @@ equal to the default value.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.IPySelectionWidget.get_value_generator">
-<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb58831b0&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.IPySelectionWidget.get_value_generator" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3578&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.IPySelectionWidget.get_value_generator" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.IPySelectionWidget.inspect_value">
-<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883368&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.IPySelectionWidget.inspect_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af35d0&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.IPySelectionWidget.inspect_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -2554,6 +2578,18 @@ equal to the default value.</p>
 dictionary {name: parameter_object}</p>
 <p>Includes Parameters from this class and its
 superclasses.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="holoviews.ipython.widgets.IPySelectionWidget.pprint">
+<tt class="descname">pprint</tt><big>(</big><em>imports=['import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews', 'import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews', 'import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews'], prefix=' ', unknown_value='&lt;?&gt;', qualify=False</em><big>)</big><a class="headerlink" href="#holoviews.ipython.widgets.IPySelectionWidget.pprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>(Experimental) Pretty printed representation that may be
+evaluated with eval. Similar to repr except introspection of the
+constructor (__init__) ensures a valid and succinct representation
+is generated.</p>
+<p>See pprint() function for more details.</p>
+<p>NOTE: pprint will replace script_repr in a future version of
+param, but is not yet a complete replacement for script_repr.</p>
 </dd></dl>
 
 <dl class="classmethod">
@@ -2583,12 +2619,12 @@ superclasses.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.IPySelectionWidget.set_dynamic_time_fn">
-<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883418&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.IPySelectionWidget.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3100&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.IPySelectionWidget.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.IPySelectionWidget.set_param">
-<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb58834c8&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.IPySelectionWidget.set_param" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3730&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.IPySelectionWidget.set_param" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -2659,7 +2695,7 @@ instantiated.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.NdWidget.force_new_dynamic_value">
-<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883050&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.NdWidget.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3208&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.NdWidget.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -2673,12 +2709,12 @@ equal to the default value.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.NdWidget.get_value_generator">
-<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb58834c8&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.NdWidget.get_value_generator" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3418&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.NdWidget.get_value_generator" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.NdWidget.inspect_value">
-<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883100&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.NdWidget.inspect_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3310&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.NdWidget.inspect_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -2694,6 +2730,18 @@ equal to the default value.</p>
 dictionary {name: parameter_object}</p>
 <p>Includes Parameters from this class and its
 superclasses.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="holoviews.ipython.widgets.NdWidget.pprint">
+<tt class="descname">pprint</tt><big>(</big><em>imports=['import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews', 'import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews', 'import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews'], prefix=' ', unknown_value='&lt;?&gt;', qualify=False</em><big>)</big><a class="headerlink" href="#holoviews.ipython.widgets.NdWidget.pprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>(Experimental) Pretty printed representation that may be
+evaluated with eval. Similar to repr except introspection of the
+constructor (__init__) ensures a valid and succinct representation
+is generated.</p>
+<p>See pprint() function for more details.</p>
+<p>NOTE: pprint will replace script_repr in a future version of
+param, but is not yet a complete replacement for script_repr.</p>
 </dd></dl>
 
 <dl class="classmethod">
@@ -2723,12 +2771,12 @@ superclasses.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.NdWidget.set_dynamic_time_fn">
-<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb58830a8&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.NdWidget.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af32b8&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.NdWidget.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.NdWidget.set_param">
-<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883310&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.NdWidget.set_param" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3680&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.NdWidget.set_param" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -2770,7 +2818,7 @@ containing the arguments.</p>
 <dl class="class">
 <dt id="holoviews.ipython.widgets.ProgressBar">
 <em class="property">class </em><tt class="descclassname">holoviews.ipython.widgets.</tt><tt class="descname">ProgressBar</tt><big>(</big><em>**params</em><big>)</big><a class="reference internal" href="../_modules/holoviews/ipython/widgets.html#ProgressBar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#holoviews.ipython.widgets.ProgressBar" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference external" href="http://ioam.github.io/param/Reference_Manual/param.html#param.parameterized.Parameterized" title="(in Param v1.3.0)"><tt class="xref py py-class docutils literal"><span class="pre">param.parameterized.Parameterized</span></tt></a></p>
+<dd><p>Bases: <a class="reference internal" href="holoviews.core.html#holoviews.core.util.ProgressIndicator" title="holoviews.core.util.ProgressIndicator"><tt class="xref py py-class docutils literal"><span class="pre">holoviews.core.util.ProgressIndicator</span></tt></a></p>
 <p>A simple text progress bar suitable for both the IPython notebook
 and the IPython interactive prompt.</p>
 <dl class="docutils">
@@ -2817,7 +2865,7 @@ instantiated.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.ProgressBar.force_new_dynamic_value">
-<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883368&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ProgressBar.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af35d0&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ProgressBar.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -2831,12 +2879,12 @@ equal to the default value.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.ProgressBar.get_value_generator">
-<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb58833c0&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ProgressBar.get_value_generator" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3628&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ProgressBar.get_value_generator" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.ProgressBar.inspect_value">
-<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb58831b0&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ProgressBar.inspect_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3100&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ProgressBar.inspect_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -2852,6 +2900,18 @@ equal to the default value.</p>
 dictionary {name: parameter_object}</p>
 <p>Includes Parameters from this class and its
 superclasses.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="holoviews.ipython.widgets.ProgressBar.pprint">
+<tt class="descname">pprint</tt><big>(</big><em>imports=['import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews', 'import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews', 'import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews'], prefix=' ', unknown_value='&lt;?&gt;', qualify=False</em><big>)</big><a class="headerlink" href="#holoviews.ipython.widgets.ProgressBar.pprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>(Experimental) Pretty printed representation that may be
+evaluated with eval. Similar to repr except introspection of the
+constructor (__init__) ensures a valid and succinct representation
+is generated.</p>
+<p>See pprint() function for more details.</p>
+<p>NOTE: pprint will replace script_repr in a future version of
+param, but is not yet a complete replacement for script_repr.</p>
 </dd></dl>
 
 <dl class="classmethod">
@@ -2881,12 +2941,12 @@ superclasses.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.ProgressBar.set_dynamic_time_fn">
-<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883310&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ProgressBar.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3310&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ProgressBar.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.ProgressBar.set_param">
-<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883578&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ProgressBar.set_param" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af37e0&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ProgressBar.set_param" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -2979,7 +3039,7 @@ instantiated.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.RemoteProgress.force_new_dynamic_value">
-<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb58834c8&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RemoteProgress.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3418&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RemoteProgress.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -2993,12 +3053,12 @@ equal to the default value.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.RemoteProgress.get_value_generator">
-<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883050&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RemoteProgress.get_value_generator" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3100&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RemoteProgress.get_value_generator" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.RemoteProgress.inspect_value">
-<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883100&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RemoteProgress.inspect_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af32b8&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RemoteProgress.inspect_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -3014,6 +3074,18 @@ equal to the default value.</p>
 dictionary {name: parameter_object}</p>
 <p>Includes Parameters from this class and its
 superclasses.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="holoviews.ipython.widgets.RemoteProgress.pprint">
+<tt class="descname">pprint</tt><big>(</big><em>imports=['import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews', 'import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews', 'import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews'], prefix=' ', unknown_value='&lt;?&gt;', qualify=False</em><big>)</big><a class="headerlink" href="#holoviews.ipython.widgets.RemoteProgress.pprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>(Experimental) Pretty printed representation that may be
+evaluated with eval. Similar to repr except introspection of the
+constructor (__init__) ensures a valid and succinct representation
+is generated.</p>
+<p>See pprint() function for more details.</p>
+<p>NOTE: pprint will replace script_repr in a future version of
+param, but is not yet a complete replacement for script_repr.</p>
 </dd></dl>
 
 <dl class="classmethod">
@@ -3043,12 +3115,12 @@ superclasses.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.RemoteProgress.set_dynamic_time_fn">
-<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883578&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RemoteProgress.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3368&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RemoteProgress.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.RemoteProgress.set_param">
-<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883470&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RemoteProgress.set_param" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af36d8&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RemoteProgress.set_param" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -3151,7 +3223,7 @@ instantiated.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.RunProgress.force_new_dynamic_value">
-<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb58831b0&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RunProgress.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3310&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RunProgress.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -3165,12 +3237,12 @@ equal to the default value.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.RunProgress.get_value_generator">
-<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883470&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RunProgress.get_value_generator" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af35d0&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RunProgress.get_value_generator" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.RunProgress.inspect_value">
-<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883310&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RunProgress.inspect_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af37e0&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RunProgress.inspect_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -3186,6 +3258,18 @@ equal to the default value.</p>
 dictionary {name: parameter_object}</p>
 <p>Includes Parameters from this class and its
 superclasses.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="holoviews.ipython.widgets.RunProgress.pprint">
+<tt class="descname">pprint</tt><big>(</big><em>imports=['import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews', 'import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews', 'import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews'], prefix=' ', unknown_value='&lt;?&gt;', qualify=False</em><big>)</big><a class="headerlink" href="#holoviews.ipython.widgets.RunProgress.pprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>(Experimental) Pretty printed representation that may be
+evaluated with eval. Similar to repr except introspection of the
+constructor (__init__) ensures a valid and succinct representation
+is generated.</p>
+<p>See pprint() function for more details.</p>
+<p>NOTE: pprint will replace script_repr in a future version of
+param, but is not yet a complete replacement for script_repr.</p>
 </dd></dl>
 
 <dl class="classmethod">
@@ -3215,12 +3299,12 @@ superclasses.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.RunProgress.set_dynamic_time_fn">
-<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883368&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RunProgress.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3628&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RunProgress.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.RunProgress.set_param">
-<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883520&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RunProgress.set_param" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3788&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.RunProgress.set_param" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -3303,7 +3387,7 @@ instantiated.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.ScrubberWidget.force_new_dynamic_value">
-<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb58834c8&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ScrubberWidget.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3368&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ScrubberWidget.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -3317,12 +3401,12 @@ equal to the default value.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.ScrubberWidget.get_value_generator">
-<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883050&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ScrubberWidget.get_value_generator" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3208&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ScrubberWidget.get_value_generator" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.ScrubberWidget.inspect_value">
-<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883578&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ScrubberWidget.inspect_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af36d8&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ScrubberWidget.inspect_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -3338,6 +3422,18 @@ equal to the default value.</p>
 dictionary {name: parameter_object}</p>
 <p>Includes Parameters from this class and its
 superclasses.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="holoviews.ipython.widgets.ScrubberWidget.pprint">
+<tt class="descname">pprint</tt><big>(</big><em>imports=['import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews', 'import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews', 'import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews'], prefix=' ', unknown_value='&lt;?&gt;', qualify=False</em><big>)</big><a class="headerlink" href="#holoviews.ipython.widgets.ScrubberWidget.pprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>(Experimental) Pretty printed representation that may be
+evaluated with eval. Similar to repr except introspection of the
+constructor (__init__) ensures a valid and succinct representation
+is generated.</p>
+<p>See pprint() function for more details.</p>
+<p>NOTE: pprint will replace script_repr in a future version of
+param, but is not yet a complete replacement for script_repr.</p>
 </dd></dl>
 
 <dl class="classmethod">
@@ -3367,12 +3463,12 @@ superclasses.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.ScrubberWidget.set_dynamic_time_fn">
-<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883100&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ScrubberWidget.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3100&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ScrubberWidget.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.ScrubberWidget.set_param">
-<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb58833c0&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ScrubberWidget.set_param" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3578&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.ScrubberWidget.set_param" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -3457,7 +3553,7 @@ instantiated.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.SelectionWidget.force_new_dynamic_value">
-<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb58831b0&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.SelectionWidget.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">force_new_dynamic_value</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3628&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.SelectionWidget.force_new_dynamic_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -3471,12 +3567,12 @@ equal to the default value.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.SelectionWidget.get_value_generator">
-<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883470&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.SelectionWidget.get_value_generator" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">get_value_generator</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3368&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.SelectionWidget.get_value_generator" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.SelectionWidget.inspect_value">
-<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883368&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.SelectionWidget.inspect_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">inspect_value</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3788&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.SelectionWidget.inspect_value" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -3492,6 +3588,18 @@ equal to the default value.</p>
 dictionary {name: parameter_object}</p>
 <p>Includes Parameters from this class and its
 superclasses.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="holoviews.ipython.widgets.SelectionWidget.pprint">
+<tt class="descname">pprint</tt><big>(</big><em>imports=['import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews', 'import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews', 'import holoviews.ipython.archive', 'import holoviews', 'import holoviews.plotting', 'import holoviews'], prefix=' ', unknown_value='&lt;?&gt;', qualify=False</em><big>)</big><a class="headerlink" href="#holoviews.ipython.widgets.SelectionWidget.pprint" title="Permalink to this definition">¶</a></dt>
+<dd><p>(Experimental) Pretty printed representation that may be
+evaluated with eval. Similar to repr except introspection of the
+constructor (__init__) ensures a valid and succinct representation
+is generated.</p>
+<p>See pprint() function for more details.</p>
+<p>NOTE: pprint will replace script_repr in a future version of
+param, but is not yet a complete replacement for script_repr.</p>
 </dd></dl>
 
 <dl class="classmethod">
@@ -3521,12 +3629,12 @@ superclasses.</p>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.SelectionWidget.set_dynamic_time_fn">
-<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb5883520&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.SelectionWidget.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_dynamic_time_fn</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af32b8&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.SelectionWidget.set_dynamic_time_fn" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="holoviews.ipython.widgets.SelectionWidget.set_param">
-<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b6cb58832b8&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.SelectionWidget.set_param" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">set_param</tt><em class="property"> = &lt;functools.partial object at 0x2b8996af3520&gt;</em><a class="headerlink" href="#holoviews.ipython.widgets.SelectionWidget.set_param" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
