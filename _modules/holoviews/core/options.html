@@ -533,7 +533,9 @@
         <span class="n">item</span> <span class="o">=</span> <span class="bp">self</span>
 
         <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">child</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
-            <span class="n">matching_children</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">children</span> <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span>
+            <span class="n">escaped_child</span> <span class="o">=</span> <span class="n">sanitize_identifier</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+            <span class="n">matching_children</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">children</span>
+                                 <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="ow">or</span> <span class="n">escaped_child</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">c</span><span class="p">)]</span>
             <span class="n">matching_children</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">matching_children</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">matching_children</span><span class="p">:</span>
                 <span class="n">item</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="n">matching_children</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
@@ -631,17 +633,17 @@
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Compositor.strongest_match"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Compositor.strongest_match">[docs]</a>    <span class="k">def</span> <span class="nf">strongest_match</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">overlay</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns the strongest matching compositor operation given an</span>
-<span class="sd">        overlay. If no matches are found, None is returned.</span>
+<span class="sd">        Returns the single strongest matching compositor operation</span>
+<span class="sd">        given an overlay. If no matches are found, None is returned.</span>
 
 <span class="sd">        The best match is defined as the compositor operation with the</span>
 <span class="sd">        highest match value as returned by the match_level method.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">match_strength</span> <span class="o">=</span> <span class="p">[(</span><span class="n">op</span><span class="o">.</span><span class="n">match_level</span><span class="p">(</span><span class="n">overlay</span><span class="p">),</span> <span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">definitions</span>
                           <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">mode</span><span class="p">]</span>
-        <span class="n">matches</span> <span class="o">=</span> <span class="p">[(</span><span class="n">lvl</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">lvl</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">match_strength</span> <span class="k">if</span> <span class="n">lvl</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">]</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="p">[(</span><span class="n">match</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">op</span><span class="p">,</span> <span class="n">match</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="p">(</span><span class="n">match</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span> <span class="ow">in</span> <span class="n">match_strength</span> <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">matches</span> <span class="o">==</span> <span class="p">[]:</span> <span class="k">return</span> <span class="bp">None</span>
-        <span class="k">else</span><span class="p">:</span>             <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">matches</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>             <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">matches</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
 </div>
     <span class="nd">@classmethod</span>
@@ -650,13 +652,16 @@
 <span class="sd">        Finds any applicable compositor and applies it.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span> <span class="nn">.overlay</span> <span class="kn">import</span> <span class="n">Overlay</span>
-        <span class="n">applicable_op</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">strongest_match</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">applicable_op</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">overlay</span>
-
-        <span class="n">output</span> <span class="o">=</span> <span class="n">applicable_op</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">ranges</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">match</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">strongest_match</span><span class="p">(</span><span class="n">overlay</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">overlay</span>
+        <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">applicable_op</span><span class="p">,</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">))</span> <span class="o">=</span> <span class="n">match</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">overlay</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="n">sliced</span> <span class="o">=</span> <span class="n">Overlay</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">])</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">applicable_op</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">sliced</span><span class="p">,</span> <span class="n">ranges</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">Overlay</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">values</span><span class="p">[:</span><span class="n">start</span><span class="p">]</span><span class="o">+</span><span class="p">[</span><span class="n">result</span><span class="p">]</span><span class="o">+</span><span class="n">values</span><span class="p">[</span><span class="n">stop</span><span class="p">:])</span>
         <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">relabel</span><span class="p">(</span><span class="n">group</span><span class="o">=</span><span class="n">applicable_op</span><span class="o">.</span><span class="n">group</span><span class="p">)</span>
         <span class="n">output</span><span class="o">.</span><span class="n">id</span> <span class="o">=</span> <span class="n">overlay</span><span class="o">.</span><span class="n">id</span>
-        <span class="k">return</span> <span class="n">Overlay</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output</span>
 
 </div>
     <span class="nd">@classmethod</span>
@@ -720,19 +725,13 @@
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="o">.</span><span class="n">output_type</span>
 
 </div>
-<div class="viewcode-block" id="Compositor.match_level"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Compositor.match_level">[docs]</a>    <span class="k">def</span> <span class="nf">match_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_slice_match_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay_items</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Given an overlay, return an integer if there is a match or</span>
-<span class="sd">        None if there is no match.</span>
-
-<span class="sd">        The returned integer is the number of matching</span>
-<span class="sd">        components. Higher values indicate a stronger match.</span>
+<span class="sd">        Find the match strength for a list of overlay items that must</span>
+<span class="sd">        be exactly the same length as the pattern specification.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">level</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pattern_spec</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">None</span>
-
-        <span class="k">for</span> <span class="n">spec</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pattern_spec</span><span class="p">,</span> <span class="n">overlay</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">spec</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pattern_spec</span><span class="p">,</span> <span class="n">overlay_items</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">spec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">type</span><span class="p">(</span><span class="n">el</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">None</span>
             <span class="n">level</span> <span class="o">+=</span> <span class="mi">1</span>      <span class="c"># Types match</span>
@@ -749,6 +748,31 @@
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">return</span> <span class="bp">None</span>
         <span class="k">return</span> <span class="n">level</span>
+
+
+<div class="viewcode-block" id="Compositor.match_level"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Compositor.match_level">[docs]</a>    <span class="k">def</span> <span class="nf">match_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">overlay</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given an overlay, return the match level and applicable slice</span>
+<span class="sd">        of the overall overlay. The level an integer if there is a</span>
+<span class="sd">        match or None if there is no match.</span>
+
+<span class="sd">        The level integer is the number of matching components. Higher</span>
+<span class="sd">        values indicate a stronger match.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">slice_width</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pattern_spec</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">slice_width</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">):</span> <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="c"># Check all the possible slices and return the best matching one</span>
+        <span class="n">best_lvl</span><span class="p">,</span> <span class="n">match_slice</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">overlay</span><span class="p">)</span><span class="o">-</span><span class="n">slice_width</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+            <span class="n">overlay_slice</span> <span class="o">=</span> <span class="n">overlay</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="n">slice_width</span><span class="p">]</span>
+            <span class="n">lvl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_slice_match_level</span><span class="p">(</span><span class="n">overlay_slice</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">lvl</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">lvl</span> <span class="o">&gt;</span> <span class="n">best_lvl</span><span class="p">:</span>
+                <span class="n">best_lvl</span> <span class="o">=</span> <span class="n">lvl</span>
+                <span class="n">match_slice</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="n">slice_width</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">best_lvl</span><span class="p">,</span> <span class="n">match_slice</span><span class="p">)</span> <span class="k">if</span> <span class="n">best_lvl</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">None</span>
 
 </div>
 <div class="viewcode-block" id="Compositor.apply"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Compositor.apply">[docs]</a>    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">input_ranges</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -797,13 +821,25 @@
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Store.load"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Equivalent to pickle.load except that the appropriate</span>
-<span class="sd">        HoloViews trees is restored appropriately.</span>
+<span class="sd">        Equivalent to pickle.load except that the HoloViews trees is</span>
+<span class="sd">        restored appropriately.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">load_counter_offset</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">custom_options</span><span class="p">)</span> <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">custom_options</span> <span class="k">else</span> <span class="mi">0</span>
         <span class="n">val</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-        <span class="n">load_counter_offset</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">load_counter_offset</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">return</span> <span class="n">val</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Store.loads"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.loads">[docs]</a>    <span class="k">def</span> <span class="nf">loads</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">pickle_string</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Equivalent to pickle.loads except that the HoloViews trees is</span>
+<span class="sd">        restored appropriately.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">load_counter_offset</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">custom_options</span><span class="p">)</span> <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">custom_options</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pickle_string</span><span class="p">)</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">load_counter_offset</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="n">val</span>
+
 </div>
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Store.dump"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.dump">[docs]</a>    <span class="k">def</span> <span class="nf">dump</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
@@ -812,8 +848,19 @@
 <span class="sd">        tree is saved appropriately.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">save_option_state</span> <span class="o">=</span> <span class="bp">True</span>
-        <span class="n">val</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">)</span>
+        <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">)</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">save_option_state</span> <span class="o">=</span> <span class="bp">False</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Store.dumps"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.dumps">[docs]</a>    <span class="k">def</span> <span class="nf">dumps</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Equivalent to pickle.dumps except that the HoloViews option</span>
+<span class="sd">        tree is saved appropriately.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">save_option_state</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">)</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">save_option_state</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="k">return</span> <span class="n">val</span>
 
 </div>
     <span class="nd">@classmethod</span>

@@ -150,6 +150,7 @@
 
 <span class="kn">import</span> <span class="nn">param</span>
 
+<span class="kn">from</span> <span class="nn">.options</span> <span class="kn">import</span> <span class="n">Store</span>
 <span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">unique_iterator</span>
 <span class="kn">from</span> <span class="nn">.ndmapping</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">UniformNdMapping</span>
 <span class="kn">from</span> <span class="nn">.dimension</span> <span class="kn">import</span> <span class="n">LabelledData</span>
@@ -218,14 +219,14 @@
 <span class="s">        versions and 2 is efficient for new style classes.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;file-ext&#39;</span><span class="p">:</span><span class="s">&#39;pkl&#39;</span><span class="p">,</span>
                       <span class="s">&#39;size&#39;</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span>
                       <span class="s">&#39;mime_type&#39;</span><span class="p">:</span><span class="s">&#39;application/python-pickle&#39;</span><span class="p">}</span>
 
     <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">basename</span><span class="p">):</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">basename</span><span class="o">+</span><span class="s">&#39;.pkl&#39;</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">)</span>
+            <span class="n">Store</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">)</span>
 
 
 </div>
@@ -240,9 +241,9 @@
 <span class="sd">    * Storing a collection of HoloViews objects to a database or HDF5.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">exporter</span><span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ClassSelector</span><span class="p">(</span><span class="n">class_</span><span class="o">=</span><span class="n">Exporter</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">        The exporter function used to convert HoloViews objects into the</span>
-<span class="s">        appropriate format.&quot;&quot;&quot;</span>  <span class="p">)</span>
+    <span class="n">exporters</span><span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The exporter functions used to convert HoloViews objects into the</span>
+<span class="s">        appropriate format(s).&quot;&quot;&quot;</span>  <span class="p">)</span>
 
 <div class="viewcode-block" id="Archive.add"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Archive.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -286,9 +287,9 @@
 <span class="sd">    directory or in an archive format (e.g. a zip file).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">exporter</span><span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">Pickler</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">        The exporter function used to convert HoloViews objects into the</span>
-<span class="s">        appropriate format.&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">exporters</span><span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="n">Pickler</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The exporter functions used to convert HoloViews objects into</span>
+<span class="s">        the appropriate format(s).&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">dimension_formatter</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s">&quot;{name}_{range}&quot;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        A string formatter for the output file based on the</span>
@@ -425,38 +426,56 @@
         <span class="k">elif</span> <span class="p">[</span><span class="n">obj</span><span class="p">,</span> <span class="n">data</span><span class="p">]</span> <span class="o">==</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Either an object or explicit data must be &quot;</span>
                             <span class="s">&quot;supplied to create an entry in the archive.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">rendered</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exporter</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">rendered</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
-            <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">new_info</span><span class="p">)</span> <span class="o">=</span> <span class="n">rendered</span>
-            <span class="n">info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="o">**</span><span class="n">new_info</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_formatters</span><span class="p">()</span>
 
-        <span class="n">hashfn</span> <span class="o">=</span> <span class="n">sha256</span><span class="p">()</span>
-        <span class="n">obj_str</span> <span class="o">=</span> <span class="s">&#39;None&#39;</span> <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_formatter</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-        <span class="n">dimensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim_formatter</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-        <span class="n">dimensions</span> <span class="o">=</span> <span class="n">dimensions</span> <span class="k">if</span> <span class="n">dimensions</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="n">entries</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">exporter</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exporters</span><span class="p">:</span>
+                <span class="n">rendered</span> <span class="o">=</span> <span class="n">exporter</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">rendered</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">continue</span>
+                <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">new_info</span><span class="p">)</span> <span class="o">=</span> <span class="n">rendered</span>
+                <span class="n">info</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="o">**</span><span class="n">new_info</span><span class="p">)</span>
+                <span class="n">entries</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">entries</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">))</span>
 
-        <span class="n">hashfn</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">obj_str</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span>
-        <span class="n">format_values</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;timestamp&#39;</span><span class="p">:</span> <span class="s">&#39;{timestamp}&#39;</span><span class="p">,</span>
-                         <span class="s">&#39;dimensions&#39;</span><span class="p">:</span> <span class="n">dimensions</span><span class="p">,</span>
-                         <span class="s">&#39;group&#39;</span><span class="p">:</span>   <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;group&#39;</span><span class="p">,</span> <span class="s">&#39;no-group&#39;</span><span class="p">),</span>
-                         <span class="s">&#39;label&#39;</span><span class="p">:</span>   <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;label&#39;</span><span class="p">,</span> <span class="s">&#39;no-label&#39;</span><span class="p">),</span>
-                         <span class="s">&#39;type&#39;</span><span class="p">:</span>    <span class="n">obj</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
-                         <span class="s">&#39;obj&#39;</span><span class="p">:</span>     <span class="n">obj_str</span><span class="p">,</span>
-                         <span class="s">&#39;SHA&#39;</span><span class="p">:</span>     <span class="n">hashfn</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()}</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_add_content</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span>
 
+</div>
+    <span class="k">def</span> <span class="nf">_add_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="p">(</span><span class="n">unique_key</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_filename</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="n">filename</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="p">[(</span><span class="n">unique_key</span><span class="p">,</span> <span class="n">ext</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_compute_filename</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">hashfn</span> <span class="o">=</span> <span class="n">sha256</span><span class="p">()</span>
+            <span class="n">obj_str</span> <span class="o">=</span> <span class="s">&#39;None&#39;</span> <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">object_formatter</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="n">dimensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim_formatter</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="n">dimensions</span> <span class="o">=</span> <span class="n">dimensions</span> <span class="k">if</span> <span class="n">dimensions</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+
+            <span class="n">hashfn</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">obj_str</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span>
+            <span class="n">format_values</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;timestamp&#39;</span><span class="p">:</span> <span class="s">&#39;{timestamp}&#39;</span><span class="p">,</span>
+                             <span class="s">&#39;dimensions&#39;</span><span class="p">:</span> <span class="n">dimensions</span><span class="p">,</span>
+                             <span class="s">&#39;group&#39;</span><span class="p">:</span>   <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;group&#39;</span><span class="p">,</span> <span class="s">&#39;no-group&#39;</span><span class="p">),</span>
+                             <span class="s">&#39;label&#39;</span><span class="p">:</span>   <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;label&#39;</span><span class="p">,</span> <span class="s">&#39;no-label&#39;</span><span class="p">),</span>
+                             <span class="s">&#39;type&#39;</span><span class="p">:</span>    <span class="n">obj</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
+                             <span class="s">&#39;obj&#39;</span><span class="p">:</span>     <span class="n">obj_str</span><span class="p">,</span>
+                             <span class="s">&#39;SHA&#39;</span><span class="p">:</span>     <span class="n">hashfn</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()}</span>
+
             <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename_formatter</span><span class="p">,</span>
                                     <span class="nb">dict</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="o">**</span><span class="n">format_values</span><span class="p">))</span>
 
         <span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_normalize_name</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-
         <span class="n">ext</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;file-ext&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
         <span class="p">(</span><span class="n">unique_key</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unique_name</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">ext</span><span class="p">,</span>
                                               <span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">force</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_files</span><span class="p">[(</span><span class="n">unique_key</span><span class="p">,</span> <span class="n">ext</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
-</div>
+        <span class="k">return</span> <span class="p">(</span><span class="n">unique_key</span><span class="p">,</span> <span class="n">ext</span><span class="p">)</span>
+
+
+
     <span class="k">def</span> <span class="nf">_zip_archive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">export_name</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
         <span class="n">archname</span> <span class="o">=</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_unique_name</span><span class="p">(</span><span class="n">export_name</span><span class="p">,</span> <span class="s">&#39;zip&#39;</span><span class="p">,</span> <span class="n">root</span><span class="p">))</span>
         <span class="k">with</span> <span class="n">zipfile</span><span class="o">.</span><span class="n">ZipFile</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">archname</span><span class="p">),</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">zipf</span><span class="p">:</span>
