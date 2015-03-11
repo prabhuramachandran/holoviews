@@ -184,6 +184,7 @@
 
 
 <span class="k">def</span> <span class="nf">HTML_video</span><span class="p">(</span><span class="n">plot</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;holomap&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;text&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="bp">None</span>
     <span class="n">dpi</span> <span class="o">=</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;dpi&#39;</span><span class="p">]</span>
     <span class="n">anim</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">anim</span><span class="p">(</span><span class="n">fps</span><span class="o">=</span><span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;fps&#39;</span><span class="p">])</span>
     <span class="n">writers</span> <span class="o">=</span> <span class="n">animation</span><span class="o">.</span><span class="n">writers</span><span class="o">.</span><span class="n">avail</span>
@@ -213,7 +214,7 @@
     <span class="k">return</span> <span class="n">display_figure</span><span class="p">(</span><span class="n">plot</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">plot</span><span class="p">)])</span>
 
 </div>
-<div class="viewcode-block" id="sanitized_repr"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.display_hooks.sanitized_repr">[docs]</a><span class="k">def</span> <span class="nf">sanitized_repr</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+<div class="viewcode-block" id="sanitize_HTML"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.display_hooks.sanitize_HTML">[docs]</a><span class="k">def</span> <span class="nf">sanitize_HTML</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
     <span class="s">&quot;Sanitize text output for HTML display&quot;</span>
     <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">,</span> <span class="s">&#39;&lt;br&gt;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;&amp;nbsp;&#39;</span><span class="p">)</span>
 </div>
@@ -225,7 +226,7 @@
 
 <div class="viewcode-block" id="process_object"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.display_hooks.process_object">[docs]</a><span class="k">def</span> <span class="nf">process_object</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
     <span class="s">&quot;Hook to process the object currently being displayed.&quot;</span>
-    <span class="n">invalid_options</span> <span class="o">=</span> <span class="n">OptsMagic</span><span class="o">.</span><span class="n">process_view</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="n">invalid_options</span> <span class="o">=</span> <span class="n">OptsMagic</span><span class="o">.</span><span class="n">process_element</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">invalid_options</span><span class="p">:</span> <span class="k">return</span> <span class="n">invalid_options</span>
 
 </div>
@@ -237,10 +238,12 @@
 
 
 <div class="viewcode-block" id="display_widgets"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.display_hooks.display_widgets">[docs]</a><span class="k">def</span> <span class="nf">display_widgets</span><span class="p">(</span><span class="n">plot</span><span class="p">):</span>
-    <span class="s">&quot;Display widgets applicable to the specified view&quot;</span>
+    <span class="s">&quot;Display widgets applicable to the specified element&quot;</span>
+    <span class="k">if</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;holomap&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;text&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="bp">None</span>
     <span class="n">widget_mode</span> <span class="o">=</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;widgets&#39;</span><span class="p">]</span>
     <span class="n">widget_format</span> <span class="o">=</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;holomap&#39;</span><span class="p">]</span>
     <span class="k">assert</span> <span class="n">widget_mode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">,</span> <span class="s">&quot;Mistaken call to display_widgets method&quot;</span>
+
 
     <span class="n">isuniform</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">uniform</span>
     <span class="n">islinear</span> <span class="o">=</span> <span class="n">bijective</span><span class="p">(</span><span class="n">plot</span><span class="o">.</span><span class="n">keys</span><span class="p">)</span>
@@ -263,7 +266,9 @@
 
 </div>
 <div class="viewcode-block" id="display_figure"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.display_hooks.display_figure">[docs]</a><span class="k">def</span> <span class="nf">display_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">max_width</span><span class="o">=</span><span class="s">&#39;100%&#39;</span><span class="p">):</span>
-    <span class="s">&quot;Display widgets applicable to the specified view&quot;</span>
+    <span class="s">&quot;Display widgets applicable to the specified element&quot;</span>
+    <span class="k">if</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;text&#39;</span><span class="p">:</span> <span class="k">return</span> <span class="bp">None</span>
+
     <span class="n">figure_format</span> <span class="o">=</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
     <span class="n">dpi</span> <span class="o">=</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;dpi&#39;</span><span class="p">]</span>
     <span class="n">backend</span> <span class="o">=</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;backend&#39;</span><span class="p">]</span>
@@ -292,17 +297,15 @@
 </div>
 <span class="k">def</span> <span class="nf">display_hook</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
     <span class="nd">@wraps</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">wrapped</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">wrapped</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="c"># If pretty printing is off, return None (will fallback to repr)</span>
         <span class="n">ip</span> <span class="o">=</span> <span class="n">get_ipython</span><span class="p">()</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">ip</span><span class="o">.</span><span class="n">display_formatter</span><span class="o">.</span><span class="n">formatters</span><span class="p">[</span><span class="s">&#39;text/plain&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pprint</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">None</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">widget_mode</span> <span class="o">=</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;widgets&#39;</span><span class="p">]</span>
             <span class="n">map_format</span>  <span class="o">=</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;holomap&#39;</span><span class="p">]</span>
             <span class="c"># If widget_mode is None, widgets are not being used</span>
             <span class="n">widget_mode</span> <span class="o">=</span> <span class="p">(</span><span class="n">widget_mode</span> <span class="k">if</span> <span class="n">map_format</span> <span class="ow">in</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">inbuilt_formats</span> <span class="k">else</span> <span class="bp">None</span><span class="p">)</span>
-            <span class="n">html</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="n">view</span><span class="p">,</span>
+            <span class="n">html</span> <span class="o">=</span> <span class="n">fn</span><span class="p">(</span><span class="n">element</span><span class="p">,</span>
                       <span class="n">size</span><span class="o">=</span><span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;size&#39;</span><span class="p">],</span>
                       <span class="n">dpi</span><span class="o">=</span><span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;dpi&#39;</span><span class="p">],</span>
                       <span class="n">max_frames</span><span class="o">=</span><span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;max_frames&#39;</span><span class="p">],</span>
@@ -310,14 +313,14 @@
                       <span class="n">map_format</span> <span class="o">=</span> <span class="n">map_format</span><span class="p">,</span>
                       <span class="n">widget_mode</span> <span class="o">=</span> <span class="n">widget_mode</span><span class="p">,</span>
                       <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="n">notebook_archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">html</span><span class="o">=</span><span class="n">html</span><span class="p">)</span>
+            <span class="n">notebook_archive</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">html</span><span class="o">=</span><span class="n">html</span><span class="p">)</span>
             <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">,</span> <span class="s">&#39;holomap&#39;</span><span class="p">,</span> <span class="s">&#39;size&#39;</span><span class="p">,</span> <span class="s">&#39;fps&#39;</span><span class="p">,</span> <span class="s">&#39;dpi&#39;</span><span class="p">]</span>
             <span class="n">filename</span> <span class="o">=</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;filename&#39;</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">filename</span><span class="p">:</span>
                 <span class="n">options</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">}</span>
                 <span class="k">if</span> <span class="n">options</span><span class="p">[</span><span class="s">&#39;holomap&#39;</span><span class="p">]</span>  <span class="ow">in</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">inbuilt_formats</span><span class="p">:</span>
                     <span class="n">options</span><span class="p">[</span><span class="s">&#39;holomap&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
-                <span class="n">PlotRenderer</span><span class="o">.</span><span class="n">instance</span><span class="p">(</span><span class="o">**</span><span class="n">options</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+                <span class="n">PlotRenderer</span><span class="o">.</span><span class="n">instance</span><span class="p">(</span><span class="o">**</span><span class="n">options</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
 
             <span class="k">return</span> <span class="n">html</span>
         <span class="k">except</span><span class="p">:</span>
@@ -332,14 +335,14 @@
 
 
 <span class="nd">@display_hook</span>
-<span class="k">def</span> <span class="nf">view_display</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">ViewableElement</span><span class="p">):</span> <span class="k">return</span> <span class="bp">None</span>
-    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">view</span><span class="p">)</span> <span class="o">==</span> <span class="n">Element</span><span class="p">:</span>                 <span class="k">return</span> <span class="bp">None</span>
-    <span class="n">info</span> <span class="o">=</span> <span class="n">process_object</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">element_display</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">ViewableElement</span><span class="p">):</span> <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">element</span><span class="p">)</span> <span class="o">==</span> <span class="n">Element</span><span class="p">:</span>                 <span class="k">return</span> <span class="bp">None</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">process_object</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">info</span><span class="p">:</span> <span class="k">return</span> <span class="n">info</span>
-    <span class="k">if</span> <span class="n">view</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Store</span><span class="o">.</span><span class="n">defaults</span><span class="p">:</span> <span class="k">return</span> <span class="bp">None</span>
-    <span class="n">fig</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="n">view</span><span class="o">.</span><span class="n">__class__</span><span class="p">](</span><span class="n">view</span><span class="p">,</span>
-                                         <span class="o">**</span><span class="n">opts</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">get_plot_size</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">size</span><span class="p">)))()</span>
+    <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">__class__</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">Store</span><span class="o">.</span><span class="n">defaults</span><span class="p">:</span> <span class="k">return</span> <span class="bp">None</span>
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="n">element</span><span class="o">.</span><span class="n">__class__</span><span class="p">](</span><span class="n">element</span><span class="p">,</span>
+                                         <span class="o">**</span><span class="n">opts</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">get_plot_size</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">size</span><span class="p">)))()</span>
     <span class="k">return</span> <span class="n">display_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
 
 
@@ -352,10 +355,10 @@
     <span class="n">mapplot</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="n">vmap</span><span class="o">.</span><span class="n">type</span><span class="p">](</span><span class="n">vmap</span><span class="p">,</span>
                                         <span class="o">**</span><span class="n">opts</span><span class="p">(</span><span class="n">vmap</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="n">get_plot_size</span><span class="p">(</span><span class="n">vmap</span><span class="p">,</span><span class="n">size</span><span class="p">)))</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mapplot</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">sanitized_repr</span><span class="p">(</span><span class="n">vmap</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sanitize_HTML</span><span class="p">(</span><span class="n">vmap</span><span class="p">)</span>
     <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">mapplot</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_frames</span><span class="p">:</span>
         <span class="n">max_frame_warning</span><span class="p">(</span><span class="n">max_frames</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">sanitized_repr</span><span class="p">(</span><span class="n">vmap</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sanitize_HTML</span><span class="p">(</span><span class="n">vmap</span><span class="p">)</span>
     <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">mapplot</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">fig</span> <span class="o">=</span> <span class="n">mapplot</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">display_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
@@ -379,10 +382,10 @@
         <span class="k">if</span> <span class="n">layout</span><span class="o">.</span><span class="n">_display</span> <span class="o">==</span> <span class="s">&#39;auto&#39;</span><span class="p">:</span>
             <span class="n">branches</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())]))</span>
             <span class="k">if</span> <span class="n">branches</span> <span class="o">&gt;</span> <span class="n">max_branches</span><span class="p">:</span>
-                <span class="k">return</span> <span class="s">&#39;&lt;tt&gt;&#39;</span><span class="o">+</span> <span class="n">sanitized_repr</span><span class="p">(</span><span class="n">layout</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;&lt;/tt&gt;&#39;</span>
+                <span class="k">return</span> <span class="s">&#39;&lt;tt&gt;&#39;</span><span class="o">+</span> <span class="n">sanitize_HTML</span><span class="p">(</span><span class="n">layout</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;&lt;/tt&gt;&#39;</span>
             <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">layout</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="o">*</span> <span class="n">nframes</span> <span class="o">&gt;</span> <span class="n">max_frames</span><span class="p">:</span>
                 <span class="n">max_frame_warning</span><span class="p">(</span><span class="n">max_frames</span><span class="p">)</span>
-                <span class="k">return</span> <span class="s">&#39;&lt;tt&gt;&#39;</span><span class="o">+</span> <span class="n">sanitized_repr</span><span class="p">(</span><span class="n">layout</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;&lt;/tt&gt;&#39;</span>
+                <span class="k">return</span> <span class="s">&#39;&lt;tt&gt;&#39;</span><span class="o">+</span> <span class="n">sanitize_HTML</span><span class="p">(</span><span class="n">layout</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;&lt;/tt&gt;&#39;</span>
 
     <span class="k">if</span> <span class="n">nframes</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">fig</span> <span class="o">=</span> <span class="n">layoutplot</span><span class="p">()</span>
@@ -409,7 +412,7 @@
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">gridplot</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_frames</span><span class="p">:</span>
         <span class="n">max_frame_warning</span><span class="p">(</span><span class="n">max_frames</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">sanitized_repr</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sanitize_HTML</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span>
     <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">gridplot</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="n">fig</span> <span class="o">=</span> <span class="n">gridplot</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">display_figure</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
@@ -427,9 +430,9 @@
     <span class="n">html_formatter</span> <span class="o">=</span> <span class="n">ip</span><span class="o">.</span><span class="n">display_formatter</span><span class="o">.</span><span class="n">formatters</span><span class="p">[</span><span class="s">&#39;text/html&#39;</span><span class="p">]</span>
     <span class="n">html_formatter</span><span class="o">.</span><span class="n">for_type_by_name</span><span class="p">(</span><span class="s">&#39;matplotlib.animation&#39;</span><span class="p">,</span> <span class="s">&#39;FuncAnimation&#39;</span><span class="p">,</span> <span class="n">animation_display</span><span class="p">)</span>
     <span class="n">html_formatter</span><span class="o">.</span><span class="n">for_type</span><span class="p">(</span><span class="n">Layout</span><span class="p">,</span> <span class="n">layout_display</span><span class="p">)</span>
-    <span class="n">html_formatter</span><span class="o">.</span><span class="n">for_type</span><span class="p">(</span><span class="n">ViewableElement</span><span class="p">,</span> <span class="n">view_display</span><span class="p">)</span>
-    <span class="n">html_formatter</span><span class="o">.</span><span class="n">for_type</span><span class="p">(</span><span class="n">Overlay</span><span class="p">,</span> <span class="n">view_display</span><span class="p">)</span>
-    <span class="n">html_formatter</span><span class="o">.</span><span class="n">for_type</span><span class="p">(</span><span class="n">NdOverlay</span><span class="p">,</span> <span class="n">view_display</span><span class="p">)</span>
+    <span class="n">html_formatter</span><span class="o">.</span><span class="n">for_type</span><span class="p">(</span><span class="n">ViewableElement</span><span class="p">,</span> <span class="n">element_display</span><span class="p">)</span>
+    <span class="n">html_formatter</span><span class="o">.</span><span class="n">for_type</span><span class="p">(</span><span class="n">Overlay</span><span class="p">,</span> <span class="n">element_display</span><span class="p">)</span>
+    <span class="n">html_formatter</span><span class="o">.</span><span class="n">for_type</span><span class="p">(</span><span class="n">NdOverlay</span><span class="p">,</span> <span class="n">element_display</span><span class="p">)</span>
     <span class="n">html_formatter</span><span class="o">.</span><span class="n">for_type</span><span class="p">(</span><span class="n">HoloMap</span><span class="p">,</span> <span class="n">map_display</span><span class="p">)</span>
     <span class="n">html_formatter</span><span class="o">.</span><span class="n">for_type</span><span class="p">(</span><span class="n">AdjointLayout</span><span class="p">,</span> <span class="n">layout_display</span><span class="p">)</span>
     <span class="n">html_formatter</span><span class="o">.</span><span class="n">for_type</span><span class="p">(</span><span class="n">NdLayout</span><span class="p">,</span> <span class="n">layout_display</span><span class="p">)</span>

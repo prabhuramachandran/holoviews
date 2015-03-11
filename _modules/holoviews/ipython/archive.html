@@ -179,6 +179,11 @@
 <span class="s">        The name of the current in the NotebookArchive instance in the</span>
 <span class="s">        IPython namespace that must be available.&quot;&quot;&quot;</span><span class="p">)</span>
 
+    <span class="n">skip_notebook_export</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether to skip JavaScript capture of notebook data which may</span>
+<span class="s">        be unreliable. Also disabled automatic capture of notebook</span>
+<span class="s">        name.&quot;&quot;&quot;</span><span class="p">)</span>
+
     <span class="n">snapshot_name</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s">&#39;index&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        The basename of the exported notebook snapshot (html). It may</span>
 <span class="s">        optionally use the {timestamp} formatter.&quot;&quot;&quot;</span><span class="p">)</span>
@@ -258,12 +263,17 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Get the current notebook data and export.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">skip_notebook_export</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">NotebookArchive</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">export</span><span class="p">(</span><span class="n">timestamp</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_timestamp</span><span class="p">,</span>
+                                                <span class="n">info</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;notebook&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">notebook_name</span><span class="p">})</span>
+            <span class="k">return</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">export_success</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_notebook_data</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_notebook_data</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">()</span>
         <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">namespace</span>
         <span class="c"># Unfortunate javascript hacks to get at notebook data</span>
         <span class="n">capture_cmd</span> <span class="o">=</span> <span class="p">((</span><span class="s">r&quot;var capture = &#39;</span><span class="si">%s</span><span class="s">._notebook_data.write(r</span><span class="se">\&quot;\&quot;\&quot;</span><span class="s">&#39;&quot;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
-                       <span class="o">+</span> <span class="s">r&quot;+json_string+&#39;</span><span class="se">\&quot;\&quot;\&quot;</span><span class="s">.encode(\&#39;utf-8\&#39;))&#39;; &quot;</span><span class="p">)</span>
+                       <span class="o">+</span> <span class="s">r&quot;+json_string+&#39;</span><span class="se">\&quot;\&quot;\&quot;</span><span class="s">.decode(\&#39;utf-8\&#39;))&#39;; &quot;</span><span class="p">)</span>
         <span class="n">cmd</span> <span class="o">=</span> <span class="p">(</span><span class="s">r&#39;var kernel = IPython.notebook.kernel; &#39;</span>
                <span class="o">+</span> <span class="s">r&#39;var json_data = IPython.notebook.toJSON(); &#39;</span>
                <span class="o">+</span> <span class="s">r&#39;var json_string = JSON.stringify(json_data); &#39;</span>
@@ -366,7 +376,7 @@
         <span class="k">if</span> <span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Captured buffer size for notebook node is zero.&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_notebook_data</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-        <span class="n">node</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">reads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_notebook_data</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">reads</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_notebook_data</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">nbversion</span> <span class="o">=</span> <span class="n">reader</span><span class="o">.</span><span class="n">get_version</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_notebook_data</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">node</span>

@@ -146,7 +146,7 @@
 <span class="kn">from</span> <span class="nn">..core.operation</span> <span class="kn">import</span> <span class="n">ElementOperation</span>
 <span class="kn">from</span> <span class="nn">..element</span> <span class="kn">import</span> <span class="n">Raster</span>
 <span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Overlay</span>
-<span class="kn">from</span> <span class="nn">..core.util</span> <span class="kn">import</span> <span class="n">sanitize_identifier</span>
+<span class="kn">from</span> <span class="nn">..core.util</span> <span class="kn">import</span> <span class="n">match_spec</span>
 
 
 <div class="viewcode-block" id="Normalization"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.normalization.Normalization">[docs]</a><span class="k">class</span> <span class="nc">Normalization</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
@@ -219,19 +219,6 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
 
 
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">matches</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">specs</span><span class="p">,</span> <span class="n">element</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">specs</span><span class="p">):</span> <span class="k">return</span> <span class="n">specs</span>
-        <span class="n">match_tuple</span> <span class="o">=</span> <span class="p">()</span>
-        <span class="n">match</span> <span class="o">=</span> <span class="n">specs</span><span class="o">.</span><span class="n">get</span><span class="p">((),</span> <span class="p">{})</span>
-        <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">element</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">sanitize_identifier</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">group</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span>
-                     <span class="n">sanitize_identifier</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">True</span><span class="p">)]:</span>
-            <span class="n">match_tuple</span> <span class="o">+=</span> <span class="p">(</span><span class="n">spec</span><span class="p">,)</span>
-            <span class="k">if</span> <span class="n">match_tuple</span> <span class="ow">in</span> <span class="n">specs</span><span class="p">:</span>
-                <span class="n">match</span> <span class="o">=</span> <span class="n">specs</span><span class="p">[</span><span class="n">match_tuple</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">match</span>
-
-
 <div class="viewcode-block" id="Normalization.get_ranges"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.normalization.Normalization.get_ranges">[docs]</a>    <span class="k">def</span> <span class="nf">get_ranges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Method to get the appropriate normalization range dictionary</span>
@@ -258,7 +245,7 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Key list length must match length of supplied ranges&quot;</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches</span><span class="p">(</span><span class="n">specs</span><span class="p">,</span> <span class="n">element</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">match_spec</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">specs</span><span class="p">)</span>
 
 </div>
     <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
@@ -303,10 +290,14 @@
             <span class="k">if</span> <span class="n">depth_range</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">norm_raster</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="n">depth_range</span> <span class="o">=</span> <span class="n">ranges</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
                 <span class="n">norm_raster</span><span class="o">.</span><span class="n">data</span><span class="p">[:,:]</span> <span class="o">-=</span> <span class="n">depth_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="n">norm_raster</span><span class="o">.</span><span class="n">data</span><span class="p">[:,:]</span> <span class="o">/=</span> <span class="p">(</span><span class="n">depth_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">depth_range</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="nb">range</span> <span class="o">=</span> <span class="p">(</span><span class="n">depth_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">depth_range</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">if</span> <span class="nb">range</span><span class="p">:</span>
+                    <span class="n">norm_raster</span><span class="o">.</span><span class="n">data</span><span class="p">[:,:]</span> <span class="o">/=</span> <span class="nb">range</span>
             <span class="k">elif</span> <span class="n">depth_range</span><span class="p">:</span>
                 <span class="n">norm_raster</span><span class="o">.</span><span class="n">data</span><span class="p">[:,:,</span><span class="n">depth</span><span class="p">]</span> <span class="o">-=</span> <span class="n">depth_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="n">norm_raster</span><span class="o">.</span><span class="n">data</span><span class="p">[:,:,</span><span class="n">depth</span><span class="p">]</span> <span class="o">/=</span> <span class="p">(</span><span class="n">depth_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">depth_range</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="nb">range</span> <span class="o">=</span> <span class="p">(</span><span class="n">depth_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">depth_range</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">if</span> <span class="nb">range</span><span class="p">:</span>
+                    <span class="n">norm_raster</span><span class="o">.</span><span class="n">data</span><span class="p">[:,:,</span><span class="n">depth</span><span class="p">]</span> <span class="o">/=</span> <span class="nb">range</span>
         <span class="k">return</span> <span class="n">norm_raster</span>
 </pre></div></div>
 
