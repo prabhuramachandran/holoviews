@@ -132,7 +132,7 @@
 <span class="kn">import</span> <span class="nn">colorsys</span>
 <span class="kn">import</span> <span class="nn">param</span>
 
-<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">Element2D</span>
+<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">Element2D</span><span class="p">,</span> <span class="n">Overlay</span>
 <span class="kn">from</span> <span class="nn">..core.boundingregion</span> <span class="kn">import</span> <span class="n">BoundingRegion</span><span class="p">,</span> <span class="n">BoundingBox</span>
 <span class="kn">from</span> <span class="nn">..core.sheetcoords</span> <span class="kn">import</span> <span class="n">SheetCoordinateSystem</span><span class="p">,</span> <span class="n">Slice</span>
 <span class="kn">from</span> <span class="nn">.chart</span> <span class="kn">import</span> <span class="n">Curve</span>
@@ -281,10 +281,9 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">dim_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension_index</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">dim_idx</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
-            <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span>
-            <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">dim_idx</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
-            <span class="n">dim_min</span><span class="p">,</span> <span class="n">dim_max</span> <span class="o">=</span> <span class="p">[(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)][</span><span class="n">dim_idx</span><span class="p">]</span>
-            <span class="n">linspace</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">dim_min</span><span class="p">,</span> <span class="n">dim_max</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">dim_idx</span><span class="p">)]</span>
+            <span class="n">dim_max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">dim_idx</span><span class="o">-</span><span class="mi">1</span><span class="p">)]</span>
+            <span class="n">linspace</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dim_max</span><span class="p">))</span>
             <span class="n">coords</span> <span class="o">=</span> <span class="n">linspace</span> <span class="o">*</span> <span class="n">shape</span>
             <span class="k">return</span> <span class="n">coords</span> <span class="k">if</span> <span class="n">dim_idx</span> <span class="k">else</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">dim_idx</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
@@ -587,29 +586,49 @@
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="RGB.load_image"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.element.html#holoviews.element.raster.RGB.load_image">[docs]</a>    <span class="k">def</span> <span class="nf">load_image</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">array</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns an RGB element or raw numpy array from a PNG image</span>
+<span class="sd">        Returns an raster element or raw numpy array from a PNG image</span>
 <span class="sd">        file, using matplotlib.</span>
 
-<span class="sd">        The specified height determines the bounds of the RGB object</span>
-<span class="sd">        in sheet coordinates: by default the height is 1 unit with the</span>
-<span class="sd">        width scaled appropriately by the image aspect ratio.</span>
+<span class="sd">        The specified height determines the bounds of the raster</span>
+<span class="sd">        object in sheet coordinates: by default the height is 1 unit</span>
+<span class="sd">        with the width scaled appropriately by the image aspect ratio.</span>
+
+<span class="sd">        Note that as PNG images are encoded as RGBA, the red component</span>
+<span class="sd">        maps to the first channel, the green component maps to the</span>
+<span class="sd">        second component etc. For RGB elements, this mapping is</span>
+<span class="sd">        trivial but may be important for subclasses e.g. for HSV</span>
+<span class="sd">        elements.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
         <span class="k">except</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span><span class="s">&quot;RGB.load_image requires matplotlib.&quot;</span><span class="p">)</span>
 
-        <span class="n">rgb</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">array</span><span class="p">:</span>  <span class="k">return</span> <span class="n">rgb</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array</span><span class="p">:</span>  <span class="k">return</span> <span class="n">data</span>
 
-        <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">channels</span><span class="p">)</span> <span class="o">=</span> <span class="n">rgb</span><span class="o">.</span><span class="n">shape</span>
+        <span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">channels</span><span class="p">)</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">f</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">height</span><span class="p">)</span> <span class="o">/</span> <span class="n">h</span>
         <span class="n">xoffset</span><span class="p">,</span> <span class="n">yoffset</span> <span class="o">=</span> <span class="n">w</span><span class="o">*</span><span class="n">f</span><span class="o">/</span><span class="mi">2</span><span class="p">,</span> <span class="n">h</span><span class="o">*</span><span class="n">f</span><span class="o">/</span><span class="mi">2</span>
-        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">rgb</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="n">xoffset</span><span class="p">,</span> <span class="o">-</span><span class="n">yoffset</span><span class="p">,</span> <span class="n">xoffset</span><span class="p">,</span> <span class="n">yoffset</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="n">xoffset</span><span class="p">,</span> <span class="o">-</span><span class="n">yoffset</span><span class="p">,</span> <span class="n">xoffset</span><span class="p">,</span> <span class="n">yoffset</span><span class="p">))</span>
 
 </div>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+
         <span class="n">sliced</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">):</span>
+            <span class="n">images</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">Image</span><span class="p">)</span> <span class="k">for</span> <span class="n">im</span> <span class="ow">in</span> <span class="n">images</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Input overlay must only contain Image elements&quot;</span><span class="p">)</span>
+            <span class="n">shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">im</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span> <span class="k">for</span> <span class="n">im</span> <span class="ow">in</span> <span class="n">images</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">shape</span><span class="o">==</span><span class="n">shapes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">shape</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Images in the input overlays must contain data of the consistent shape&quot;</span><span class="p">)</span>
+            <span class="n">ranges</span> <span class="o">=</span> <span class="p">[</span><span class="n">im</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">range</span> <span class="k">for</span> <span class="n">im</span> <span class="ow">in</span> <span class="n">images</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="bp">None</span> <span class="ow">in</span> <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">ranges</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Ranges must be defined on all the value_dimensions of all the Images&quot;</span><span class="p">)</span>
+            <span class="n">arrays</span> <span class="o">=</span> <span class="p">[(</span><span class="n">im</span><span class="o">.</span><span class="n">data</span> <span class="o">-</span> <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span><span class="p">,</span><span class="n">im</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ranges</span><span class="p">,</span> <span class="n">images</span><span class="p">)]</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">(</span><span class="n">arrays</span><span class="p">)</span>
+
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Three dimensional matrices or arrays required&quot;</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>

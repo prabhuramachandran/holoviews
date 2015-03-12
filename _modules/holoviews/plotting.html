@@ -135,13 +135,13 @@
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">rc_params_from_file</span><span class="p">,</span> <span class="n">rcParams</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">rc_params_from_file</span>
 <span class="kn">from</span> <span class="nn">matplotlib.ticker</span> <span class="kn">import</span> <span class="n">FormatStrFormatter</span>
-<span class="kn">from</span> <span class="nn">matplotlib.colors</span> <span class="kn">import</span> <span class="n">LinearSegmentedColormap</span>
 
 <span class="kn">import</span> <span class="nn">param</span>
+<span class="kn">from</span> <span class="nn">param.parameterized</span> <span class="kn">import</span> <span class="n">bothmethod</span>
 
-<span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Cycle</span><span class="p">,</span> <span class="n">Palette</span><span class="p">,</span> <span class="n">Options</span><span class="p">,</span> <span class="n">Store</span>
+<span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Cycle</span><span class="p">,</span> <span class="n">Palette</span><span class="p">,</span> <span class="n">Options</span><span class="p">,</span> <span class="n">Store</span><span class="p">,</span> <span class="n">StoreOptions</span>
 <span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">NdLayout</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">,</span> <span class="n">HoloMap</span>
 <span class="kn">from</span> <span class="nn">..core.io</span> <span class="kn">import</span> <span class="n">Exporter</span>
 <span class="kn">from</span> <span class="nn">.annotation</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
@@ -290,17 +290,19 @@
                       <span class="s">&#39;mime_type&#39;</span><span class="p">:</span><span class="n">HTML_TAGS</span><span class="p">[</span><span class="n">fmt</span><span class="p">][</span><span class="mi">0</span><span class="p">]}</span>
 
 
-<div class="viewcode-block" id="PlotRenderer.save"><a class="viewcode-back" href="../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.PlotRenderer.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="nd">@bothmethod</span>
+<div class="viewcode-block" id="PlotRenderer.save"><a class="viewcode-back" href="../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.PlotRenderer.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Save a HoloViews object to file, either using an explicitly</span>
 <span class="sd">        supplied format or to the appropriate deafult.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">rendered</span> <span class="o">=</span> <span class="bp">self</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">StoreOptions</span><span class="o">.</span><span class="n">options</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="n">rendered</span> <span class="o">=</span> <span class="n">self_or_cls</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">rendered</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
         <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="o">=</span> <span class="n">rendered</span>
         <span class="n">filename</span> <span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s">&#39;file-ext&#39;</span><span class="p">])</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">rendered</span><span class="p">))</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">self_or_cls</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">rendered</span><span class="p">))</span>
 </div>
 <div class="viewcode-block" id="PlotRenderer.anim_data"><a class="viewcode-back" href="../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.PlotRenderer.anim_data">[docs]</a>    <span class="k">def</span> <span class="nf">anim_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anim</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">writer</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>

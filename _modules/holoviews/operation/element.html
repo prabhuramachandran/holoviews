@@ -135,12 +135,29 @@
                    <span class="n">NdOverlay</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">BoundingBox</span>
 <span class="kn">from</span> <span class="nn">..core.util</span> <span class="kn">import</span> <span class="n">find_minmax</span>
 <span class="kn">from</span> <span class="nn">..element.chart</span> <span class="kn">import</span> <span class="n">Histogram</span><span class="p">,</span> <span class="n">VectorField</span><span class="p">,</span> <span class="n">Curve</span>
-<span class="kn">from</span> <span class="nn">..element.raster</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">from</span> <span class="nn">..element.raster</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">RGB</span>
 <span class="kn">from</span> <span class="nn">..element.tabular</span> <span class="kn">import</span> <span class="n">ItemTable</span>
 <span class="kn">from</span> <span class="nn">..element.path</span> <span class="kn">import</span> <span class="n">Contours</span>
 <span class="kn">from</span> <span class="nn">.normalization</span> <span class="kn">import</span> <span class="n">raster_normalization</span>
 
 
+<div class="viewcode-block" id="factory"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.element.factory">[docs]</a><span class="k">class</span> <span class="nc">factory</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simple operation that constructs any element that accepts some</span>
+<span class="sd">    other element as input. For instance, RGB and HSV elements can be</span>
+<span class="sd">    created from overlays of Image elements.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">output_type</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Parameter</span><span class="p">(</span><span class="n">RGB</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The output type of the factor operation.</span>
+
+<span class="s">        By default, if three overlaid Images elements are supplied,</span>
+<span class="s">        the corresponding RGB element will be returned. &quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">output_type</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
+
+</div>
 <div class="viewcode-block" id="chain"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.element.chain">[docs]</a><span class="k">class</span> <span class="nc">chain</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Defining an ElementOperation chain is an easy way to define a new</span>
@@ -220,19 +237,19 @@
 <span class="c">#==============================#</span>
 
 </div>
-<div class="viewcode-block" id="matrix_overlay"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.element.matrix_overlay">[docs]</a><span class="k">class</span> <span class="nc">matrix_overlay</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
+<div class="viewcode-block" id="image_overlay"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.operation.html#holoviews.operation.element.image_overlay">[docs]</a><span class="k">class</span> <span class="nc">image_overlay</span><span class="p">(</span><span class="n">ElementOperation</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Operation to build a matrix overlay to a specification from a</span>
+<span class="sd">    Operation to build a overlay of images to a specification from a</span>
 <span class="sd">    subset of the required elements.</span>
 
 <span class="sd">    This is useful for reordering the elements of an overlay,</span>
-<span class="sd">    duplicating layers of an overlay or creating blank matrix elements</span>
+<span class="sd">    duplicating layers of an overlay or creating blank image elements</span>
 <span class="sd">    in the appropriate positions.</span>
 
-<span class="sd">    For instance, matrix_overlay may build a three layered input</span>
-<span class="sd">    suitable for the toRGB operation even if supplied with one or two</span>
-<span class="sd">    of the required channels (creating blank channels for the missing</span>
-<span class="sd">    elements).</span>
+<span class="sd">    For instance, image_overlay may build a three layered input</span>
+<span class="sd">    suitable for the RGB factory operation even if supplied with one</span>
+<span class="sd">    or two of the required channels (creating blank channels for the</span>
+<span class="sd">    missing elements).</span>
 
 <span class="sd">    Note that if there is any ambiguity regarding the match, the</span>
 <span class="sd">    strongest match will be used. In the case of a tie in match</span>
@@ -255,6 +272,10 @@
 <span class="s">       are created with the specified fill group.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">fill</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Number</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">default_range</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Tuple</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The default range that will be set on the value_dimension of</span>
+<span class="s">        any automatically created blank image elements.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">group</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Transform&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        The group assigned to the resulting overlay.&quot;&quot;&quot;</span><span class="p">)</span>
@@ -302,7 +323,7 @@
         <span class="n">specs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">spec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">))</span>
         <span class="n">ordering</span><span class="p">,</span> <span class="n">strengths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_match_overlay</span><span class="p">(</span><span class="n">raster</span><span class="p">,</span> <span class="n">specs</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">el</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">ordering</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;The matrix_overlay operation requires at least one match&quot;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;The image_overlay operation requires at least one match&quot;</span><span class="p">)</span>
 
         <span class="n">completed</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">strongest</span> <span class="o">=</span> <span class="n">ordering</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">strengths</span><span class="p">)]</span>
@@ -312,6 +333,7 @@
                 <span class="n">el</span> <span class="o">=</span> <span class="n">Image</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">strongest</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">fill</span><span class="p">,</span>
                             <span class="n">group</span><span class="o">=</span><span class="n">spec_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;group&#39;</span><span class="p">,</span><span class="s">&#39;Image&#39;</span><span class="p">),</span>
                             <span class="n">label</span><span class="o">=</span><span class="n">spec_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;label&#39;</span><span class="p">,</span><span class="s">&#39;&#39;</span><span class="p">))</span>
+                <span class="n">el</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">range</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">p</span><span class="o">.</span><span class="n">default_range</span>
             <span class="n">completed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">el</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">completed</span><span class="p">)</span>
 

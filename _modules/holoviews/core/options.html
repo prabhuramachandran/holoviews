@@ -161,13 +161,14 @@
 <span class="sd">   extension together.</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span> <span class="nn">string</span><span class="o">,</span> <span class="nn">time</span><span class="o">,</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
 <span class="kn">import</span> <span class="nn">param</span>
 <span class="kn">from</span> <span class="nn">.tree</span> <span class="kn">import</span> <span class="n">AttrTree</span>
-<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">allowable</span><span class="p">,</span> <span class="n">sanitize_identifier</span>
+<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">sanitize_identifier</span>
 
 
 <div class="viewcode-block" id="OptionError"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.OptionError">[docs]</a><span class="k">class</span> <span class="nc">OptionError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
@@ -786,18 +787,13 @@
 </div></div>
 <div class="viewcode-block" id="Store"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store">[docs]</a><span class="k">class</span> <span class="nc">Store</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    The Store is what links up HoloViews objects and elements to both</span>
-<span class="sd">    the IPython extension and to the plotting/display backend.</span>
+<span class="sd">    The Store is what links up HoloViews objects to their</span>
+<span class="sd">    corresponding options and to the appropriate classes of the chosen</span>
+<span class="sd">    backend (e.g for rendering).</span>
 
-<span class="sd">    * Data objects are independent of plotting and the IPython</span>
-<span class="sd">      extension.</span>
-
-<span class="sd">    * Plotting and the IPython extension are likewise independent from</span>
-<span class="sd">      each other.</span>
-
-<span class="sd">    The Store stores the display options (plotting) for data elements</span>
-<span class="sd">    as well as the association from HoloViews objects to the respective</span>
-<span class="sd">    plotting classes.</span>
+<span class="sd">    In addition, Storesupports pickle operations that automatically</span>
+<span class="sd">    pickle and unpickle the corresponding options for a HoloViews</span>
+<span class="sd">    object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c"># A mapping from ViewableElement types to their corresponding plot</span>
@@ -929,7 +925,7 @@
 <span class="sd">    A collection of utilities for advanced users for creating and</span>
 <span class="sd">    setting customized option tress on the Store. Designed for use by</span>
 <span class="sd">    either advanced users or the %opts line and cell magics which use</span>
-<span class="sd">    this machinery to operate.</span>
+<span class="sd">    this machinery.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nd">@classmethod</span>
@@ -941,7 +937,8 @@
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
                 <span class="n">customization</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="o">.</span><span class="n">key</span><span class="p">:</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">[</span><span class="n">key</span><span class="p">]}</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">customization</span> <span class="o">=</span> <span class="n">spec</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="n">customization</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:(</span><span class="n">Options</span><span class="p">(</span><span class="o">**</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span><span class="p">)</span>
+                                 <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
             <span class="n">options</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="n">customization</span>
         <span class="k">return</span> <span class="n">options</span>
 </div>
@@ -1001,58 +998,132 @@
                                  <span class="s">&quot;Store.custom_options to contain&quot;</span>
                                  <span class="s">&quot; a tree with id </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">new_id</span><span class="p">)</span>
         <span class="n">obj</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="nb">setattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="n">new_id</span><span class="p">),</span> <span class="n">specs</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">applied_keys</span><span class="p">))</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="StoreOptions.capture_ids"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.capture_ids">[docs]</a>    <span class="k">def</span> <span class="nf">capture_ids</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given an list of ids, capture a list of ids that can be</span>
+<span class="sd">        restored using the restore_ids.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s">&#39;id&#39;</span><span class="p">))</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="StoreOptions.restore_ids"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.restore_ids">[docs]</a>    <span class="k">def</span> <span class="nf">restore_ids</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">ids</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given an list of ids as captured with capture_ids, restore the</span>
+<span class="sd">        ids. Note the structure of an object must not change between</span>
+<span class="sd">        the calls to capture_ids and restore_ids.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="nb">setattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="n">ids</span><span class="o">.</span><span class="n">next</span><span class="p">()))</span>
+
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="StoreOptions.merge_options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.merge_options">[docs]</a>    <span class="k">def</span> <span class="nf">merge_options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given a full options dictionary and options groups specified</span>
+<span class="sd">        as a keywords such as return the full set of merged options:</span>
+
+<span class="sd">        &gt;&gt;&gt; options={&#39;Curve&#39;:{&#39;style&#39;:dict(color=&#39;b&#39;)}}</span>
+<span class="sd">        &gt;&gt;&gt; style={&#39;Curve&#39;:{&#39;linewidth&#39;:10 }}</span>
+<span class="sd">        &gt;&gt;&gt; merged = StoreOptions.merge_options(options, style=style)</span>
+<span class="sd">        &gt;&gt;&gt; sorted(merged[&#39;Curve&#39;][&#39;style&#39;].items())</span>
+<span class="sd">        [(&#39;color&#39;, &#39;b&#39;), (&#39;linewidth&#39;, 10)]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="p">{}</span> <span class="k">if</span> <span class="p">(</span><span class="n">options</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="o">**</span><span class="n">options</span><span class="p">)</span>
+        <span class="n">all_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">k</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">spec_key</span> <span class="ow">in</span> <span class="n">all_keys</span><span class="p">:</span>
+            <span class="n">additions</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">spec_key</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+                    <span class="n">kws</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="n">spec_key</span><span class="p">]</span>
+                    <span class="n">additions</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">k</span><span class="p">:</span><span class="n">kws</span><span class="p">})</span>
+            <span class="k">if</span> <span class="n">spec_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">options</span><span class="p">:</span>
+                <span class="n">options</span><span class="p">[</span><span class="n">spec_key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">additions</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">options</span><span class="p">[</span><span class="n">spec_key</span><span class="p">]:</span>
+                    <span class="n">options</span><span class="p">[</span><span class="n">spec_key</span><span class="p">][</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">additions</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">options</span><span class="p">[</span><span class="n">spec_key</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">additions</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">options</span>
+
+</div>
+    <span class="nd">@classmethod</span>
+    <span class="nd">@contextmanager</span>
+<div class="viewcode-block" id="StoreOptions.options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.options">[docs]</a>    <span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Context-manager for temporarily setting options on an object</span>
+<span class="sd">        (if options is None, no options will be set) . Once the</span>
+<span class="sd">        context manager exits, both the object and the Store will be</span>
+<span class="sd">        left in exactly the same state they were in before the context</span>
+<span class="sd">        manager was used.</span>
+
+<span class="sd">        See holoviews.core.options.set_options function for more</span>
+<span class="sd">        information on the options specification format.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">options</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="n">kwargs</span> <span class="o">==</span> <span class="p">{}:</span> <span class="k">yield</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">options</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">merge_options</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">ids</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">capture_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="n">original_custom_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">set_options</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+            <span class="k">yield</span>
+        <span class="k">if</span> <span class="n">options</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">current_custom_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">current_custom_keys</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">original_custom_keys</span><span class="p">):</span>
+                <span class="k">del</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="n">cls</span><span class="o">.</span><span class="n">restore_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
+
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="StoreOptions.set_options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.set_options">[docs]</a>    <span class="k">def</span> <span class="nf">set_options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Pure Python function for customize HoloViews objects in terms of</span>
+<span class="sd">        their style, plot and normalization options.</span>
+
+<span class="sd">        The options specification is a dictionary containing the target</span>
+<span class="sd">        for customization as a {type}.{group}.{label} keys. An example of</span>
+<span class="sd">        such a key is &#39;Image&#39; which would customize all Image components</span>
+<span class="sd">        in the object. The key &#39;Image.Channel&#39; would only customize Images</span>
+<span class="sd">        in the object that have the group &#39;Channel&#39;.</span>
+
+<span class="sd">        The corresponding value is then a list of Option objects specified</span>
+<span class="sd">        with an appropriate category (&#39;plot&#39;, &#39;style&#39; or &#39;norm&#39;). For</span>
+<span class="sd">        instance, using the keys described above, the specs could be:</span>
+
+<span class="sd">        {&#39;Image:[Options(&#39;style&#39;, cmap=&#39;jet&#39;)]}</span>
+
+<span class="sd">        Or setting two types of option at once:</span>
+
+<span class="sd">        {&#39;Image.Channel:[Options(&#39;plot&#39;, size=50),</span>
+<span class="sd">                        Options(&#39;style&#39;, cmap=&#39;Blues&#39;)]}</span>
 
 
+<span class="sd">        Relationship to the %%opts magic</span>
+<span class="sd">        ----------------------------------</span>
 
-</div></div>
-<div class="viewcode-block" id="set_options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.set_options">[docs]</a><span class="k">def</span> <span class="nf">set_options</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Pure Python function for customize HoloViews objects in terms of</span>
-<span class="sd">    their style, plot and normalization options.</span>
+<span class="sd">        This function matches the functionality supplied by the %%opts</span>
+<span class="sd">        cell magic in the IPython extension. In fact, you can use the same</span>
+<span class="sd">        syntax as the IPython cell magic to achieve the same customization</span>
+<span class="sd">        as shown above:</span>
 
-<span class="sd">    Given an object, the specification is a dictionary containing the</span>
-<span class="sd">    target for customization as a {type}.{group}.{label} keys. An</span>
-<span class="sd">    example of such a key is &#39;Image&#39; which would customize all Image</span>
-<span class="sd">    components in the object. The key &#39;Image.Channel&#39; would only</span>
-<span class="sd">    customize Images in the object that have the group &#39;Channel&#39;.</span>
+<span class="sd">        from holoviews.ipython.parser import OptsSpec</span>
+<span class="sd">        set_options(my_image, OptsSpec.parse(&quot;Image (cmap=&#39;jet&#39;)&quot;))</span>
 
-<span class="sd">    The corresponding value is then a list of Option objects specified</span>
-<span class="sd">    with an appropriate category (&#39;plot&#39;, &#39;style&#39; or &#39;norm&#39;). For</span>
-<span class="sd">    instance, using the keys described above, the specs could be:</span>
+<span class="sd">        Then setting both plot and style options:</span>
 
-<span class="sd">    {&#39;Image:[Options(&#39;style&#39;, cmap=&#39;jet&#39;)]}</span>
+<span class="sd">        set_options(my_image, OptsSpec.parse(&quot;Image [size=50] (cmap=&#39;Blues&#39;)&quot;))</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c"># Note that an alternate, more verbose and less recommended</span>
+        <span class="c"># syntax can also be used:</span>
 
-<span class="sd">    Or setting two types of option at once:</span>
-
-<span class="sd">    {&#39;Image.Channel:[Options(&#39;plot&#39;, size=50),</span>
-<span class="sd">                    Options(&#39;style&#39;, cmap=&#39;Blues&#39;)]}</span>
-
-
-<span class="sd">    Relationship to the %%opts magic</span>
-<span class="sd">    ----------------------------------</span>
-
-<span class="sd">    This function matches the functionality supplied by the %%opts</span>
-<span class="sd">    cell magic in the IPython extension. In fact, you can use the same</span>
-<span class="sd">    syntax as the IPython cell magic to achieve the same customization</span>
-<span class="sd">    as shown above:</span>
-
-<span class="sd">    from holoviews.ipython.parser import OptsSpec</span>
-<span class="sd">    set_options(my_image, OptsSpec.parse(&quot;Image (cmap=&#39;jet&#39;)&quot;))</span>
-
-<span class="sd">    Then setting both plot and style options:</span>
-
-<span class="sd">    set_options(my_image, OptsSpec.parse(&quot;Image [size=50] (cmap=&#39;Blues&#39;)&quot;))</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c"># Note that an alternate, more verbose and less recommended</span>
-    <span class="c"># syntax can also be used:</span>
-
-    <span class="c"># {&#39;Image.Channel:{&#39;plot&#39;:  Options(size=50),</span>
-    <span class="c">#                  &#39;style&#39;: Options(&#39;style&#39;, cmap=&#39;Blues&#39;)]}</span>
-
-    <span class="n">spec</span><span class="p">,</span> <span class="n">compositor_applied</span> <span class="o">=</span> <span class="n">StoreOptions</span><span class="o">.</span><span class="n">expand_compositor_keys</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
-    <span class="n">new_id</span> <span class="o">=</span> <span class="n">StoreOptions</span><span class="o">.</span><span class="n">add_custom_options</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
-    <span class="n">StoreOptions</span><span class="o">.</span><span class="n">propagate_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">new_id</span><span class="p">,</span> <span class="n">compositor_applied</span><span class="o">+</span><span class="nb">list</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
-    <span class="k">return</span> <span class="n">obj</span></div>
+        <span class="c"># {&#39;Image.Channel:{&#39;plot&#39;:  Options(size=50),</span>
+        <span class="c">#                  &#39;style&#39;: Options(&#39;style&#39;, cmap=&#39;Blues&#39;)]}</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">merge_options</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">spec</span><span class="p">,</span> <span class="n">compositor_applied</span> <span class="o">=</span> <span class="n">StoreOptions</span><span class="o">.</span><span class="n">expand_compositor_keys</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
+        <span class="n">new_id</span> <span class="o">=</span> <span class="n">StoreOptions</span><span class="o">.</span><span class="n">add_custom_options</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">StoreOptions</span><span class="o">.</span><span class="n">propagate_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">new_id</span><span class="p">,</span> <span class="n">compositor_applied</span><span class="o">+</span><span class="nb">list</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+        <span class="k">return</span> <span class="n">obj</span></div></div>
 </pre></div>
 
           </div>
