@@ -77,6 +77,7 @@
         
             <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../features.html">Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">Tutorials</a><ul class="simple">
 </ul>
 </li>
@@ -338,7 +339,7 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">plotfn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;axis&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">bar</span>
 
         <span class="c"># Plot bars and make any adjustments</span>
-        <span class="n">style</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">hist</span><span class="p">,</span> <span class="s">&#39;style&#39;</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span><span class="p">]</span>
+        <span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span><span class="p">]</span>
         <span class="n">bars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plotfn</span><span class="p">(</span><span class="n">edges</span><span class="p">,</span> <span class="n">hvals</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="n">style</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;bars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">hist</span><span class="p">,</span> <span class="n">bars</span><span class="p">,</span> <span class="n">lims</span><span class="p">)</span> <span class="c"># Indexing top</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;legend_handle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bars</span>
@@ -847,7 +848,7 @@
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">BarPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_values</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bar_dimensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_values</span><span class="p">()</span>
 
 
     <span class="k">def</span> <span class="nf">_get_values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -857,18 +858,21 @@
         <span class="n">gi</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="n">si</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">group_index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">category_index</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack_index</span>
         <span class="n">ndims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">ndims</span>
         <span class="n">dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">key_dimensions</span>
+        <span class="n">dimensions</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">values</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">vidx</span><span class="p">,</span> <span class="n">vtype</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="n">gi</span><span class="p">,</span> <span class="n">ci</span><span class="p">,</span> <span class="n">si</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dimensions</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">vidx</span> <span class="o">&lt;</span> <span class="n">ndims</span><span class="p">:</span>
                 <span class="n">dim</span> <span class="o">=</span> <span class="n">dims</span><span class="p">[</span><span class="n">vidx</span><span class="p">]</span>
+                <span class="n">dimensions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
                 <span class="n">vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dim</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
                 <span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">key_dimensions</span><span class="o">=</span><span class="p">[</span><span class="n">dim</span><span class="p">])</span>
             <span class="k">else</span><span class="p">:</span>
+                <span class="n">dimensions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
                 <span class="n">vals</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span>
                 <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="n">values</span><span class="p">[</span><span class="n">vtype</span><span class="p">]</span> <span class="o">=</span> <span class="n">NdMapping</span><span class="p">([(</span><span class="n">v</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">],</span>
                                       <span class="o">**</span><span class="n">params</span><span class="p">)</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">values</span>
+        <span class="k">return</span> <span class="n">values</span><span class="p">,</span> <span class="n">dimensions</span>
 
 
     <span class="k">def</span> <span class="nf">_compute_styles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">style_groups</span><span class="p">):</span>
@@ -894,9 +898,7 @@
 
 
     <span class="k">def</span> <span class="nf">get_extents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">ranges</span><span class="p">):</span>
-        <span class="n">vdim</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(</span><span class="s">&#39;value&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="s">&#39;group&#39;</span><span class="p">]),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">ranges</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">vdim</span><span class="p">,</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">))[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">[</span><span class="s">&#39;group&#39;</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span>
 
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>

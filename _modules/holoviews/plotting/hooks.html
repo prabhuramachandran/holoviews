@@ -77,6 +77,7 @@
         
             <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../features.html">Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">Tutorials</a><ul class="simple">
 </ul>
 </li>
@@ -142,7 +143,7 @@
 <span class="kn">from</span> <span class="nn">..ipython.magics</span> <span class="kn">import</span> <span class="n">OutputMagic</span>
 <span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">NdOverlay</span><span class="p">,</span> <span class="n">Overlay</span>
 <span class="kn">from</span> <span class="nn">..element</span> <span class="kn">import</span> <span class="n">HeatMap</span><span class="p">,</span> <span class="n">Raster</span><span class="p">,</span> <span class="n">Scatter</span><span class="p">,</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">Points</span><span class="p">,</span> <span class="n">Bars</span><span class="p">,</span> <span class="n">Histogram</span>
-<span class="kn">from</span> <span class="nn">..plotting</span> <span class="kn">import</span> <span class="n">CurvePlot</span><span class="p">,</span> <span class="n">PointPlot</span><span class="p">,</span> <span class="n">OverlayPlot</span><span class="p">,</span> <span class="n">RasterPlot</span><span class="p">,</span> <span class="n">HistogramPlot</span>
+<span class="kn">from</span> <span class="nn">..plotting</span> <span class="kn">import</span> <span class="n">CurvePlot</span><span class="p">,</span> <span class="n">PointPlot</span><span class="p">,</span> <span class="n">OverlayPlot</span><span class="p">,</span> <span class="n">RasterPlot</span><span class="p">,</span> <span class="n">HistogramPlot</span><span class="p">,</span> <span class="n">BarPlot</span>
 
 
 <div class="viewcode-block" id="PlottingHook"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.hooks.PlottingHook">[docs]</a><span class="k">class</span> <span class="nc">PlottingHook</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">ParameterizedFunction</span><span class="p">):</span>
@@ -233,10 +234,31 @@
         <span class="n">plugins</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">tooltip</span><span class="p">)</span>
 
 </div>
-<div class="viewcode-block" id="BarPlugin"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.hooks.BarPlugin">[docs]</a><span class="k">class</span> <span class="nc">BarPlugin</span><span class="p">(</span><span class="n">MplD3Plugin</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">BarPlugin</span><span class="p">(</span><span class="n">MplD3Plugin</span><span class="p">):</span>
+
+    <span class="n">types</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">([</span><span class="n">Bars</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applies</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span> <span class="k">return</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;fig&#39;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">bar</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;bars&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="n">handle</span> <span class="o">=</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_children</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">selection</span> <span class="o">=</span> <span class="p">[(</span><span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="p">,{</span><span class="n">k</span><span class="p">})</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">plot</span><span class="o">.</span><span class="n">bar_dimensions</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+                         <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">]</span>
+            <span class="n">label_data</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">selection</span><span class="p">))</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to_frame</span><span class="p">()</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">label_data</span><span class="o">.</span><span class="n">to_html</span><span class="p">(</span><span class="n">header</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">))</span>
+            <span class="n">tooltip</span> <span class="o">=</span> <span class="n">plugins</span><span class="o">.</span><span class="n">LineHTMLTooltip</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span> <span class="n">voffset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">voffset</span><span class="p">,</span>
+                                              <span class="n">hoffset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hoffset</span><span class="p">,</span> <span class="n">css</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">css</span><span class="p">)</span>
+            <span class="n">plugins</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">tooltip</span><span class="p">)</span>
+
+    
+
+
+<div class="viewcode-block" id="HistogramPlugin"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.hooks.HistogramPlugin">[docs]</a><span class="k">class</span> <span class="nc">HistogramPlugin</span><span class="p">(</span><span class="n">MplD3Plugin</span><span class="p">):</span>
     <span class="s">&quot;Labels each bar with a table of its values.&quot;</span>
 
-    <span class="n">types</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">([</span><span class="n">Bars</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">])</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">([</span><span class="n">Histogram</span><span class="p">])</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applies</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span> <span class="k">return</span>
@@ -289,8 +311,9 @@
             <span class="n">df</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span><span class="o">.</span><span class="n">sort</span><span class="p">([</span><span class="s">&#39;y&#39;</span><span class="p">,</span><span class="s">&#39;x&#39;</span><span class="p">],</span> <span class="n">ascending</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
             <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">rows</span><span class="p">)</span>
 
-        <span class="k">for</span> <span class="n">ann</span> <span class="ow">in</span> <span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;annotations&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">ann</span> <span class="ow">in</span> <span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;annotations&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">ann</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+            <span class="n">plot</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;annotations&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
 
         <span class="c"># Generate color mesh to label each point</span>
         <span class="n">cols</span><span class="o">+=</span><span class="mi">1</span><span class="p">;</span> <span class="n">rows</span><span class="o">+=</span><span class="mi">1</span>
@@ -358,7 +381,8 @@
     <span class="n">RasterPlot</span><span class="o">.</span><span class="n">finalize_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="n">RasterPlugin</span><span class="p">]</span>
     <span class="n">CurvePlot</span><span class="o">.</span><span class="n">finalize_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="n">CurvePlugin</span><span class="p">]</span>
     <span class="n">PointPlot</span><span class="o">.</span><span class="n">finalize_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="n">PointPlugin</span><span class="p">]</span>
-    <span class="n">HistogramPlot</span><span class="o">.</span><span class="n">finalize_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="n">BarPlugin</span><span class="p">]</span>
+    <span class="n">HistogramPlot</span><span class="o">.</span><span class="n">finalize_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="n">HistogramPlugin</span><span class="p">]</span>
+    <span class="n">BarPlot</span><span class="o">.</span><span class="n">finalize_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="n">BarPlugin</span><span class="p">]</span>
 </pre></div>
 
           </div>

@@ -77,6 +77,7 @@
         
             <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../features.html">Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">Tutorials</a><ul class="simple">
 </ul>
 </li>
@@ -552,17 +553,29 @@
         <span class="n">components</span> <span class="o">=</span> <span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">group</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">components</span><span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
 
+
 </div>
-<div class="viewcode-block" id="OptionTree.options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.OptionTree.options">[docs]</a>    <span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">):</span>
+<div class="viewcode-block" id="OptionTree.options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.OptionTree.options">[docs]</a>    <span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Using inheritance up to the root, get the complete Options</span>
 <span class="sd">        object for the given node and the specified group.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">None</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">target</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">):</span>
+            <span class="n">root_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span>
+            <span class="n">replacement</span> <span class="o">=</span> <span class="n">root_name</span> <span class="o">+</span> <span class="p">(</span><span class="s">&#39;&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">root_name</span><span class="p">)</span> <span class="k">else</span> <span class="s">&#39;.&#39;</span><span class="p">)</span>
+            <span class="n">option_key</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">replacement</span><span class="p">,</span><span class="s">&#39;&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">option_key</span> <span class="ow">in</span> <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="n">option_key</span><span class="p">]</span><span class="o">.</span><span class="n">options</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">Options</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">group</span><span class="p">]</span>
-        <span class="k">return</span> <span class="n">Options</span><span class="p">(</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">options</span><span class="p">(</span><span class="n">group</span><span class="p">)</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
+
+        <span class="k">return</span> <span class="n">Options</span><span class="p">(</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">options</span><span class="p">(</span><span class="n">group</span><span class="p">,</span><span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
                               <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">group</span><span class="p">]</span><span class="o">.</span><span class="n">kwargs</span><span class="p">))</span>
 
 </div>
@@ -928,64 +941,17 @@
 <span class="sd">    this machinery.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="StoreOptions.apply_customizations"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.apply_customizations">[docs]</a>    <span class="k">def</span> <span class="nf">apply_customizations</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Apply the given option specs to the supplied options tree.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
-                <span class="n">customization</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="o">.</span><span class="n">key</span><span class="p">:</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">[</span><span class="n">key</span><span class="p">]}</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">customization</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:(</span><span class="n">Options</span><span class="p">(</span><span class="o">**</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span><span class="p">)</span>
-                                 <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
-            <span class="n">options</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="n">customization</span>
-        <span class="k">return</span> <span class="n">options</span>
-</div>
-    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="StoreOptions.expand_compositor_keys"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.expand_compositor_keys">[docs]</a>    <span class="k">def</span> <span class="nf">expand_compositor_keys</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Expands compositor definition keys into {type}.{group}</span>
-<span class="sd">        keys. For instance a compositor operation returning a group</span>
-<span class="sd">        string &#39;Image&#39; of element type RGB expands to &#39;RGB.Image&#39;.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">expanded_spec</span><span class="o">=</span><span class="p">{}</span>
-        <span class="n">applied_keys</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">compositor_defs</span> <span class="o">=</span> <span class="p">{</span><span class="n">el</span><span class="o">.</span><span class="n">group</span><span class="p">:</span><span class="n">el</span><span class="o">.</span><span class="n">output_type</span><span class="o">.</span><span class="n">__name__</span>
-                           <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">Compositor</span><span class="o">.</span><span class="n">definitions</span><span class="p">}</span>
-        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">compositor_defs</span><span class="p">:</span>
-                <span class="n">expanded_spec</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="c"># Send id to Overlays</span>
-                <span class="n">applied_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Overlay&#39;</span><span class="p">]</span>
-                <span class="n">type_name</span> <span class="o">=</span> <span class="n">compositor_defs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-                <span class="n">expanded_spec</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">type_name</span><span class="o">+</span><span class="s">&#39;.&#39;</span><span class="o">+</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="n">val</span>
-        <span class="k">return</span> <span class="n">expanded_spec</span><span class="p">,</span> <span class="n">applied_keys</span>
+    <span class="c">#===============#</span>
+    <span class="c"># ID management #</span>
+    <span class="c">#===============#</span>
 
-</div>
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="StoreOptions.get_custom_tree"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.get_custom_tree">[docs]</a>    <span class="k">def</span> <span class="nf">get_custom_tree</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Get a tree that is based on the default Store.options tree but</span>
-<span class="sd">        has been customized by the specified specs.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">options</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="n">items</span><span class="o">=</span><span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span>
-                             <span class="n">groups</span><span class="o">=</span><span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">apply_customizations</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
-</div>
-    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="StoreOptions.add_custom_options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.add_custom_options">[docs]</a>    <span class="k">def</span> <span class="nf">add_custom_options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Sets a new tree in Store.custom_options based on the supplied</span>
-<span class="sd">        customization specification. Returns the id of the new tree.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">ids</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
-        <span class="n">max_id</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
-        <span class="n">custom_tree</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">get_custom_tree</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
-        <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">[</span><span class="n">max_id</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">custom_tree</span>
-        <span class="k">return</span> <span class="n">max_id</span><span class="o">+</span><span class="mi">1</span>
-</div>
+    <span class="k">def</span> <span class="nf">get_object_ids</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="n">el</span> <span class="k">for</span> <span class="n">el</span>
+                   <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">))</span>
+                   <span class="k">if</span> <span class="n">el</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span>
+
+
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="StoreOptions.propagate_ids"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.propagate_ids">[docs]</a>    <span class="k">def</span> <span class="nf">propagate_ids</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">new_id</span><span class="p">,</span> <span class="n">applied_keys</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1016,6 +982,82 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">ids</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span>
         <span class="n">obj</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="nb">setattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="n">ids</span><span class="o">.</span><span class="n">next</span><span class="p">()))</span>
+
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="StoreOptions.apply_customizations"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.apply_customizations">[docs]</a>    <span class="k">def</span> <span class="nf">apply_customizations</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply the given option specs to the supplied options tree.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+                <span class="n">customization</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="o">.</span><span class="n">key</span><span class="p">:</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">[</span><span class="n">key</span><span class="p">]}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">customization</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:(</span><span class="n">Options</span><span class="p">(</span><span class="o">**</span><span class="n">v</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="n">v</span><span class="p">)</span>
+                                 <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+            <span class="n">options</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="n">customization</span>
+        <span class="k">return</span> <span class="n">options</span>
+
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="StoreOptions.validate_spec"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.validate_spec">[docs]</a>    <span class="k">def</span> <span class="nf">validate_spec</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given a specification, validated it against the default</span>
+<span class="sd">        options tree (Store.options)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="n">items</span><span class="o">=</span><span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span>
+                             <span class="n">groups</span><span class="o">=</span><span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">apply_customizations</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
+
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="StoreOptions.expand_compositor_keys"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.expand_compositor_keys">[docs]</a>    <span class="k">def</span> <span class="nf">expand_compositor_keys</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Expands compositor definition keys into {type}.{group}</span>
+<span class="sd">        keys. For instance a compositor operation returning a group</span>
+<span class="sd">        string &#39;Image&#39; of element type RGB expands to &#39;RGB.Image&#39;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">expanded_spec</span><span class="o">=</span><span class="p">{}</span>
+        <span class="n">applied_keys</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">compositor_defs</span> <span class="o">=</span> <span class="p">{</span><span class="n">el</span><span class="o">.</span><span class="n">group</span><span class="p">:</span><span class="n">el</span><span class="o">.</span><span class="n">output_type</span><span class="o">.</span><span class="n">__name__</span>
+                           <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">Compositor</span><span class="o">.</span><span class="n">definitions</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">compositor_defs</span><span class="p">:</span>
+                <span class="n">expanded_spec</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c"># Send id to Overlays</span>
+                <span class="n">applied_keys</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Overlay&#39;</span><span class="p">]</span>
+                <span class="n">type_name</span> <span class="o">=</span> <span class="n">compositor_defs</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="n">expanded_spec</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">type_name</span><span class="o">+</span><span class="s">&#39;.&#39;</span><span class="o">+</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">return</span> <span class="n">expanded_spec</span><span class="p">,</span> <span class="n">applied_keys</span>
+
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="StoreOptions.create_custom_trees"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.create_custom_trees">[docs]</a>    <span class="k">def</span> <span class="nf">create_custom_trees</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the appropriate set of customized subtree clones for</span>
+<span class="sd">        an object, suitable for merging with Store.custom_options (i.e</span>
+<span class="sd">        with the ids appropriately offset). Note if an object has no</span>
+<span class="sd">        integer ids a new OptionTree is built.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">clones</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">obj_ids</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">get_object_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="n">store_ids</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">store_ids</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">store_ids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">tree_id</span> <span class="ow">in</span> <span class="n">obj_ids</span><span class="p">:</span>
+            <span class="n">original</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">[</span><span class="n">tree_id</span><span class="p">]</span>
+            <span class="n">clone</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="n">items</span><span class="o">=</span>  <span class="n">original</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span>
+                               <span class="n">groups</span><span class="o">=</span> <span class="n">original</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span>
+            <span class="n">clones</span><span class="p">[</span><span class="n">tree_id</span> <span class="o">+</span> <span class="n">offset</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">clone</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">clones</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">new_tree</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="n">groups</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;norm&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(),</span>
+                                          <span class="s">&#39;plot&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(),</span>
+                                          <span class="s">&#39;style&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">()})</span>
+            <span class="n">clones</span><span class="p">[</span><span class="n">offset</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_tree</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">cls</span><span class="o">.</span><span class="n">apply_customizations</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="k">if</span> <span class="n">options</span> <span class="k">else</span> <span class="n">t</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">t</span> <span class="ow">in</span> <span class="n">clones</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
 
 </div>
     <span class="nd">@classmethod</span>
@@ -1121,8 +1163,11 @@
         <span class="c">#                  &#39;style&#39;: Options(&#39;style&#39;, cmap=&#39;Blues&#39;)]}</span>
         <span class="n">options</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">merge_options</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">spec</span><span class="p">,</span> <span class="n">compositor_applied</span> <span class="o">=</span> <span class="n">StoreOptions</span><span class="o">.</span><span class="n">expand_compositor_keys</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
-        <span class="n">new_id</span> <span class="o">=</span> <span class="n">StoreOptions</span><span class="o">.</span><span class="n">add_custom_options</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
-        <span class="n">StoreOptions</span><span class="o">.</span><span class="n">propagate_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">new_id</span><span class="p">,</span> <span class="n">compositor_applied</span><span class="o">+</span><span class="nb">list</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+        <span class="n">custom_trees</span> <span class="o">=</span> <span class="n">StoreOptions</span><span class="o">.</span><span class="n">create_custom_trees</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">spec</span><span class="p">)</span>
+        <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">custom_trees</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">tree_id</span> <span class="ow">in</span> <span class="n">custom_trees</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">propagate_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">tree_id</span><span class="p">,</span> <span class="n">compositor_applied</span><span class="o">+</span><span class="nb">list</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
         <span class="k">return</span> <span class="n">obj</span></div></div>
 </pre></div>
 

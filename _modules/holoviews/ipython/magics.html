@@ -77,6 +77,7 @@
         
             <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../features.html">Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">Tutorials</a><ul class="simple">
 </ul>
 </li>
@@ -184,7 +185,7 @@
 
 
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="OptionsMagic.get_options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.magics.OptionsMagic.get_options">[docs]</a>    <span class="k">def</span> <span class="nf">get_options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
+<div class="viewcode-block" id="OptionsMagic.get_options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.magics.OptionsMagic.get_options">[docs]</a>    <span class="k">def</span> <span class="nf">get_options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="p">{}):</span>
         <span class="s">&quot;Given a keyword specification line, validated and compute options&quot;</span>
         <span class="n">items</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_extract_keywords</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">())</span>
         <span class="k">for</span> <span class="n">keyword</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">defaults</span><span class="p">:</span>
@@ -200,6 +201,8 @@
                         <span class="n">info</span> <span class="o">=</span> <span class="p">(</span><span class="n">keyword</span><span class="p">,</span><span class="n">value</span><span class="p">)</span><span class="o">+</span><span class="n">allowed</span>
                         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Value </span><span class="si">%r</span><span class="s"> for key </span><span class="si">%r</span><span class="s"> not between </span><span class="si">%s</span><span class="s"> and </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">info</span><span class="p">)</span>
                 <span class="n">options</span><span class="p">[</span><span class="n">keyword</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">elif</span> <span class="n">keyword</span> <span class="ow">in</span> <span class="n">fallback</span><span class="p">:</span>
+                <span class="n">options</span><span class="p">[</span><span class="n">keyword</span><span class="p">]</span> <span class="o">=</span> <span class="n">fallback</span><span class="p">[</span><span class="n">keyword</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">options</span><span class="p">[</span><span class="n">keyword</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="n">keyword</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">_validate</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
@@ -386,7 +389,7 @@
 
         <span class="n">restore_copy</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_options</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">())</span>
+            <span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_options</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">(),</span> <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
             <span class="n">OutputMagic</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">options</span>
             <span class="c"># Inform writer of chosen fps</span>
             <span class="k">if</span> <span class="n">options</span><span class="p">[</span><span class="s">&#39;holomap&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;gif&#39;</span><span class="p">,</span> <span class="s">&#39;scrubber&#39;</span><span class="p">]:</span>
@@ -544,7 +547,7 @@
 <span class="sd">    Consult %%opts? for more information.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">error_message</span> <span class="o">=</span> <span class="bp">None</span> <span class="c"># If not None, the error message that will be displayed</span>
-    <span class="n">next_id</span> <span class="o">=</span> <span class="bp">None</span>       <span class="c"># Next id to propagate, binding displayed object together.</span>
+    <span class="n">opts_spec</span> <span class="o">=</span> <span class="bp">None</span>       <span class="c"># Next id to propagate, binding displayed object together.</span>
     <span class="n">applied_keys</span> <span class="o">=</span> <span class="p">[]</span>    <span class="c"># Path specs selecting the objects to be given a new id</span>
 
     <span class="nd">@classmethod</span>
@@ -558,9 +561,12 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">error_message</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">error_message</span>
-        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">next_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">StoreOptions</span><span class="o">.</span><span class="n">propagate_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">next_id</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">applied_keys</span><span class="p">)</span>
-            <span class="n">cls</span><span class="o">.</span><span class="n">next_id</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">opts_spec</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">custom_trees</span> <span class="o">=</span> <span class="n">StoreOptions</span><span class="o">.</span><span class="n">create_custom_trees</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">opts_spec</span><span class="p">)</span>
+            <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">custom_trees</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">tree_id</span> <span class="ow">in</span> <span class="n">custom_trees</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">StoreOptions</span><span class="o">.</span><span class="n">propagate_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">tree_id</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">applied_keys</span><span class="p">)</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">opts_spec</span> <span class="o">=</span> <span class="bp">None</span>
             <span class="n">cls</span><span class="o">.</span><span class="n">applied_keys</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">return</span> <span class="bp">None</span>
 
@@ -574,16 +580,16 @@
     <span class="k">def</span> <span class="nf">register_custom_spec</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">spec</span><span class="p">,</span> <span class="n">cellmagic</span><span class="p">):</span>
         <span class="n">spec</span><span class="p">,</span> <span class="n">applied_keys</span> <span class="o">=</span> <span class="n">StoreOptions</span><span class="o">.</span><span class="n">expand_compositor_keys</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="n">new_id</span> <span class="o">=</span> <span class="n">StoreOptions</span><span class="o">.</span><span class="n">add_custom_options</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+            <span class="n">StoreOptions</span><span class="o">.</span><span class="n">validate_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">OptionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="n">cls</span><span class="o">.</span><span class="n">error_message</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">_format_options_error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">None</span>
 
         <span class="k">if</span> <span class="n">cellmagic</span><span class="p">:</span>
-            <span class="n">cls</span><span class="o">.</span><span class="n">next_id</span> <span class="o">=</span> <span class="n">new_id</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">opts_spec</span> <span class="o">=</span> <span class="n">spec</span>
             <span class="n">cls</span><span class="o">.</span><span class="n">applied_keys</span> <span class="o">=</span> <span class="n">applied_keys</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">cls</span><span class="o">.</span><span class="n">next_id</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">opts_spec</span> <span class="o">=</span> <span class="n">spec</span>
             <span class="n">cls</span><span class="o">.</span><span class="n">applied_keys</span> <span class="o">=</span> <span class="p">[]</span>
 
 
