@@ -137,11 +137,114 @@
 <span class="sd">As a result, HoloViews does not attempt to build representations that</span>
 <span class="sd">can be evaluated with eval; such representations would typically be</span>
 <span class="sd">far too large to be practical. Instead, all HoloViews objects can be</span>
-<span class="sd">represented as tree structures, showing the types, values and labels</span>
-<span class="sd">where possible.</span>
+<span class="sd">represented as tree structures, showing how to access and index into</span>
+<span class="sd">your data.</span>
+
+<span class="sd">In addition, there are several different ways of</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="c"># IPython not required to import ParamPager</span>
+<span class="kn">from</span> <span class="nn">param.ipython</span> <span class="kn">import</span> <span class="n">ParamPager</span>
 
+
+<div class="viewcode-block" id="InfoPrinter"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.InfoPrinter">[docs]</a><span class="k">class</span> <span class="nc">InfoPrinter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for printing other information related to an object that is</span>
+<span class="sd">    of use to the user.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">headings</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;</span><span class="se">\x1b</span><span class="s">[1;35m</span><span class="si">%s</span><span class="se">\x1b</span><span class="s">[0m&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\x1b</span><span class="s">[1;32m</span><span class="si">%s</span><span class="se">\x1b</span><span class="s">[0m&#39;</span><span class="p">]</span>
+    <span class="n">ansi_escape</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;\x1b[^m]*m&#39;</span><span class="p">)</span>
+    <span class="n">ppager</span> <span class="o">=</span> <span class="n">ParamPager</span><span class="p">()</span>
+    <span class="n">store</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="InfoPrinter.get_parameter_info"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.InfoPrinter.get_parameter_info">[docs]</a>    <span class="k">def</span> <span class="nf">get_parameter_info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get parameter information from the supplied class or object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">ppager</span><span class="o">.</span><span class="n">_param_docstrings</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">ppager</span><span class="o">.</span><span class="n">_get_param_info</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ansi_escape</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">ansi</span> <span class="k">else</span> <span class="n">info</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="InfoPrinter.heading"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.InfoPrinter.heading">[docs]</a>    <span class="k">def</span> <span class="nf">heading</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">heading_text</span><span class="p">,</span> <span class="n">char</span><span class="o">=</span><span class="s">&#39;=&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Turn the supplied heading text into a suitable heading with</span>
+<span class="sd">        optional underline and color.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">heading_color</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">headings</span><span class="p">[</span><span class="n">level</span><span class="p">]</span> <span class="k">if</span> <span class="n">ansi</span> <span class="k">else</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span>
+        <span class="k">if</span> <span class="n">char</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">heading_color</span> <span class="o">%</span> <span class="s">&#39;</span><span class="si">%s</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">heading_text</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">heading_ul</span> <span class="o">=</span> <span class="n">char</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">heading_text</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">heading_color</span> <span class="o">%</span> <span class="s">&#39;</span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">heading_text</span><span class="p">,</span> <span class="n">heading_ul</span><span class="p">)</span>
+
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="InfoPrinter.info"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.InfoPrinter.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">category</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Show information about an object in the given category. ANSI</span>
+<span class="sd">        color codes may be enabled or disabled.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">categories</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;display&#39;</span><span class="p">,</span> <span class="s">&#39;access&#39;</span><span class="p">,</span> <span class="s">&#39;all&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">category</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Valid information categories: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">categories</span><span class="p">))</span>
+
+        <span class="n">plot_class</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)]</span>
+
+        <span class="n">obj_info</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">object_info</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">)</span>
+        <span class="n">heading</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s"> Information&#39;</span> <span class="o">%</span> <span class="n">obj</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span>
+        <span class="n">heading_ul</span> <span class="o">=</span> <span class="s">&#39;=&#39;</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">heading</span><span class="p">)</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n\n</span><span class="si">%s</span><span class="se">\n\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">heading_ul</span><span class="p">,</span> <span class="n">heading</span><span class="p">,</span> <span class="n">heading_ul</span><span class="p">,</span> <span class="n">obj_info</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">category</span> <span class="o">==</span> <span class="s">&#39;display&#39;</span><span class="p">:</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">display_info</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">plot_class</span><span class="p">,</span> <span class="n">ansi</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">category</span> <span class="o">==</span> <span class="s">&#39;access&#39;</span><span class="p">:</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">access_info</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">category</span> <span class="o">==</span> <span class="s">&#39;all&#39;</span><span class="p">:</span>
+            <span class="n">access_info</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">access_info</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="p">)</span>
+            <span class="n">info</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">access_info</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">display_info</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">plot_class</span><span class="p">,</span> <span class="n">ansi</span><span class="p">)])</span>
+        <span class="k">return</span> <span class="n">prefix</span> <span class="o">+</span> <span class="n">info</span>
+</div>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">access_info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">cls</span><span class="o">.</span><span class="n">heading</span><span class="p">(</span><span class="s">&#39;Access Structure&#39;</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">),</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">obj</span><span class="p">)])</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">object_info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">key_dims</span><span class="p">,</span> <span class="n">val_dims</span><span class="p">)</span>  <span class="o">=</span> <span class="p">(</span><span class="s">&#39;N/A&#39;</span><span class="p">,</span> <span class="p">[],</span> <span class="p">[])</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;key_dimensions&#39;</span><span class="p">):</span>
+            <span class="n">key_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;value_dimensions&#39;</span><span class="p">):</span>
+            <span class="n">val_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;values&#39;</span><span class="p">):</span>
+            <span class="n">count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Item count:       </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">count</span><span class="p">,</span>
+                 <span class="s">&#39;Key dimensions:   </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">key_dims</span><span class="p">)</span> <span class="k">if</span> <span class="n">key_dims</span> <span class="k">else</span> <span class="s">&#39;N/A&#39;</span><span class="p">),</span>
+                 <span class="s">&#39;Value dimensions: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">val_dims</span><span class="p">)</span> <span class="k">if</span> <span class="n">val_dims</span> <span class="k">else</span> <span class="s">&#39;N/A&#39;</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">display_info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">plot_class</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="n">style_heading</span> <span class="o">=</span> <span class="s">&#39;Style options:&#39;</span>
+        <span class="k">if</span> <span class="n">plot_class</span><span class="o">.</span><span class="n">style_opts</span><span class="p">:</span>
+            <span class="n">style_info</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">(Consult matplotlib&#39;s documentation for more information.)&quot;</span>
+            <span class="n">style_keywords</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\t</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">plot_class</span><span class="o">.</span><span class="n">style_opts</span><span class="p">)</span>
+            <span class="n">style_msg</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">style_keywords</span><span class="p">,</span> <span class="n">style_info</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">style_msg</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\t</span><span class="s">&lt;No style options available&gt;&#39;</span>
+
+        <span class="n">param_info</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">get_parameter_info</span><span class="p">(</span><span class="n">plot_class</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">)</span>
+        <span class="n">param_heading</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">Plot options [</span><span class="si">%s</span><span class="s">]:&#39;</span> <span class="o">%</span> <span class="n">plot_class</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span> <span class="n">cls</span><span class="o">.</span><span class="n">heading</span><span class="p">(</span><span class="s">&#39;Display&#39;</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">),</span>  <span class="s">&#39;&#39;</span><span class="p">,</span>
+                           <span class="n">cls</span><span class="o">.</span><span class="n">heading</span><span class="p">(</span><span class="n">style_heading</span><span class="p">,</span> <span class="n">char</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">),</span>
+                           <span class="n">style_msg</span><span class="p">,</span>
+                           <span class="n">cls</span><span class="o">.</span><span class="n">heading</span><span class="p">(</span><span class="n">param_heading</span><span class="p">,</span> <span class="n">char</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">),</span>
+                           <span class="n">param_info</span><span class="p">])</span>
+
+</div>
 <div class="viewcode-block" id="PrettyPrinter"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.PrettyPrinter">[docs]</a><span class="k">class</span> <span class="nc">PrettyPrinter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The PrettyPrinter used to print all HoloView objects via the</span>
@@ -259,7 +362,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2014 IOAM: Jean-Luc R. Stevens and Philipp Rudiger.
+        &copy; Copyright 2015 IOAM: Jean-Luc R. Stevens, Philipp Rudiger, and James A. Bednar.
     </p>
   </div>
 </footer>

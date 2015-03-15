@@ -138,9 +138,9 @@
 
 <span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Options</span><span class="p">,</span> <span class="n">OptionError</span><span class="p">,</span> <span class="n">Store</span><span class="p">,</span> <span class="n">StoreOptions</span>
+<span class="kn">from</span> <span class="nn">..core.pprint</span> <span class="kn">import</span> <span class="n">InfoPrinter</span>
 
 <span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">display</span><span class="p">,</span> <span class="n">HTML</span>
-
 <span class="kn">from</span> <span class="nn">..operation</span> <span class="kn">import</span> <span class="n">Compositor</span>
 
 <span class="c">#========#</span>
@@ -160,18 +160,8 @@
 <span class="c"># Set to True to automatically run notebooks.</span>
 <span class="n">STORE_HISTORY</span> <span class="o">=</span> <span class="bp">False</span>
 
-
-<span class="c"># ANSI color codes for the IPython pager</span>
-<span class="n">red</span>   <span class="o">=</span> <span class="s">&#39;</span><span class="se">\x1b</span><span class="s">[1;31m</span><span class="si">%s</span><span class="se">\x1b</span><span class="s">[0m&#39;</span>
-<span class="n">blue</span>  <span class="o">=</span> <span class="s">&#39;</span><span class="se">\x1b</span><span class="s">[1;34m</span><span class="si">%s</span><span class="se">\x1b</span><span class="s">[0m&#39;</span>
-<span class="n">green</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\x1b</span><span class="s">[1;32m</span><span class="si">%s</span><span class="se">\x1b</span><span class="s">[0m&#39;</span>
-<span class="n">cyan</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\x1b</span><span class="s">[1;36m</span><span class="si">%s</span><span class="se">\x1b</span><span class="s">[0m&#39;</span>
-
-<span class="c"># Corresponding HTML color codes</span>
-<span class="n">html_red</span> <span class="o">=</span> <span class="s">&#39;#980f00&#39;</span>
-<span class="n">html_blue</span> <span class="o">=</span> <span class="s">&#39;#00008e&#39;</span>
-
-
+<span class="kn">from</span> <span class="nn">IPython.core</span> <span class="kn">import</span> <span class="n">page</span>
+<span class="n">InfoPrinter</span><span class="o">.</span><span class="n">store</span> <span class="o">=</span> <span class="n">Store</span>
 
 <div class="viewcode-block" id="OptionsMagic"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.magics.OptionsMagic">[docs]</a><span class="k">class</span> <span class="nc">OptionsMagic</span><span class="p">(</span><span class="n">Magics</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -300,7 +290,8 @@
                <span class="s">&#39;size&#39;</span>        <span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">)),</span>
                <span class="s">&#39;dpi&#39;</span>         <span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">)),</span>
                <span class="s">&#39;charwidth&#39;</span>   <span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="s">&#39;inf&#39;</span><span class="p">)),</span>
-               <span class="s">&#39;filename&#39;</span>   <span class="p">:</span> <span class="p">{</span><span class="bp">None</span><span class="p">}}</span>
+               <span class="s">&#39;filename&#39;</span>    <span class="p">:</span> <span class="p">{</span><span class="bp">None</span><span class="p">},</span>
+               <span class="s">&#39;page&#39;</span>   <span class="p">:</span> <span class="p">[</span><span class="s">&#39;disabled&#39;</span><span class="p">,</span> <span class="s">&#39;display&#39;</span><span class="p">,</span> <span class="s">&#39;access&#39;</span><span class="p">,</span> <span class="s">&#39;all&#39;</span><span class="p">]}</span>
 
     <span class="n">defaults</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">([(</span><span class="s">&#39;backend&#39;</span>     <span class="p">,</span> <span class="s">&#39;mpl&#39;</span><span class="p">),</span>
                             <span class="p">(</span><span class="s">&#39;fig&#39;</span>         <span class="p">,</span> <span class="s">&#39;png&#39;</span><span class="p">),</span>
@@ -312,7 +303,8 @@
                             <span class="p">(</span><span class="s">&#39;size&#39;</span>        <span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
                             <span class="p">(</span><span class="s">&#39;dpi&#39;</span>         <span class="p">,</span> <span class="mi">72</span><span class="p">),</span>
                             <span class="p">(</span><span class="s">&#39;charwidth&#39;</span>   <span class="p">,</span> <span class="mi">80</span><span class="p">),</span>
-                            <span class="p">(</span><span class="s">&#39;filename&#39;</span>    <span class="p">,</span> <span class="bp">None</span><span class="p">)])</span>
+                            <span class="p">(</span><span class="s">&#39;filename&#39;</span>    <span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                            <span class="p">(</span><span class="s">&#39;page&#39;</span>   <span class="p">,</span> <span class="s">&#39;disabled&#39;</span><span class="p">)])</span>
 
     <span class="n">options</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="n">defaults</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
 
@@ -328,8 +320,13 @@
             <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s">&quot;Registering format in list </span><span class="si">%s</span><span class="s"> not in known formats </span><span class="si">%s</span><span class="s">&quot;</span>
                                  <span class="o">%</span> <span class="p">(</span><span class="n">supported_formats</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">optional_formats</span><span class="p">))</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">allowed</span><span class="p">[</span><span class="s">&#39;holomap&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">inbuilt_formats</span> <span class="o">+</span> <span class="n">supported_formats</span>
-
 </div>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">page</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;page&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="s">&#39;disabled&#39;</span><span class="p">:</span>
+            <span class="n">page</span><span class="o">.</span><span class="n">page</span><span class="p">(</span><span class="n">InfoPrinter</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">options</span><span class="p">[</span><span class="s">&#39;page&#39;</span><span class="p">],</span> <span class="n">ansi</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
+
+
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">_generate_docstring</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
         <span class="n">intro</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;Magic for setting HoloViews display options.&quot;</span><span class="p">,</span>
@@ -352,7 +349,10 @@
                   <span class="o">%</span> <span class="n">cls</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="s">&#39;charwidth&#39;</span><span class="p">])</span>
         <span class="n">fname</span> <span class="o">=</span>  <span class="p">(</span><span class="s">&quot;filename    : The filename of the saved output, if any (default </span><span class="si">%r</span><span class="s">)&quot;</span>
                   <span class="o">%</span> <span class="n">cls</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="s">&#39;filename&#39;</span><span class="p">])</span>
-        <span class="n">descriptions</span> <span class="o">=</span> <span class="p">[</span><span class="n">backend</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">holomap</span><span class="p">,</span> <span class="n">widgets</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">branches</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">dpi</span><span class="p">,</span> <span class="n">chars</span><span class="p">,</span> <span class="n">fname</span><span class="p">]</span>
+        <span class="n">page</span> <span class="o">=</span>  <span class="p">(</span><span class="s">&quot;page    : The information to page about the displayed objects (default </span><span class="si">%r</span><span class="s">)&quot;</span>
+                  <span class="o">%</span> <span class="n">cls</span><span class="o">.</span><span class="n">defaults</span><span class="p">[</span><span class="s">&#39;page&#39;</span><span class="p">])</span>
+
+        <span class="n">descriptions</span> <span class="o">=</span> <span class="p">[</span><span class="n">backend</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">holomap</span><span class="p">,</span> <span class="n">widgets</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">frames</span><span class="p">,</span> <span class="n">branches</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">dpi</span><span class="p">,</span> <span class="n">chars</span><span class="p">,</span> <span class="n">fname</span><span class="p">,</span> <span class="n">page</span><span class="p">]</span>
         <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">intro</span> <span class="o">+</span> <span class="n">descriptions</span><span class="p">)</span>
 
 
@@ -717,7 +717,7 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2014 IOAM: Jean-Luc R. Stevens and Philipp Rudiger.
+        &copy; Copyright 2015 IOAM: Jean-Luc R. Stevens, Philipp Rudiger, and James A. Bednar.
     </p>
   </div>
 </footer>
