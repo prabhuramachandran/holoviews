@@ -90,6 +90,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.plotting.html">plotting</a></li>
 </ul>
 </li>
+<li class="toctree-l1"><a class="reference internal" href="../../../FAQ.html">FAQ</a></li>
 <li class="toctree-l1"><a class="reference external" href="http://github.com/ioam/holoviews">Github source</a></li>
 </ul>
 
@@ -131,6 +132,8 @@
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="c"># IPython not required to import ParamPager</span>
 <span class="kn">from</span> <span class="nn">param.ipython</span> <span class="kn">import</span> <span class="n">ParamPager</span>
+<span class="kn">from</span> <span class="nn">holoviews.core.util</span> <span class="kn">import</span> <span class="n">sanitize_identifier</span>
+
 
 
 <div class="viewcode-block" id="InfoPrinter"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.InfoPrinter">[docs]</a><span class="k">class</span> <span class="nc">InfoPrinter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -173,7 +176,7 @@
             <span class="k">return</span> <span class="n">heading_color</span> <span class="o">%</span> <span class="s">&#39;</span><span class="si">%s</span><span class="se">\n</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">heading_text</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">heading_ul</span> <span class="o">=</span> <span class="n">char</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">heading_text</span><span class="p">)</span>
-            <span class="k">return</span> <span class="n">heading_color</span> <span class="o">%</span> <span class="s">&#39;</span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">heading_text</span><span class="p">,</span> <span class="n">heading_ul</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">heading_color</span> <span class="o">%</span> <span class="s">&#39;</span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">heading_ul</span><span class="p">,</span> <span class="n">heading_text</span><span class="p">,</span> <span class="n">heading_ul</span><span class="p">)</span>
 
 </div>
     <span class="nd">@classmethod</span>
@@ -184,21 +187,64 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">isclass</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
         <span class="n">name</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">__name__</span> <span class="k">if</span> <span class="n">isclass</span>  <span class="k">else</span> <span class="n">obj</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span>
-        <span class="n">plot_class</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">obj</span> <span class="k">if</span> <span class="n">isclass</span> <span class="k">else</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)]</span>
+        <span class="n">plot_class</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">obj</span> <span class="k">if</span> <span class="n">isclass</span> <span class="k">else</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">),</span> <span class="bp">None</span><span class="p">)</span>
         <span class="n">heading</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">isclass</span> <span class="k">else</span> <span class="s">&#39;{name}: {group} {label}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
                                                                         <span class="n">group</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">group</span><span class="p">,</span>
                                                                         <span class="n">label</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
-        <span class="n">heading_ul</span> <span class="o">=</span> <span class="s">&#39;=&#39;</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">heading</span><span class="p">)</span>
-        <span class="n">prefix</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">heading_ul</span><span class="p">,</span> <span class="n">heading</span><span class="p">,</span> <span class="n">heading_ul</span><span class="p">)</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="n">heading</span>
 
         <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">prefix</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">object_info</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">)]</span>
-        <span class="n">lines</span> <span class="o">+=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">isclass</span> <span class="k">else</span> <span class="p">[</span><span class="n">cls</span><span class="o">.</span><span class="n">indexing_info</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="p">)]</span>
-        <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span> <span class="o">+</span> <span class="p">[</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">options_info</span><span class="p">(</span><span class="n">plot_class</span><span class="p">,</span> <span class="n">ansi</span><span class="p">)])</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">isclass</span><span class="p">:</span>
+            <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">target_info</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">plot_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">lines</span> <span class="o">+=</span> <span class="p">[</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">options_info</span><span class="p">(</span><span class="n">plot_class</span><span class="p">,</span> <span class="n">ansi</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
 
 </div>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">indexing_info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">cls</span><span class="o">.</span><span class="n">heading</span><span class="p">(</span><span class="s">&#39;Indexing&#39;</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">),</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">obj</span><span class="p">)])</span>
+    <span class="k">def</span> <span class="nf">get_target</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="n">objtype</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span>
+        <span class="n">group</span> <span class="o">=</span> <span class="n">sanitize_identifier</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">group</span><span class="p">)</span>
+        <span class="n">label</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;.&#39;</span><span class="o">+</span><span class="n">sanitize_identifier</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">label</span><span class="p">)</span> <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">label</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="s">&#39;{objtype}.{group}{label}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">objtype</span><span class="o">=</span><span class="n">objtype</span><span class="p">,</span>
+                                                   <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">,</span>
+                                                   <span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;values&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">target_info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span> <span class="k">return</span> <span class="s">&#39;&#39;</span> <span class="c"># &lt; TEST</span>
+
+        <span class="n">targets</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">get_target</span><span class="p">)</span>
+        <span class="n">elements</span><span class="p">,</span> <span class="n">containers</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">targets</span><span class="p">)</span>
+        <span class="n">element_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">el</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">elements</span> <span class="k">if</span> <span class="n">el</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="n">container_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">containers</span> <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">)</span>
+
+        <span class="n">element_info</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">element_set</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">element_info</span> <span class="o">=</span> <span class="s">&#39;Element: </span><span class="si">%s</span><span class="s">&#39;</span>  <span class="o">%</span> <span class="nb">list</span><span class="p">(</span><span class="n">element_set</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">element_set</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">element_info</span> <span class="o">=</span> <span class="s">&#39;Elements:</span><span class="se">\n</span><span class="s">   </span><span class="si">%s</span><span class="s">&#39;</span>  <span class="o">%</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">   &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">element_set</span><span class="p">))</span>
+
+        <span class="n">container_info</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">container_set</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">container_info</span> <span class="o">=</span> <span class="s">&#39;Container: </span><span class="si">%s</span><span class="s">&#39;</span>  <span class="o">%</span> <span class="nb">list</span><span class="p">(</span><span class="n">container_set</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">container_set</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">container_info</span> <span class="o">=</span> <span class="s">&#39;Containers:</span><span class="se">\n</span><span class="s">   </span><span class="si">%s</span><span class="s">&#39;</span>  <span class="o">%</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">   &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">container_set</span><span class="p">))</span>
+        <span class="n">heading</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">heading</span><span class="p">(</span><span class="s">&#39;Target Specifications&#39;</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">,</span> <span class="n">char</span><span class="o">=</span><span class="s">&quot;-&quot;</span><span class="p">)</span>
+
+        <span class="n">target_header</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">Targets in this object available for customization:</span><span class="se">\n</span><span class="s">&#39;</span>
+        <span class="k">if</span> <span class="n">element_info</span> <span class="ow">and</span> <span class="n">container_info</span><span class="p">:</span>
+            <span class="n">target_info</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%s</span><span class="se">\n\n</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">element_info</span><span class="p">,</span> <span class="n">container_info</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">target_info</span> <span class="o">=</span> <span class="n">element_info</span> <span class="k">if</span> <span class="n">element_info</span> <span class="k">else</span> <span class="n">container_info</span>
+
+        <span class="n">target_footer</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">To see the options info for one of these target specifications,&quot;</span>
+                         <span class="s">&quot;</span><span class="se">\n</span><span class="s">which are of the form {type}[.{group}[.{label}]], do holoviews.info({type}).&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">heading</span><span class="p">,</span> <span class="n">target_header</span><span class="p">,</span> <span class="n">target_info</span><span class="p">,</span> <span class="n">target_footer</span><span class="p">])</span>
 
 
     <span class="nd">@classmethod</span>
@@ -209,7 +255,7 @@
         <span class="n">link</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">obj</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;</span><span class="se">\n</span><span class="s">Online example: {link}&quot;</span>
-               <span class="o">+</span> <span class="s">&quot;</span><span class="se">\n\n</span><span class="s">Access component help with holoviews.help({obj})&quot;</span>
+               <span class="o">+</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">Help for the data object: holoviews.help({obj})&quot;</span>
                <span class="o">+</span> <span class="s">&quot; or holoviews.help(&lt;{lower}_instance&gt;)&quot;</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">msg</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">obj</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
@@ -219,7 +265,6 @@
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">options_info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">plot_class</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
-        <span class="n">style_heading</span> <span class="o">=</span> <span class="s">&#39;Style options:&#39;</span>
         <span class="k">if</span> <span class="n">plot_class</span><span class="o">.</span><span class="n">style_opts</span><span class="p">:</span>
             <span class="n">style_info</span> <span class="o">=</span> <span class="s">&quot;</span><span class="se">\n</span><span class="s">(Consult matplotlib&#39;s documentation for more information.)&quot;</span>
             <span class="n">style_keywords</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\t</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">plot_class</span><span class="o">.</span><span class="n">style_opts</span><span class="p">)</span>
@@ -228,9 +273,11 @@
             <span class="n">style_msg</span> <span class="o">=</span> <span class="s">&#39;</span><span class="se">\t</span><span class="s">&lt;No style options available&gt;&#39;</span>
 
         <span class="n">param_info</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">get_parameter_info</span><span class="p">(</span><span class="n">plot_class</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">)</span>
-        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span> <span class="n">cls</span><span class="o">.</span><span class="n">heading</span><span class="p">(</span><span class="s">&#39;Display Options&#39;</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">),</span> <span class="s">&#39;&#39;</span><span class="p">,</span>
-                           <span class="n">cls</span><span class="o">.</span><span class="n">heading</span><span class="p">(</span><span class="n">style_heading</span><span class="p">,</span> <span class="n">char</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">),</span>
-                           <span class="n">style_msg</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">param_info</span><span class="p">])</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span> <span class="n">cls</span><span class="o">.</span><span class="n">heading</span><span class="p">(</span><span class="s">&#39;Style Options&#39;</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">,</span> <span class="n">char</span><span class="o">=</span><span class="s">&quot;-&quot;</span><span class="p">),</span> <span class="s">&#39;&#39;</span><span class="p">,</span>
+                           <span class="n">style_msg</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">,</span> 
+                           <span class="n">cls</span><span class="o">.</span><span class="n">heading</span><span class="p">(</span><span class="s">&#39;Plot Options&#39;</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">,</span> <span class="n">char</span><span class="o">=</span><span class="s">&quot;-&quot;</span><span class="p">),</span> <span class="s">&#39;&#39;</span><span class="p">,</span>
+                           <span class="s">&quot;The plot options are the parameters of the plotting class:</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+                           <span class="n">param_info</span><span class="p">])</span>
 
 </div>
 <div class="viewcode-block" id="PrettyPrinter"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.pprint.PrettyPrinter">[docs]</a><span class="k">class</span> <span class="nc">PrettyPrinter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
