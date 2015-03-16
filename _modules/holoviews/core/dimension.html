@@ -280,7 +280,7 @@
 <span class="sd">    containing data. This class assumes that the core data contents</span>
 <span class="sd">    will be held in the attribute called &#39;data&#39;.</span>
 
-<span class="sd">    Used together, group and label is designed to allow a simple and</span>
+<span class="sd">    Used together, group and label are designed to allow a simple and</span>
 <span class="sd">    flexible means of addressing data. For instance, if you are</span>
 <span class="sd">    collecting the heights of people in different demographics, you</span>
 <span class="sd">    could specify the values of your objects as &#39;Height&#39; and then use</span>
@@ -295,19 +295,24 @@
 <span class="sd">    LabelledData object is therefore given by the tuple</span>
 <span class="sd">    (&lt;type&gt;, &lt;group&gt;, label&gt;). This additional level of specification is</span>
 <span class="sd">    used in the traverse method.</span>
+
+<span class="sd">    Any strings can be used for the group and label, but it can be</span>
+<span class="sd">    convenient to use a capitalized string of alphanumeric characters,</span>
+<span class="sd">    in which case the keys used for matching in the matches and</span>
+<span class="sd">    traverse method will correspond exactly to {type}.{group}.{label}.</span>
+<span class="sd">    Otherwise the strings provided will be sanitized to be valid</span>
+<span class="sd">    capitalized Python identifiers, which works fine but can sometimes</span>
+<span class="sd">    be confusing.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">group</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;LabelledData&#39;</span><span class="p">,</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">       A string describing the type of data contained by the object.</span>
-<span class="s">       By default this should mirror the class name. The first letter</span>
-<span class="s">       of a group name should always be capitalized.&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">       By default this will typically mirror the class name.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">label</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">       Optional label describing the data, typically reflecting where</span>
-<span class="s">       or how it was measured. Together with the group parameter,</span>
-<span class="s">       label should allow a specific measurement or dataset to be</span>
-<span class="s">       referenced given the class type. Note that the first letter of</span>
-<span class="s">       a label should always be capitalized.&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">       or how it was measured. The label should allow a specific</span>
+<span class="s">       measurement or dataset to be referenced for a given group..&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">_deep_indexable</span> <span class="o">=</span> <span class="bp">False</span>
 
@@ -357,9 +362,12 @@
 <span class="sd">        A specification may be a class, a tuple or a string.</span>
 <span class="sd">        Equivalent to isinstance if a class is supplied, otherwise</span>
 <span class="sd">        matching occurs on type, group and label. These may be supplied</span>
-<span class="sd">        as a tuple of strings or as a single string of form</span>
-<span class="sd">        {type}.{group}.{label}. Matching may be done on type alone,</span>
-<span class="sd">        type and group or type, group, and label.</span>
+<span class="sd">        as a tuple of strings or as a single string of the</span>
+<span class="sd">        form &quot;{type}.{group}.{label}&quot;. Matching may be done on {type}</span>
+<span class="sd">        alone, {type}.{group}, or {type}.{group}.{label}.  The strings</span>
+<span class="sd">        for the type, group, and label will each be sanitized before</span>
+<span class="sd">        the match, and so the sanitized versions of those values will</span>
+<span class="sd">        need to be provided if the match is to succeed.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span> <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">)</span>
         <span class="n">specification</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
@@ -505,7 +513,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">constant_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">OrderedDict</span><span class="p">(),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">       A dictionary of Dimension : value providing additional</span>
+<span class="s">       A dictionary of Dimension:value pairs providing additional</span>
 <span class="s">       dimension information about the object.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">key_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
