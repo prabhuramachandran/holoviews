@@ -152,6 +152,41 @@
 <span class="kn">from</span> <span class="nn">.ndmapping</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">UniformNdMapping</span>
 <span class="kn">from</span> <span class="nn">.dimension</span> <span class="kn">import</span> <span class="n">LabelledData</span>
 
+
+<div class="viewcode-block" id="Reference"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Reference">[docs]</a><span class="k">class</span> <span class="nc">Reference</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Reference allows access to an object to be deferred until it is</span>
+<span class="sd">    needed in the appropriate context. References are used by</span>
+<span class="sd">    Collector to capture the state of an object at collection time.</span>
+
+<span class="sd">    One particularly important property of references is that they</span>
+<span class="sd">    should be pickleable. This means that you can pickle Collectors so</span>
+<span class="sd">    that you can unpickle them in different environments and still</span>
+<span class="sd">    collect from the required object.</span>
+
+<span class="sd">    A Reference only needs to have a resolved_type property and a</span>
+<span class="sd">    resolve method. The constructor will take some specification of</span>
+<span class="sd">    where to find the target object (may be the object itself).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Reference.resolved_type"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Reference.resolved_type">[docs]</a>    <span class="k">def</span> <span class="nf">resolved_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the type of the object resolved by this references. If</span>
+<span class="sd">        multiple types are possible, the return is a tuple of types.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+</div>
+<div class="viewcode-block" id="Reference.resolve"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Reference.resolve">[docs]</a>    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">container</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the referenced object. Optionally, a container may be</span>
+<span class="sd">        passed in from which the object is to be resolved.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+
+</div></div>
 <div class="viewcode-block" id="Exporter"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Exporter">[docs]</a><span class="k">class</span> <span class="nc">Exporter</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">ParameterizedFunction</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    An Exporter is a parameterized function that accepts a HoloViews</span>
@@ -165,6 +200,15 @@
 
     <span class="c"># Mime-types that need encoding as utf-8 upon export</span>
     <span class="n">utf8_mime_types</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;image/svg+xml&#39;</span><span class="p">,</span> <span class="s">&#39;text/html&#39;</span><span class="p">]</span>
+
+    <span class="n">metadata_fn</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">      Function that generates additional metadata information from the</span>
+<span class="s">      HoloViews object being saved.</span>
+
+<span class="s">      Must return a dictionary containing string keys and simple</span>
+<span class="s">      literal values such ints, floats, short strings and booleans. By</span>
+<span class="s">      default the metadata is an empty dictionary.&quot;&quot;&quot;</span><span class="p">)</span>
+
 
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Exporter.encode"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Exporter.encode">[docs]</a>    <span class="k">def</span> <span class="nf">encode</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">entry</span><span class="p">):</span>
@@ -188,7 +232,6 @@
 
 <span class="sd">        &#39;file-ext&#39; : The file extension if applicable (else empty string)</span>
 <span class="sd">        &#39;mime_type&#39;: The mime-type of the data.</span>
-<span class="sd">        &#39;size&#39;     : Size in bytes of the returned data.</span>
 
 <span class="sd">        The fmt argument may be used with exporters that support multiple</span>
 <span class="sd">        output formats. If not supplied, the exporter is to pick an</span>
@@ -196,12 +239,15 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Exporter not implemented.&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Exporter.save"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Exporter.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="viewcode-block" id="Exporter.save"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Exporter.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Similar to the call method except saves exporter data to disk</span>
 <span class="sd">        into a file with specified basename. For exporters that</span>
 <span class="sd">        support multiple formats, the fmt argument may also be</span>
 <span class="sd">        supplied (which typically corresponds to the file-extension).</span>
+
+<span class="sd">        The supplied metadata dictionary updates the output of the</span>
+<span class="sd">        metadata_fn (if any) which is then saved if supported.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Exporter save method not implemented.&quot;</span><span class="p">)</span>
 
@@ -218,7 +264,6 @@
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
         <span class="n">data</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">protocol</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;file-ext&#39;</span><span class="p">:</span><span class="s">&#39;pkl&#39;</span><span class="p">,</span>
-                      <span class="s">&#39;size&#39;</span><span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">),</span>
                       <span class="s">&#39;mime_type&#39;</span><span class="p">:</span><span class="s">&#39;application/python-pickle&#39;</span><span class="p">}</span>
 
     <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">basename</span><span class="p">):</span>
