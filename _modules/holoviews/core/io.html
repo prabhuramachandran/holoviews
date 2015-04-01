@@ -146,6 +146,7 @@
 <span class="kn">from</span> <span class="nn">hashlib</span> <span class="kn">import</span> <span class="n">sha256</span>
 
 <span class="kn">import</span> <span class="nn">param</span>
+<span class="kn">from</span> <span class="nn">param.parameterized</span> <span class="kn">import</span> <span class="n">bothmethod</span>
 
 <span class="kn">from</span> <span class="nn">.options</span> <span class="kn">import</span> <span class="n">Store</span>
 <span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">unique_iterator</span>
@@ -195,19 +196,29 @@
 
 <span class="sd">    Pickling:   Native Python, supported by HoloViews.</span>
 <span class="sd">    Rendering:  Currently using matplotlib but could use any plotting backend.</span>
-<span class="sd">    Storage:    Databases (e.g SQL), HDF5 etc.</span>
+<span class="sd">    Storage:    Saving to a database (e.g SQL), HDF5 etc.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c"># Mime-types that need encoding as utf-8 upon export</span>
     <span class="n">utf8_mime_types</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;image/svg+xml&#39;</span><span class="p">,</span> <span class="s">&#39;text/html&#39;</span><span class="p">]</span>
 
-    <span class="n">metadata_fn</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+    <span class="n">key_fn</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">      Function that generates the metadata key from the HoloViews</span>
+<span class="s">      object being saved. The metadata key is a single</span>
+<span class="s">      high-dimensional key of values associated with dimension labels.</span>
+
+<span class="s">      The returned dictionary must have string keys and simple</span>
+<span class="s">      literals that may be conviently used for dictionary-style</span>
+<span class="s">      indexing. Returns an empty dictionary by default.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">info_fn</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;repr&#39;</span><span class="p">:</span><span class="nb">repr</span><span class="p">(</span><span class="n">x</span><span class="p">)},</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">      Function that generates additional metadata information from the</span>
 <span class="s">      HoloViews object being saved.</span>
 
-<span class="s">      Must return a dictionary containing string keys and simple</span>
-<span class="s">      literal values such ints, floats, short strings and booleans. By</span>
-<span class="s">      default the metadata is an empty dictionary.&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">      Unlike metadata keys, the information returned may be unsuitable</span>
+<span class="s">      for use as a key index and may include entries such as the</span>
+<span class="s">      object&#39;s repr. Regardless, the info metadata should still only</span>
+<span class="s">      contain items that will be quick to load and inspect. &quot;&quot;&quot;</span><span class="p">)</span>
 
 
     <span class="nd">@classmethod</span>
@@ -222,8 +233,16 @@
             <span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">data</span>
-
 </div>
+    <span class="nd">@bothmethod</span>
+    <span class="k">def</span> <span class="nf">_merge_metadata</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">dicts</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a merged metadata info dictionary from the supplied</span>
+<span class="sd">        function and additional dictionaries</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">merged</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dicts</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()])</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">merged</span><span class="p">,</span> <span class="o">**</span><span class="n">fn</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span> <span class="k">if</span> <span class="n">fn</span> <span class="k">else</span> <span class="n">merged</span>
+
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given a HoloViews object return the raw exported data and</span>
@@ -239,19 +258,143 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Exporter not implemented.&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="Exporter.save"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Exporter.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+    <span class="nd">@bothmethod</span>
+<div class="viewcode-block" id="Exporter.save"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Exporter.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">{},</span> <span class="n">info</span><span class="o">=</span><span class="p">{},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Similar to the call method except saves exporter data to disk</span>
 <span class="sd">        into a file with specified basename. For exporters that</span>
 <span class="sd">        support multiple formats, the fmt argument may also be</span>
 <span class="sd">        supplied (which typically corresponds to the file-extension).</span>
 
-<span class="sd">        The supplied metadata dictionary updates the output of the</span>
-<span class="sd">        metadata_fn (if any) which is then saved if supported.</span>
+<span class="sd">        The supplied metadata key and info dictionaries will be used</span>
+<span class="sd">        to update the output of the relevant key and info functions</span>
+<span class="sd">        which is then saved (if supported).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Exporter save method not implemented.&quot;</span><span class="p">)</span>
 
+
 </div></div>
+<div class="viewcode-block" id="Importer"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Importer">[docs]</a><span class="k">class</span> <span class="nc">Importer</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">ParameterizedFunction</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An Importer is a parameterized function that accepts some data in</span>
+<span class="sd">    some format and returns a HoloViews object. This mechanism is</span>
+<span class="sd">    designed to be very general so here are a few examples:</span>
+
+<span class="sd">    Unpickling: Native Python, supported by HoloViews.</span>
+<span class="sd">    Servers:    Loading data over a network connection.</span>
+<span class="sd">    Storage:    Loading from a database (e.g SQL), HDF5 etc.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given raw data in the appropriate format return the</span>
+<span class="sd">        corresponding HoloViews object. Acts as the inverse of</span>
+<span class="sd">        Exporter when supplied the data portion of an Exporter&#39;s</span>
+<span class="sd">        output.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Importer not implemented.&quot;</span><span class="p">)</span>
+
+
+    <span class="nd">@bothmethod</span>
+<div class="viewcode-block" id="Importer.load"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Importer.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">entry</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given some source (e.g. a filename, a network connection etc),</span>
+<span class="sd">        return the loaded HoloViews object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Importer load method not implemented.&quot;</span><span class="p">)</span>
+
+</div>
+    <span class="nd">@bothmethod</span>
+<div class="viewcode-block" id="Importer.info"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Importer.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">src</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the &#39;info&#39; portion of the metadata (if available).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Importer info method not implemented.&quot;</span><span class="p">)</span>
+</div>
+    <span class="nd">@bothmethod</span>
+<div class="viewcode-block" id="Importer.key"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Importer.key">[docs]</a>    <span class="k">def</span> <span class="nf">key</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">src</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the metadata key (if available).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s">&quot;Importer keys method not implemented.&quot;</span><span class="p">)</span>
+
+</div></div>
+<div class="viewcode-block" id="Serializer"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Serializer">[docs]</a><span class="k">class</span> <span class="nc">Serializer</span><span class="p">(</span><span class="n">Exporter</span><span class="p">):</span>
+    <span class="s">&quot;A generic exporter that supports any arbitrary serializer&quot;</span>
+
+    <span class="n">serializer</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">dumps</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The serializer function, set to Store.dumps by default. The</span>
+<span class="s">       serializer should take an object and output a serialization as</span>
+<span class="s">       a string or byte stream.</span>
+
+<span class="s">       Any suitable serializer may be used. For instance, pickle.dumps</span>
+<span class="s">       may be used although this will not save customized options.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">mime_type</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s">&#39;application/python-pickle&#39;</span><span class="p">,</span> <span class="n">allow_None</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The mime-type associated with the serializer (if applicable).&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">file_ext</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s">&#39;pkl&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The file extension associated with the corresponding file</span>
+<span class="s">       format (if applicable).&quot;&quot;&quot;</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">serializer</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;file-ext&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">file_ext</span><span class="p">,</span> <span class="s">&#39;mime_type&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">mime_type</span><span class="p">}</span>
+
+    <span class="nd">@bothmethod</span>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="p">{},</span> <span class="n">key</span><span class="o">=</span><span class="p">{},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">base_info</span> <span class="o">=</span> <span class="n">self_or_cls</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">_merge_metadata</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">key_fn</span><span class="p">,</span> <span class="n">base_info</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">_merge_metadata</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">info_fn</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+        <span class="n">metadata</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">self_or_cls</span><span class="p">({</span><span class="s">&#39;info&#39;</span><span class="p">:</span><span class="n">info</span><span class="p">,</span> <span class="s">&#39;key&#39;</span><span class="p">:</span><span class="n">key</span><span class="p">},</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">file_ext</span><span class="p">),</span> <span class="s">&#39;a&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="Deserializer"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Deserializer">[docs]</a><span class="k">class</span> <span class="nc">Deserializer</span><span class="p">(</span><span class="n">Importer</span><span class="p">):</span>
+    <span class="s">&quot;A generic importer that supports any arbitrary de-serializer.&quot;</span>
+
+    <span class="n">deserializer</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">load</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The deserializer function, set to Store.load by default. The</span>
+<span class="s">       deserializer should take a file-like object that can be read</span>
+<span class="s">       from until the first object has been deserialized. If the file</span>
+<span class="s">       has not been exhausted, the deserializer should be able to</span>
+<span class="s">       continue parsing and loading objects.</span>
+
+<span class="s">       Any suitable deserializer may be used. For instance,</span>
+<span class="s">       pickle.load may be used although this will not load customized</span>
+<span class="s">       options.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">deserializer</span><span class="p">(</span><span class="n">BytesIO</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+
+    <span class="nd">@bothmethod</span>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">deserializer</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">deserializer</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span> <span class="k">pass</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="nd">@bothmethod</span>
+    <span class="k">def</span> <span class="nf">key</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">deserializer</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;key&#39;</span><span class="p">,</span> <span class="p">{})</span>
+
+    <span class="nd">@bothmethod</span>
+    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">deserializer</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="k">return</span> <span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;info&#39;</span><span class="p">,</span> <span class="p">{})</span>
+</div>
 <div class="viewcode-block" id="Pickler"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.io.Pickler">[docs]</a><span class="k">class</span> <span class="nc">Pickler</span><span class="p">(</span><span class="n">Exporter</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Simple example of an archiver that simply returns the pickled data.</span>
