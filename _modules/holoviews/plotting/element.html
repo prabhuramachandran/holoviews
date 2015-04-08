@@ -129,6 +129,9 @@
   <h1>Source code for holoviews.plotting.element</h1><div class="highlight"><pre>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">groupby</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">ticker</span>
+<span class="kn">from</span> <span class="nn">mpl_toolkits.axes_grid1</span> <span class="kn">import</span> <span class="n">make_axes_locatable</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
 <span class="c"># Python3 compatibility</span>
@@ -240,13 +243,16 @@
     <span class="k">def</span> <span class="nf">_get_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uniform</span><span class="p">:</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span> <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">key</span><span class="p">,)</span>
-            <span class="n">dimensions</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">]</span>
             <span class="n">key_dimensions</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">dimensions</span> <span class="o">=</span> <span class="n">key_dimensions</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">dimensions</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">key_dimensions</span> <span class="o">==</span> <span class="p">[</span><span class="s">&#39;Frame&#39;</span><span class="p">]</span> <span class="ow">and</span> <span class="n">key_dimensions</span> <span class="o">!=</span> <span class="n">dimensions</span><span class="p">:</span>
                 <span class="n">select</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">Frame</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">select</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">key</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span>
-                          <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">}</span>
+                <span class="n">select</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span><span class="p">:</span> <span class="n">key</span><span class="p">[</span><span class="n">dimensions</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">d</span><span class="p">)]</span>
+                          <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">key_dimensions</span><span class="p">}</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="nb">min</span><span class="p">([</span><span class="n">key</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
         <span class="k">else</span><span class="p">:</span>
@@ -298,7 +304,16 @@
 <span class="sd">        Gets the extents for the axes from the current View. The globally</span>
 <span class="sd">        computed ranges can optionally override the extents.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">view</span><span class="o">.</span><span class="n">extents</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rescale_individually</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">extents</span>
+        <span class="n">xdim</span><span class="p">,</span> <span class="n">ydim</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">view</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ranges</span><span class="p">:</span>
+            <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span> <span class="o">=</span> <span class="n">ranges</span><span class="p">[</span><span class="n">xdim</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">ranges</span><span class="p">[</span><span class="n">ydim</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">view</span><span class="o">.</span><span class="n">extents</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">projection</span> <span class="o">==</span> <span class="s">&#39;3d&#39;</span><span class="p">:</span>
+                <span class="n">z0</span><span class="p">,</span> <span class="n">z1</span> <span class="o">=</span> <span class="n">ranges</span><span class="p">[</span><span class="n">view</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+                <span class="k">return</span> <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">z0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">z1</span>
+        <span class="k">return</span> <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span>
 
 
     <span class="k">def</span> <span class="nf">_format_title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
@@ -319,6 +334,14 @@
             <span class="k">return</span> <span class="n">title</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">title</span><span class="p">,</span> <span class="n">dim_title</span><span class="p">])</span>
+
+
+    <span class="k">def</span> <span class="nf">_draw_colorbar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">artist</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s">&#39;cax&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">:</span>
+            <span class="n">axis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;axis&#39;</span><span class="p">]</span>
+            <span class="n">divider</span> <span class="o">=</span> <span class="n">make_axes_locatable</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;cax&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">divider</span><span class="o">.</span><span class="n">append_axes</span><span class="p">(</span><span class="s">&#39;right&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s">&quot;5%&quot;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">artist</span><span class="p">,</span> <span class="n">cax</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;cax&#39;</span><span class="p">])</span>
 
 
     <span class="k">def</span> <span class="nf">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">xticks</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">yticks</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
@@ -644,12 +667,13 @@
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">axis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;axis&#39;</span><span class="p">]</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
 
+        <span class="n">ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_ranges</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">plot</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">plot</span><span class="p">(</span><span class="n">ranges</span><span class="o">=</span><span class="n">ranges</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_adjust_legend</span><span class="p">(</span><span class="n">axis</span><span class="p">)</span>
 
-        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="n">ranges</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
 
 
@@ -710,6 +734,7 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">projection</span> <span class="o">==</span> <span class="s">&#39;3d&#39;</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;axis&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
+        <span class="n">ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_ranges</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">plot</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
             <span class="n">plot</span><span class="o">.</span><span class="n">update_frame</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
 
