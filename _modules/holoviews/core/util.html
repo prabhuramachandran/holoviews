@@ -131,9 +131,121 @@
 <span class="kn">import</span> <span class="nn">numbers</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">import</span> <span class="nn">string</span>
+<span class="kn">import</span> <span class="nn">unicodedata</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">param</span>
+
+
+<div class="viewcode-block" id="sanitize_identifier"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.sanitize_identifier">[docs]</a><span class="k">class</span> <span class="nc">sanitize_identifier</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">ParameterizedFunction</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sanitizes group/label values for use in AttrTree attribute</span>
+<span class="sd">    access. Depending on the version parameter, either sanitization</span>
+<span class="sd">    appropriate for Python 2 (no unicode gn identifiers allowed) or</span>
+<span class="sd">    Python 3 (some unicode allowed) is used.</span>
+
+<span class="sd">    Note that if you are using Python 3, you can switch to version 2</span>
+<span class="sd">    for compatibility but you cannot enable relaxed sanitization if</span>
+<span class="sd">    you are using Python 2.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">version</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span><span class="p">,</span> <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The sanitization version. If set to 2, more aggresive</span>
+<span class="s">        sanitization appropriate for Python 2 is applied. Otherwise,</span>
+<span class="s">        if set to 3, more relaxed, Python 3 sanitization is used.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">capitalize</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Whether the first letter should be converted to</span>
+<span class="s">       uppercase. Note, this will only be applied to ASCII characters</span>
+<span class="s">       in order to make sure paths aren&#39;t confused with method</span>
+<span class="s">       names.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">UNDERSCORE_TOKEN</span> <span class="o">=</span> <span class="s">&#39;UNDERSCORE&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">]:</span> <span class="k">return</span> <span class="n">name</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="k">if</span> <span class="n">version</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">version</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">allowable</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;String </span><span class="si">%r</span><span class="s"> cannot be sanitized into a suitable attribute name</span><span class="se">\n</span><span class="s">&#39;</span>
+                            <span class="s">&#39;(Must not start with an underscore or character in a digit class)&#39;</span><span class="p">)</span>
+
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">capitalize</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">and</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">+</span><span class="n">name</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="n">chars</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sanitize_py2</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">escape</span><span class="p">)</span>
+                 <span class="k">if</span> <span class="n">version</span><span class="o">==</span><span class="mi">2</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize_py3</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">escape</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chars</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">chars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_0x&#39;</span><span class="p">):</span>
+            <span class="n">chars</span> <span class="o">=</span> <span class="p">[</span><span class="n">chars</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">2</span><span class="p">:]]</span> <span class="o">+</span> <span class="n">chars</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">escape</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span> <span class="ow">and</span> <span class="n">chars</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;_&#39;</span><span class="p">:</span>
+            <span class="n">chars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">UNDERSCORE_TOKEN</span> <span class="o">+</span> <span class="n">chars</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">sanitize_py2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="s">&#39;&#39;</span>
+        <span class="n">valid_chars</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span><span class="o">+</span><span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="o">+</span><span class="s">&#39;_&#39;</span>
+        <span class="n">chars</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_chars</span><span class="p">:</span>
+                <span class="n">chars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;_</span><span class="si">%s</span><span class="s">_&#39;</span> <span class="o">%</span> <span class="nb">hex</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">chars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">chars</span>
+
+    <span class="k">def</span> <span class="nf">sanitize_py3</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="n">chars</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">isidentifier</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="s">&#39;_&#39;</span><span class="o">+</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">isidentifier</span><span class="p">():</span>
+                    <span class="n">chars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;_</span><span class="si">%s</span><span class="s">_&#39;</span> <span class="o">%</span> <span class="nb">hex</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">chars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">chars</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="allowable"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.allowable">[docs]</a><span class="k">class</span> <span class="nc">allowable</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">ParameterizedFunction</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Predicate function that returns a boolean that indicates whether a</span>
+<span class="sd">    string is an allowable identifier or not.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span><span class="p">,</span> <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The sanitization version. If set to 2, fewer strings are</span>
+<span class="s">       allowable as more aggresive sanitization is needed for Python</span>
+<span class="s">       2. If set to 3, more strings will be allowable due to better</span>
+<span class="s">       unicode support in Python 3.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">disallowed</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;Trait_names&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       An explicit list of identifiers that should not be treated as</span>
+<span class="s">       attribute names for use on Tree objects.</span>
+
+<span class="s">       By default, prevents IPython from creating an entry called</span>
+<span class="s">       Trait_names due to an inconvenient getattr check during</span>
+<span class="s">       tab-completion.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span> <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">disallowed</span><span class="p">:</span> <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="n">invalid_starting</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Mn&#39;</span><span class="p">,</span> <span class="s">&#39;Mc&#39;</span><span class="p">,</span> <span class="s">&#39;Nd&#39;</span><span class="p">,</span> <span class="s">&#39;Pc&#39;</span><span class="p">]</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="k">if</span> <span class="n">version</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">version</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">version</span><span class="o">==</span><span class="mi">2</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="p">:</span> <span class="k">return</span> <span class="bp">False</span>
+            <span class="n">valid_second_chars</span><span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span><span class="o">+</span><span class="n">string</span><span class="o">.</span><span class="n">digits</span>
+            <span class="k">return</span> <span class="ow">not</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_second_chars</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">version</span><span class="o">==</span><span class="mi">3</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">category</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">in</span> <span class="n">invalid_starting</span><span class="p">:</span> <span class="k">return</span> <span class="bp">False</span>
+            <span class="k">return</span> <span class="ow">not</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">name</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">isidentifier</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">True</span>
+
+</div>
+<span class="k">def</span> <span class="nf">unescape_identifier</span><span class="p">(</span><span class="n">identifier</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">identifier</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">sanitize_identifier</span><span class="o">.</span><span class="n">UNDERSCORE_TOKEN</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
+
 
 <div class="viewcode-block" id="find_minmax"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.find_minmax">[docs]</a><span class="k">def</span> <span class="nf">find_minmax</span><span class="p">(</span><span class="n">lims</span><span class="p">,</span> <span class="n">olims</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -141,13 +253,13 @@
 <span class="sd">    (np.nanmin(a1, b1), np.nanmax(a2, b2)). Used to calculate</span>
 <span class="sd">    min and max values of a number of items.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
     <span class="k">try</span><span class="p">:</span>
         <span class="n">limzip</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">lims</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">olims</span><span class="p">),</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">])</span>
         <span class="n">limits</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">fn</span><span class="p">([</span><span class="n">l</span><span class="p">,</span> <span class="n">ol</span><span class="p">]))</span> <span class="k">for</span> <span class="n">l</span><span class="p">,</span> <span class="n">ol</span><span class="p">,</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">limzip</span><span class="p">])</span>
     <span class="k">except</span><span class="p">:</span>
         <span class="n">limits</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">limits</span>
+
 </div>
 <div class="viewcode-block" id="int_to_alpha"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.int_to_alpha">[docs]</a><span class="k">def</span> <span class="nf">int_to_alpha</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
     <span class="s">&quot;Generates alphanumeric labels of form A-Z, AA-ZZ etc.&quot;</span>
@@ -168,6 +280,7 @@
         <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">n</span> <span class="o">-=</span> <span class="mi">26</span><span class="o">**</span><span class="n">count</span>
     <span class="k">return</span> <span class="n">label</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
 </div>
 <span class="k">def</span> <span class="nf">int_to_roman</span><span class="p">(</span><span class="nb">input</span><span class="p">):</span>
    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">type</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span>
@@ -182,42 +295,6 @@
       <span class="n">result</span> <span class="o">+=</span> <span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">count</span>
       <span class="nb">input</span> <span class="o">-=</span> <span class="n">ints</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">count</span>
    <span class="k">return</span> <span class="n">result</span>
-
-
-<span class="n">UNDERSCORE_TOKEN</span> <span class="o">=</span> <span class="s">&#39;UNDERSCORE&#39;</span>
-
-<div class="viewcode-block" id="sanitize_identifier"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.sanitize_identifier">[docs]</a><span class="k">def</span> <span class="nf">sanitize_identifier</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Sanitizes group/label values for use in AttrTree</span>
-<span class="sd">    attribute access</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="s">&#39;&#39;</span>
-    <span class="n">valid_chars</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span><span class="o">+</span><span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="o">+</span><span class="s">&#39;_&#39;</span>
-    <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
-    <span class="n">chars</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">if</span> <span class="n">name</span> <span class="ow">and</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">islower</span><span class="p">():</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">upper</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="n">name</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="mi">0</span> <span class="ow">and</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="p">:</span>
-            <span class="n">chars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;_</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">c</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_chars</span><span class="p">:</span>
-            <span class="n">chars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;_</span><span class="si">%s</span><span class="s">_&#39;</span> <span class="o">%</span> <span class="nb">hex</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="n">c</span><span class="p">)))</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">chars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">escape</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span> <span class="ow">and</span> <span class="n">chars</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;_&#39;</span><span class="p">:</span>
-        <span class="n">chars</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">UNDERSCORE_TOKEN</span> <span class="o">+</span> <span class="n">chars</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span>
-    <span class="k">return</span> <span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span>
-
-</div>
-<span class="k">def</span> <span class="nf">unescape_identifier</span><span class="p">(</span><span class="n">identifier</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">identifier</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">UNDERSCORE_TOKEN</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">allowable</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-    <span class="n">valid_second_chars</span><span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span><span class="o">+</span><span class="n">string</span><span class="o">.</span><span class="n">digits</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_second_chars</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">False</span>
-    <span class="k">return</span> <span class="bp">True</span>
 
 
 <div class="viewcode-block" id="unique_iterator"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.unique_iterator">[docs]</a><span class="k">def</span> <span class="nf">unique_iterator</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
