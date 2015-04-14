@@ -127,7 +127,6 @@
           <div role="main">
             
   <h1>Source code for holoviews.plotting.element</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">groupby</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">ticker</span>
 <span class="kn">from</span> <span class="nn">mpl_toolkits.axes_grid1</span> <span class="kn">import</span> <span class="n">make_axes_locatable</span>
@@ -139,7 +138,7 @@
 
 <span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Store</span>
 <span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">NdOverlay</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">,</span> <span class="n">CompositeOverlay</span><span class="p">,</span> <span class="n">Element3D</span>
-<span class="kn">from</span> <span class="nn">..core.util</span> <span class="kn">import</span> <span class="n">find_minmax</span><span class="p">,</span> <span class="n">match_spec</span><span class="p">,</span> <span class="nb">unicode</span><span class="p">,</span> <span class="nb">basestring</span>
+<span class="kn">from</span> <span class="nn">..core.util</span> <span class="kn">import</span> <span class="n">find_minmax</span><span class="p">,</span> <span class="n">match_spec</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">,</span> <span class="n">safe_unicode</span>
 <span class="kn">from</span> <span class="nn">..element</span> <span class="kn">import</span> <span class="n">Annotation</span><span class="p">,</span> <span class="n">Table</span><span class="p">,</span> <span class="n">ItemTable</span>
 <span class="kn">from</span> <span class="nn">..operation</span> <span class="kn">import</span> <span class="n">Compositor</span>
 <span class="kn">from</span> <span class="nn">.plot</span> <span class="kn">import</span> <span class="n">Plot</span>
@@ -220,7 +219,7 @@
     <span class="c"># Element Plots should declare the valid style options for matplotlib call</span>
     <span class="n">style_opts</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="n">_suppressed</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Table&#39;</span><span class="p">,</span> <span class="s">&#39;ItemTable&#39;</span><span class="p">]</span>
+    <span class="n">_suppressed</span> <span class="o">=</span> <span class="p">[</span><span class="n">Table</span><span class="p">,</span> <span class="n">ItemTable</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">overlaid</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                  <span class="n">cyclic_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">zorder</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">adjoined</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">uniform</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
@@ -330,12 +329,10 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout_dimensions</span><span class="p">:</span>
             <span class="n">title</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="n">group</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span>
-                <span class="n">label</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">label</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span>
-            <span class="n">title</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">title_format</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
-                                                      <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">,</span>
-                                                      <span class="nb">type</span><span class="o">=</span><span class="n">type_name</span><span class="p">)</span>
+            <span class="n">title_format</span> <span class="o">=</span> <span class="n">safe_unicode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">title_format</span><span class="p">)</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="n">title_format</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">safe_unicode</span><span class="p">(</span><span class="n">label</span><span class="p">),</span>
+                                        <span class="n">group</span><span class="o">=</span><span class="n">safe_unicode</span><span class="p">(</span><span class="n">group</span><span class="p">),</span>
+                                        <span class="nb">type</span><span class="o">=</span><span class="n">type_name</span><span class="p">)</span>
         <span class="n">dim_title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frame_title</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">title</span><span class="o">.</span><span class="n">isspace</span><span class="p">():</span>
             <span class="k">return</span> <span class="n">dim_title</span>
@@ -369,7 +366,8 @@
         <span class="n">subplots</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subplots</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subplots</span> <span class="k">else</span> <span class="p">[]</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">title</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zorder</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_format_title</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-            <span class="n">suppress</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">sp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_suppressed</span> <span class="k">for</span> <span class="n">sp</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="p">]</span> <span class="o">+</span> <span class="n">subplots</span><span class="p">)</span>
+            <span class="n">suppress</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">type</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_suppressed</span> <span class="k">for</span> <span class="n">sp</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">self</span><span class="p">]</span> <span class="o">+</span> <span class="n">subplots</span>
+                           <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">map</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">view</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">suppress</span><span class="p">:</span>
 
                 <span class="c"># Axis labels</span>
@@ -743,12 +741,10 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout_dimensions</span><span class="p">:</span>
             <span class="n">title</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="n">group</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span>
-                <span class="n">label</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">label</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span>
-            <span class="n">title</span> <span class="o">=</span> <span class="nb">unicode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">title_format</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
-                                                      <span class="n">group</span><span class="o">=</span><span class="n">group</span><span class="p">,</span>
-                                                      <span class="nb">type</span><span class="o">=</span><span class="n">type_name</span><span class="p">)</span>
+            <span class="n">title_format</span> <span class="o">=</span> <span class="n">safe_unicode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">title_format</span><span class="p">)</span>
+            <span class="n">title</span> <span class="o">=</span> <span class="n">title_format</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">safe_unicode</span><span class="p">(</span><span class="n">label</span><span class="p">),</span>
+                                        <span class="n">group</span><span class="o">=</span><span class="n">safe_unicode</span><span class="p">(</span><span class="n">group</span><span class="p">),</span>
+                                        <span class="nb">type</span><span class="o">=</span><span class="n">type_name</span><span class="p">)</span>
         <span class="n">dim_title</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_frame_title</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">title</span> <span class="ow">or</span> <span class="n">title</span><span class="o">.</span><span class="n">isspace</span><span class="p">():</span>
             <span class="k">return</span> <span class="n">dim_title</span>

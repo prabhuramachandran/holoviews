@@ -290,7 +290,6 @@
 <span class="sd">        If the node is a root node, you may also access elements using</span>
 <span class="sd">        either tuple format or the &#39;A.B.C&#39; string format.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">keyerror_msg</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
         <span class="n">split_label</span> <span class="o">=</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">identifier</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">))</span>
                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">identifier</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">identifier</span><span class="p">))</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">split_label</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -298,7 +297,7 @@
             <span class="k">if</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">identifier</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">identifier</span> <span class="o">+</span> <span class="p">((</span><span class="s">&#39; : </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">keyerror_msg</span><span class="p">)</span> <span class="k">if</span> <span class="n">keyerror_msg</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
         <span class="n">path_item</span> <span class="o">=</span> <span class="bp">self</span>
         <span class="k">for</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="n">split_label</span><span class="p">:</span>
             <span class="n">path_item</span> <span class="o">=</span> <span class="n">path_item</span><span class="p">[</span><span class="n">identifier</span><span class="p">]</span>
@@ -314,7 +313,6 @@
         <span class="nb">super</span><span class="p">(</span><span class="n">AttrTree</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__setattr__</span><span class="p">(</span><span class="n">identifier</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">identifier</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
-            <span class="n">identifier</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">unescape_identifier</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_propagate</span><span class="p">((</span><span class="n">identifier</span><span class="p">,),</span> <span class="n">val</span><span class="p">)</span>
@@ -334,12 +332,10 @@
         <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="o">==</span><span class="bp">True</span><span class="p">:</span>           <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_fixed_error</span> <span class="o">%</span> <span class="n">identifier</span><span class="p">)</span>
         <span class="n">identifier</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">sanitize_identifier</span><span class="p">(</span><span class="n">identifier</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
-        <span class="n">unescaped_identifier</span> <span class="o">=</span> <span class="n">util</span><span class="o">.</span><span class="n">unescape_identifier</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">unescaped_identifier</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">unescaped_identifier</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">identifier</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">identifier</span><span class="p">]</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="n">identifier</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>
-            <span class="n">identifier</span> <span class="o">=</span> <span class="n">unescaped_identifier</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">identifier</span><span class="p">)</span>
             <span class="n">child_tree</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="p">(</span><span class="n">identifier</span><span class="o">=</span><span class="n">identifier</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">identifier</span><span class="p">]</span> <span class="o">=</span> <span class="n">child_tree</span>
