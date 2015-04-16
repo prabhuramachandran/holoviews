@@ -162,9 +162,6 @@
 <span class="s">        Aspect ratio defaults to square, &#39;equal&#39; or numeric values</span>
 <span class="s">        are also supported.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">rescale_individually</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">        Whether to use redraw the axes per map or per element.&quot;&quot;&quot;</span><span class="p">)</span>
-
     <span class="n">show_grid</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        Enables the axis grid.&quot;&quot;&quot;</span><span class="p">)</span>
 
@@ -213,8 +210,6 @@
 <span class="sd">    compose).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">rescale_individually</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-
     <span class="n">joint</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        Whether to visualize the kernel density estimate with marginal</span>
 <span class="s">        distributions along each axis. Does not animate or compose</span>
@@ -256,8 +251,6 @@
 <span class="sd">    curve.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">rescale_individually</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-
     <span class="n">show_frame</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">       Disabled by default for clarity.&quot;&quot;&quot;</span><span class="p">)</span>
 
@@ -269,18 +262,21 @@
                   <span class="s">&#39;estimator&#39;</span><span class="p">,</span> <span class="s">&#39;kwargs&#39;</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">curveview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last</span>
+        <span class="n">element</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last</span>
         <span class="n">axis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;axis&#39;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">curveview</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_plot</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="n">element</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-
 
     <span class="k">def</span> <span class="nf">_update_plot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
         <span class="n">sns</span><span class="o">.</span><span class="n">tsplot</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">view</span><span class="o">.</span><span class="n">xdata</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">axis</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">view</span><span class="o">.</span><span class="n">label</span><span class="p">,</span>
                    <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">_axis_labels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">subplots</span><span class="p">,</span> <span class="n">xlabel</span><span class="p">,</span> <span class="n">ylabel</span><span class="p">,</span> <span class="n">zlabel</span><span class="p">):</span>
+        <span class="n">xlabel</span> <span class="o">=</span> <span class="n">xlabel</span> <span class="k">if</span> <span class="n">xlabel</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">ylabel</span> <span class="o">=</span> <span class="n">ylabel</span> <span class="k">if</span> <span class="n">ylabel</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">view</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">xlabel</span><span class="p">,</span> <span class="n">ylabel</span><span class="p">,</span> <span class="n">zlabel</span>
 
 </div>
 <div class="viewcode-block" id="DistributionPlot"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.seaborn.DistributionPlot">[docs]</a><span class="k">class</span> <span class="nc">DistributionPlot</span><span class="p">(</span><span class="n">FullRedrawPlot</span><span class="p">):</span>
@@ -290,14 +286,14 @@
 <span class="sd">    array as a histogram, kernel density estimate, or rugplot.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">rescale_individually</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">apply_ranges</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        Whether to compute the plot bounds from the data itself.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">show_frame</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">       Disabled by default for clarity.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">style_opts</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;bins&#39;</span><span class="p">,</span> <span class="s">&#39;hist&#39;</span><span class="p">,</span> <span class="s">&#39;kde&#39;</span><span class="p">,</span> <span class="s">&#39;rug&#39;</span><span class="p">,</span> <span class="s">&#39;fit&#39;</span><span class="p">,</span>
-                  <span class="s">&#39;hist_kws&#39;</span><span class="p">,</span> <span class="s">&#39;kde_kws&#39;</span><span class="p">,</span> <span class="s">&#39;rug_kws&#39;</span><span class="p">,</span>
-                  <span class="s">&#39;fit_kws&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">]</span>
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;bins&#39;</span><span class="p">,</span> <span class="s">&#39;hist&#39;</span><span class="p">,</span> <span class="s">&#39;kde&#39;</span><span class="p">,</span> <span class="s">&#39;rug&#39;</span><span class="p">,</span> <span class="s">&#39;fit&#39;</span><span class="p">,</span> <span class="s">&#39;hist_kws&#39;</span><span class="p">,</span>
+                  <span class="s">&#39;kde_kws&#39;</span><span class="p">,</span> <span class="s">&#39;rug_kws&#39;</span><span class="p">,</span> <span class="s">&#39;fit_kws&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">distview</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last</span>

@@ -138,7 +138,7 @@
 <span class="kn">from</span> <span class="nn">.ndmapping</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">,</span> <span class="n">NdMapping</span>
 <span class="kn">from</span> <span class="nn">.overlay</span> <span class="kn">import</span> <span class="n">Overlayable</span><span class="p">,</span> <span class="n">NdOverlay</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">CompositeOverlay</span>
 <span class="kn">from</span> <span class="nn">.tree</span> <span class="kn">import</span> <span class="n">AttrTree</span>
-<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">find_minmax</span><span class="p">,</span> <span class="n">sanitize_identifier</span>
+<span class="kn">from</span> <span class="nn">.util</span> <span class="kn">import</span> <span class="n">sanitize_identifier</span>
 
 
 <div class="viewcode-block" id="Element"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.Element">[docs]</a><span class="k">class</span> <span class="nc">Element</span><span class="p">(</span><span class="n">ViewableElement</span><span class="p">,</span> <span class="n">Composable</span><span class="p">,</span> <span class="n">Overlayable</span><span class="p">):</span>
@@ -269,67 +269,10 @@
 </div>
 <span class="k">class</span> <span class="nc">Element2D</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">extents</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="n">extents</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">extents</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">extents</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="n">extents</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">extents</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">extents</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Element2D</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">xlabel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">pprint_label</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">ylabel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">pprint_label</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span> <span class="ow">and</span> <span class="bp">None</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-
-    <span class="nd">@xlim.setter</span>
-    <span class="k">def</span> <span class="nf">xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limits</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">limits</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">limits</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">limits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_xlim</span> <span class="o">=</span> <span class="n">limits</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;xlim needs to be a length two tuple or None.&#39;</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span> <span class="ow">and</span> <span class="bp">None</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-
-    <span class="nd">@ylim.setter</span>
-    <span class="k">def</span> <span class="nf">ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limits</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">limits</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">limits</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">limits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_ylim</span> <span class="o">=</span> <span class="n">limits</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;xlim needs to be a length two tuple or None.&#39;</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">extents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;&quot;</span>
-<span class="sd">        The extent on Element2D types and its subclasses are a tuple</span>
-<span class="sd">        of all the dimension lower bounds followed by the upper bounds.</span>
-<span class="sd">        In case of a simple Element2D this takes the form (l, b, r, t).</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">lbound</span><span class="p">,</span> <span class="n">ubound</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">kd</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">:</span>
-            <span class="n">drange</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="n">kd</span><span class="p">)</span>
-            <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">drange</span> <span class="k">if</span> <span class="n">drange</span> <span class="k">else</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
-            <span class="n">lbound</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lower</span><span class="p">)</span>
-            <span class="n">ubound</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">upper</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">lbound</span><span class="o">+</span><span class="n">ubound</span><span class="p">)</span>
-
-
-    <span class="nd">@extents.setter</span>
-    <span class="k">def</span> <span class="nf">extents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extents</span><span class="p">):</span>
-        <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">extents</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span> <span class="o">=</span> <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+    <span class="n">extents</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Tuple</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+                          <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;Allows overriding the extents</span>
+<span class="s">              of the Element in 2D space defined as four-tuple</span>
+<span class="s">              defining the (left, bottom, right and top) edges.&quot;&quot;&quot;</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="NdElement"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.NdElement">[docs]</a><span class="k">class</span> <span class="nc">NdElement</span><span class="p">(</span><span class="n">Element</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">):</span>
@@ -545,49 +488,11 @@
 </div>
 <span class="k">class</span> <span class="nc">Element3D</span><span class="p">(</span><span class="n">Element2D</span><span class="p">):</span>
 
-
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">extents</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">extents</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span> <span class="o">=</span> <span class="p">(</span><span class="n">extents</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">extents</span><span class="p">[</span><span class="mi">5</span><span class="p">])</span>
-            <span class="n">extents</span> <span class="o">=</span> <span class="p">(</span><span class="n">extents</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">extents</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">extents</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">extents</span><span class="p">[</span><span class="mi">4</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span> <span class="o">=</span> <span class="bp">None</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">Element3D</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">extents</span><span class="o">=</span><span class="n">extents</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">extents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;&quot;</span>
-<span class="sd">        For Element3D the extents is the 6-tuple (left, bottom, -z, right, top, +z) using</span>
-<span class="sd">        a right-handed Cartesian coordinate-system.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">l</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span> <span class="k">else</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
-        <span class="n">b</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span> <span class="k">else</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
-        <span class="n">zminus</span><span class="p">,</span> <span class="n">zplus</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zlim</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">zlim</span> <span class="k">else</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">zminus</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">zplus</span>
-
-    <span class="nd">@extents.setter</span>
-    <span class="k">def</span> <span class="nf">extents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extents</span><span class="p">):</span>
-        <span class="n">l</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">zminus</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">zplus</span> <span class="o">=</span> <span class="n">extents</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">zlim</span> <span class="o">=</span> <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">),</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">),</span> <span class="p">(</span><span class="n">zminus</span><span class="p">,</span> <span class="n">zplus</span><span class="p">)</span>
-
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">zlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span> <span class="ow">and</span> <span class="bp">None</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-
-    <span class="nd">@zlim.setter</span>
-    <span class="k">def</span> <span class="nf">zlim</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">limits</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">limits</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">limits</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">limits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_zlim</span> <span class="o">=</span> <span class="n">limits</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;zlim needs to be a length two tuple or None.&#39;</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">zlabel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">pprint_label</span>
+    <span class="n">extents</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Tuple</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span>
+                                   <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span>
+        <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;Allows overriding the extents of the Element</span>
+<span class="s">               in 3D space defined as (xmin, ymin, zmin,</span>
+<span class="s">               xmax, ymax, zmax).&quot;&quot;&quot;</span><span class="p">)</span>
 
 
 
@@ -599,52 +504,6 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">data_type</span> <span class="o">=</span> <span class="p">(</span><span class="n">ViewableElement</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">xlabel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">xlabel</span>
-
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">ylabel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">ylabel</span>
-
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">xlim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">xlim</span>
-        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">xlim</span> <span class="o">=</span> <span class="n">find_minmax</span><span class="p">(</span><span class="n">xlim</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">xlim</span><span class="p">)</span> <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">xlim</span> <span class="ow">and</span> <span class="n">xlim</span> <span class="k">else</span> <span class="n">xlim</span>
-        <span class="k">return</span> <span class="n">xlim</span>
-
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">ylim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">ylim</span>
-        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">ylim</span> <span class="o">=</span> <span class="n">find_minmax</span><span class="p">(</span><span class="n">ylim</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">ylim</span><span class="p">)</span> <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">ylim</span> <span class="ow">and</span> <span class="n">ylim</span> <span class="k">else</span> <span class="n">ylim</span>
-        <span class="k">return</span> <span class="n">ylim</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">zlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="n">Element3D</span><span class="p">):</span>
-            <span class="k">return</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
-        <span class="n">zlim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">zlim</span>
-        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">zlim</span> <span class="o">=</span> <span class="n">find_minmax</span><span class="p">(</span><span class="n">zlim</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">zlim</span><span class="p">)</span> <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">zlim</span> <span class="ow">and</span> <span class="n">zlim</span> <span class="k">else</span> <span class="n">zlim</span>
-        <span class="k">return</span> <span class="n">zlim</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">extents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span>
-        <span class="n">l</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span>
-        <span class="n">b</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="n">Element3D</span><span class="p">):</span>
-            <span class="n">zmin</span><span class="p">,</span> <span class="n">zmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">zlim</span>
-            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">l</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">zmin</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">zmax</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">l</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
-
 
 <div class="viewcode-block" id="HoloMap.overlay"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.HoloMap.overlay">[docs]</a>    <span class="k">def</span> <span class="nf">overlay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -849,12 +708,15 @@
         <span class="n">dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">ndims</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">isscalar</span><span class="p">(</span><span class="n">samples</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">dims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xlims</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="bp">self</span><span class="o">.</span><span class="n">xlims</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">bounds</span>
+                <span class="n">xlim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="p">(</span><span class="n">xlim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xlim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">bounds</span>
                 <span class="n">edges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span><span class="p">,</span> <span class="n">samples</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">linsamples</span> <span class="o">=</span> <span class="p">[(</span><span class="n">l</span><span class="o">+</span><span class="n">u</span><span class="p">)</span><span class="o">/</span><span class="mf">2.0</span> <span class="k">for</span> <span class="n">l</span><span class="p">,</span><span class="n">u</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">edges</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">edges</span><span class="p">[</span><span class="mi">1</span><span class="p">:])]</span>
             <span class="k">elif</span> <span class="n">dims</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
                 <span class="p">(</span><span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">)</span> <span class="o">=</span> <span class="n">samples</span>
-                <span class="p">(</span><span class="n">l</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">r</span><span class="p">,</span><span class="n">t</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">extents</span> <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">bounds</span>
+                <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">y0</span><span class="p">,</span> <span class="n">y1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="p">(</span><span class="n">l</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">r</span><span class="p">,</span><span class="n">t</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y0</span><span class="p">)</span> <span class="k">if</span> <span class="n">bounds</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">bounds</span>
 
                 <span class="n">xedges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">cols</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
                 <span class="n">yedges</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">rows</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
@@ -1163,40 +1025,6 @@
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">)),</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">))</span>
-
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">xlim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">xlim</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">xlim</span>
-        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">xlim</span> <span class="o">=</span> <span class="n">find_minmax</span><span class="p">(</span><span class="n">xlim</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">xlim</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">xlim</span>
-
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">ylim</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">ylim</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">())[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">ylim</span>
-        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
-            <span class="n">ylim</span> <span class="o">=</span> <span class="n">find_minmax</span><span class="p">(</span><span class="n">ylim</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">ylim</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="n">ylim</span> <span class="o">=</span> <span class="p">(</span><span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ylim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mf">1.</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">ylim</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">extents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span>
-        <span class="n">l</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xlim</span>
-        <span class="n">b</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ylim</span>
-        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">l</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">b</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">),</span> <span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">grid_lbrt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">grid_dimensions</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">:</span>
-            <span class="n">grid_dimensions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">range</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">grid_dimensions</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
-        <span class="n">xdim</span><span class="p">,</span> <span class="n">ydim</span> <span class="o">=</span> <span class="n">grid_dimensions</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">xdim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ydim</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xdim</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ydim</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
 
 <div class="viewcode-block" id="GridSpace.dframe"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.element.GridSpace.dframe">[docs]</a>    <span class="k">def</span> <span class="nf">dframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>

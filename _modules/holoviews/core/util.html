@@ -127,7 +127,7 @@
           <div role="main">
             
   <h1>Source code for holoviews.core.util</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">warnings</span>
 <span class="kn">import</span> <span class="nn">numbers</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">import</span> <span class="nn">string</span>
@@ -349,6 +349,48 @@
     <span class="k">except</span><span class="p">:</span>
         <span class="n">limits</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">limits</span>
+
+</div>
+<div class="viewcode-block" id="max_range"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.max_range">[docs]</a><span class="k">def</span> <span class="nf">max_range</span><span class="p">(</span><span class="n">ranges</span><span class="p">):</span>
+   <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">   Computes the maximal lower and upper bounds from a list bounds.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+   <span class="k">try</span><span class="p">:</span>
+      <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+         <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s">&#39;ignore&#39;</span><span class="p">,</span> <span class="s">r&#39;All-NaN (slice|axis) encountered&#39;</span><span class="p">)</span>
+         <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ranges</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+         <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">arr</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">arr</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]))</span>
+   <span class="k">except</span><span class="p">:</span>
+      <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="max_extents"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.max_extents">[docs]</a><span class="k">def</span> <span class="nf">max_extents</span><span class="p">(</span><span class="n">extents</span><span class="p">,</span> <span class="n">zrange</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+   <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">   Computes the maximal extent in 2D and 3D space from</span>
+<span class="sd">   list of 4-tuples or 6-tuples. If zrange is enabled</span>
+<span class="sd">   all extents are converted to 6-tuples to comput</span>
+<span class="sd">   x-, y- and z-limits.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+
+   <span class="k">if</span> <span class="n">zrange</span><span class="p">:</span>
+      <span class="n">num</span> <span class="o">=</span> <span class="mi">6</span>
+      <span class="n">inds</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)]</span>
+      <span class="n">extents</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">==</span> <span class="mi">6</span> <span class="k">else</span> <span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">None</span><span class="p">,</span>
+                                        <span class="n">e</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">e</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="bp">None</span><span class="p">)</span>
+                 <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">extents</span><span class="p">]</span>
+   <span class="k">else</span><span class="p">:</span>
+      <span class="n">num</span> <span class="o">=</span> <span class="mi">4</span>
+      <span class="n">inds</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)]</span>
+   <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">extents</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">ndmin</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+   <span class="n">extents</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">]</span> <span class="o">*</span> <span class="n">num</span>
+   <span class="k">if</span> <span class="mi">0</span> <span class="ow">in</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">extents</span>
+   <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+      <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s">&#39;ignore&#39;</span><span class="p">,</span> <span class="s">r&#39;All-NaN (slice|axis) encountered&#39;</span><span class="p">)</span>
+      <span class="k">for</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="ow">in</span> <span class="n">inds</span><span class="p">:</span>
+         <span class="n">extents</span><span class="p">[</span><span class="n">lower</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">arr</span><span class="p">[:,</span> <span class="n">lower</span><span class="p">])</span>
+         <span class="n">extents</span><span class="p">[</span><span class="n">upper</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">arr</span><span class="p">[:,</span> <span class="n">upper</span><span class="p">])</span>
+   <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">extents</span><span class="p">)</span>
 
 </div>
 <div class="viewcode-block" id="int_to_alpha"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.int_to_alpha">[docs]</a><span class="k">def</span> <span class="nf">int_to_alpha</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>

@@ -172,6 +172,8 @@
     <span class="n">defaults</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">([(</span><span class="s">&#39;charwidth&#39;</span>   <span class="p">,</span> <span class="mi">80</span><span class="p">)])</span>  <span class="c"># Default keyword values.</span>
     <span class="n">options</span> <span class="o">=</span>  <span class="n">OrderedDict</span><span class="p">(</span><span class="n">defaults</span><span class="o">.</span><span class="n">items</span><span class="p">())</span> <span class="c"># Current options</span>
 
+    <span class="c"># Callables accepting (value, keyword, allowed) for custom exceptions</span>
+    <span class="n">custom_exceptions</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="OptionsMagic.get_options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.ipython.html#holoviews.ipython.magics.OptionsMagic.get_options">[docs]</a>    <span class="k">def</span> <span class="nf">get_options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
@@ -183,8 +185,11 @@
                 <span class="n">allowed</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">allowed</span><span class="p">[</span><span class="n">keyword</span><span class="p">]</span>
                 <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">allowed</span><span class="p">,</span> <span class="nb">set</span><span class="p">):</span>  <span class="k">pass</span>
                 <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">allowed</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Value </span><span class="si">%r</span><span class="s"> for key </span><span class="si">%r</span><span class="s"> not one of </span><span class="si">%s</span><span class="s">&quot;</span>
-                                     <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">keyword</span><span class="p">,</span> <span class="n">allowed</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="n">keyword</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">custom_exceptions</span><span class="p">:</span>
+                        <span class="n">cls</span><span class="o">.</span><span class="n">custom_exceptions</span><span class="p">[</span><span class="n">keyword</span><span class="p">](</span><span class="n">value</span><span class="p">,</span> <span class="n">keyword</span><span class="p">,</span> <span class="n">allowed</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Value </span><span class="si">%r</span><span class="s"> for key </span><span class="si">%r</span><span class="s"> not one of </span><span class="si">%s</span><span class="s">&quot;</span>
+                                         <span class="o">%</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">keyword</span><span class="p">,</span> <span class="n">allowed</span><span class="p">))</span>
                 <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">allowed</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
                     <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">allowed</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="n">allowed</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
                         <span class="n">info</span> <span class="o">=</span> <span class="p">(</span><span class="n">keyword</span><span class="p">,</span><span class="n">value</span><span class="p">)</span><span class="o">+</span><span class="n">allowed</span>
@@ -309,6 +314,15 @@
 
     <span class="c"># Used to disable info output in testing</span>
     <span class="n">_disable_info_output</span> <span class="o">=</span> <span class="bp">False</span>
+
+
+    <span class="k">def</span> <span class="nf">missing_dependency_exception</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">keyword</span><span class="p">,</span> <span class="n">allowed</span><span class="p">):</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">renderer</span><span class="p">,</span> <span class="s">&#39;HOLOMAP_FORMAT_ERROR_MESSAGES&#39;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;Format </span><span class="si">%r</span><span class="s"> does not appear to be supported.&quot;</span> <span class="o">%</span> <span class="n">value</span><span class="p">)</span>
+        <span class="n">error_msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">Message: </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">errors</span><span class="p">[</span><span class="n">value</span><span class="p">])</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">errors</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">msg</span><span class="o">+</span><span class="n">error_msg</span><span class="p">)</span>
+
+    <span class="n">custom_exceptions</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;holomap&#39;</span><span class="p">:</span><span class="n">missing_dependency_exception</span><span class="p">}</span>
 
     <span class="c"># Counter for nbagg figures</span>
     <span class="n">nbagg_counter</span> <span class="o">=</span> <span class="mi">0</span>

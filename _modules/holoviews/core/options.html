@@ -926,7 +926,7 @@
 
 </div>
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Store.register_plots"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.register_plots">[docs]</a>    <span class="k">def</span> <span class="nf">register_plots</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+<div class="viewcode-block" id="Store.register_plots"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.register_plots">[docs]</a>    <span class="k">def</span> <span class="nf">register_plots</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">style_aliases</span><span class="o">=</span><span class="p">{}):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given that the Store.registry dictionary has been populate</span>
 <span class="sd">        with {&lt;element&gt;:&lt;plot-class&gt;} items, build an OptionTree for the</span>
@@ -950,7 +950,11 @@
         <span class="k">for</span> <span class="n">view_class</span><span class="p">,</span> <span class="n">plot</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">view_class</span><span class="o">.</span><span class="n">__name__</span>
             <span class="n">plot_opts</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">plot</span><span class="o">.</span><span class="n">params</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]]</span>
-            <span class="n">style_opts</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">style_opts</span>
+            <span class="n">expanded_opts</span> <span class="o">=</span> <span class="p">[</span><span class="n">opt</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">plot</span><span class="o">.</span><span class="n">style_opts</span>
+                             <span class="k">for</span> <span class="n">opt</span> <span class="ow">in</span> <span class="n">style_aliases</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])]</span>
+            <span class="n">style_opts</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">expanded_opts</span> <span class="o">+</span> <span class="n">plot</span><span class="o">.</span><span class="n">style_opts</span><span class="p">))</span>
+            <span class="k">with</span> <span class="n">param</span><span class="o">.</span><span class="n">logging_level</span><span class="p">(</span><span class="s">&#39;CRITICAL&#39;</span><span class="p">):</span>
+                <span class="n">plot</span><span class="o">.</span><span class="n">style_opts</span> <span class="o">=</span> <span class="n">style_opts</span>
             <span class="n">opt_groups</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;plot&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(</span><span class="n">allowed_keywords</span><span class="o">=</span><span class="n">plot_opts</span><span class="p">)}</span>
 
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view_class</span><span class="p">,</span> <span class="n">CompositeOverlay</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="s">&#39;style_opts&#39;</span><span class="p">):</span>
