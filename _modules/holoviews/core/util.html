@@ -214,7 +214,8 @@
 <span class="s">       unicode name. For instance, the defaultcapitalize_unicode_name</span>
 <span class="s">       function will turn the string &quot;capital delta&quot; into &quot;Delta&quot;.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">disallowed</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;Trait_names&#39;</span><span class="p">,</span> <span class="s">&#39;_ipython_display_&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+    <span class="n">disallowed</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;trait_names&#39;</span><span class="p">,</span> <span class="s">&#39;_ipython_display_&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;_getAttributeNames&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">       An explicit list of name that should not be allowed as</span>
 <span class="s">       attribute names on Tree objects.</span>
 
@@ -222,11 +223,23 @@
 <span class="s">       Trait_names due to an inconvenient getattr check (during</span>
 <span class="s">       tab-completion).&quot;&quot;&quot;</span><span class="p">)</span>
 
+    <span class="n">disable_leading_underscore</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Whether leading underscores should be allowed to be sanitized</span>
+<span class="s">       with the leading prefix.&quot;&quot;&quot;</span><span class="p">)</span>
+
     <span class="n">prefix</span> <span class="o">=</span> <span class="s">&#39;A_&#39;</span>
 
     <span class="nd">@param.parameterized.bothmethod</span>
-    <span class="k">def</span> <span class="nf">allowable</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
-       <span class="k">return</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">disallowed</span>
+    <span class="k">def</span> <span class="nf">allowable</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">disable_leading_underscore</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+       <span class="n">disabled_reprs</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;javascript&#39;</span><span class="p">,</span> <span class="s">&#39;jpeg&#39;</span><span class="p">,</span> <span class="s">&#39;json&#39;</span><span class="p">,</span> <span class="s">&#39;latex&#39;</span><span class="p">,</span>
+                         <span class="s">&#39;latex&#39;</span><span class="p">,</span> <span class="s">&#39;pdf&#39;</span><span class="p">,</span> <span class="s">&#39;png&#39;</span><span class="p">,</span> <span class="s">&#39;svg&#39;</span><span class="p">]</span>
+       <span class="n">disabled_</span> <span class="o">=</span> <span class="p">(</span><span class="n">self_or_cls</span><span class="o">.</span><span class="n">disable_leading_underscore</span>
+                    <span class="k">if</span> <span class="n">disable_leading_underscore</span> <span class="ow">is</span> <span class="bp">None</span>
+                    <span class="k">else</span> <span class="n">disable_leading_underscore</span><span class="p">)</span>
+       <span class="k">if</span> <span class="n">disabled_</span> <span class="ow">and</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>
+          <span class="k">return</span> <span class="bp">False</span>
+       <span class="n">isrepr</span> <span class="o">=</span> <span class="nb">any</span><span class="p">((</span><span class="s">&#39;_repr_</span><span class="si">%s</span><span class="s">_&#39;</span> <span class="o">%</span> <span class="n">el</span><span class="p">)</span> <span class="o">==</span> <span class="n">name</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">disabled_reprs</span><span class="p">)</span>
+       <span class="k">return</span> <span class="p">(</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">disallowed</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">isrepr</span>
 
     <span class="nd">@param.parameterized.bothmethod</span>
 <div class="viewcode-block" id="sanitize_identifier.prefixed"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.sanitize_identifier.prefixed">[docs]</a>    <span class="k">def</span> <span class="nf">prefixed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span>
