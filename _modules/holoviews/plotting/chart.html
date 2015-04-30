@@ -139,7 +139,7 @@
 <span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Store</span>
 <span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">ViewableElement</span><span class="p">,</span> <span class="n">CompositeOverlay</span><span class="p">,</span> <span class="n">HoloMap</span>
 <span class="kn">from</span> <span class="nn">..core.util</span> <span class="kn">import</span> <span class="n">match_spec</span>
-<span class="kn">from</span> <span class="nn">..element</span> <span class="kn">import</span> <span class="n">Scatter</span><span class="p">,</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">,</span> <span class="n">Bars</span><span class="p">,</span> <span class="n">Points</span><span class="p">,</span> <span class="n">Raster</span><span class="p">,</span> <span class="n">VectorField</span>
+<span class="kn">from</span> <span class="nn">..element</span> <span class="kn">import</span> <span class="n">Scatter</span><span class="p">,</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">Histogram</span><span class="p">,</span> <span class="n">Bars</span><span class="p">,</span> <span class="n">Points</span><span class="p">,</span> <span class="n">Raster</span><span class="p">,</span> <span class="n">VectorField</span><span class="p">,</span> <span class="n">ErrorBars</span>
 <span class="kn">from</span> <span class="nn">.element</span> <span class="kn">import</span> <span class="n">ElementPlot</span>
 <span class="kn">from</span> <span class="nn">.plot</span> <span class="kn">import</span> <span class="n">Plot</span>
 
@@ -270,6 +270,72 @@
             <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cyclic_curves</span><span class="p">(</span><span class="n">view</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;line_segment&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_xdata</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;line_segment&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])</span>
+
+
+
+</div>
+<div class="viewcode-block" id="ErrorPlot"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.chart.ErrorPlot">[docs]</a><span class="k">class</span> <span class="nc">ErrorPlot</span><span class="p">(</span><span class="n">ChartPlot</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    ErrorPlot plots the ErrorBar Element type and supporting</span>
+<span class="sd">    both horizontal and vertical error bars via the vertical</span>
+<span class="sd">    plot option.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">vertical</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Whether to draw horizontal or vertical error bars.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">style_opts</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;ecolor&#39;</span><span class="p">,</span> <span class="s">&#39;elinewidth&#39;</span><span class="p">,</span> <span class="s">&#39;capsize&#39;</span><span class="p">,</span> <span class="s">&#39;capthick&#39;</span><span class="p">,</span>
+                  <span class="s">&#39;barsabove&#39;</span><span class="p">,</span> <span class="s">&#39;lolims&#39;</span><span class="p">,</span> <span class="s">&#39;uplims&#39;</span><span class="p">,</span> <span class="s">&#39;xlolims&#39;</span><span class="p">,</span>
+                  <span class="s">&#39;errorevery&#39;</span><span class="p">,</span> <span class="s">&#39;xuplims&#39;</span><span class="p">,</span> <span class="s">&#39;alpha&#39;</span><span class="p">,</span> <span class="s">&#39;linestyle&#39;</span><span class="p">,</span>
+                  <span class="s">&#39;linewidth&#39;</span><span class="p">,</span> <span class="s">&#39;markeredgecolor&#39;</span><span class="p">,</span> <span class="s">&#39;markeredgewidth&#39;</span><span class="p">,</span>
+                  <span class="s">&#39;markerfacecolor&#39;</span><span class="p">,</span> <span class="s">&#39;markersize&#39;</span><span class="p">,</span> <span class="s">&#39;solid_capstyle&#39;</span><span class="p">,</span>
+                  <span class="s">&#39;solid_joinstyle&#39;</span><span class="p">,</span> <span class="s">&#39;dashes&#39;</span><span class="p">,</span> <span class="s">&#39;color&#39;</span><span class="p">]</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">element</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last</span>
+        <span class="n">axis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;axis&#39;</span><span class="p">]</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="n">ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_ranges</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
+        <span class="n">ranges</span> <span class="o">=</span> <span class="n">match_spec</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
+
+        <span class="n">error_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">style</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">cyclic_index</span><span class="p">],</span> <span class="n">fmt</span><span class="o">=</span><span class="s">&#39;none&#39;</span><span class="p">,</span>
+                            <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="p">)</span>
+        <span class="n">kwarg</span> <span class="o">=</span> <span class="s">&#39;xerr&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">vertical</span> <span class="k">else</span> <span class="s">&#39;yerr&#39;</span>
+        <span class="n">error_kwargs</span><span class="p">[</span><span class="n">kwarg</span><span class="p">]</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">bottoms</span><span class="p">,</span> <span class="n">tops</span><span class="p">),</span> <span class="n">verts</span> <span class="o">=</span> <span class="n">axis</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+                                                  <span class="n">element</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span>
+                                                  <span class="o">**</span><span class="n">error_kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;bottoms&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bottoms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;tops&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tops</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;verts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">verts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_finalize_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">ranges</span><span class="o">=</span><span class="n">ranges</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">update_handles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">view</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">bottoms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;bottoms&#39;</span><span class="p">]</span>
+        <span class="n">tops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;tops&#39;</span><span class="p">]</span>
+        <span class="n">verts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;verts&#39;</span><span class="p">]</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="n">verts</span><span class="o">.</span><span class="n">get_paths</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">vertical</span><span class="p">:</span>
+            <span class="n">bdata</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">data</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>
+            <span class="n">tdata</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">data</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span>
+            <span class="n">tops</span><span class="o">.</span><span class="n">set_xdata</span><span class="p">(</span><span class="n">bdata</span><span class="p">)</span>
+            <span class="n">bottoms</span><span class="o">.</span><span class="n">set_xdata</span><span class="p">(</span><span class="n">tdata</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">paths</span><span class="p">):</span>
+                <span class="n">path</span><span class="o">.</span><span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">bdata</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]],</span>
+                                          <span class="p">[</span><span class="n">tdata</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">bdata</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">data</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>
+            <span class="n">tdata</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">data</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span>
+            <span class="n">bottoms</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">(</span><span class="n">bdata</span><span class="p">)</span>
+            <span class="n">tops</span><span class="o">.</span><span class="n">set_ydata</span><span class="p">(</span><span class="n">tdata</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">paths</span><span class="p">):</span>
+                <span class="n">path</span><span class="o">.</span><span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">bdata</span><span class="p">[</span><span class="n">i</span><span class="p">]],</span>
+                                          <span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">tdata</span><span class="p">[</span><span class="n">i</span><span class="p">]]])</span>
 
 
 </div>
@@ -1014,7 +1080,8 @@
                        <span class="n">Bars</span><span class="p">:</span> <span class="n">BarPlot</span><span class="p">,</span>
                        <span class="n">Histogram</span><span class="p">:</span> <span class="n">HistogramPlot</span><span class="p">,</span>
                        <span class="n">Points</span><span class="p">:</span> <span class="n">PointPlot</span><span class="p">,</span>
-                       <span class="n">VectorField</span><span class="p">:</span> <span class="n">VectorFieldPlot</span><span class="p">})</span>
+                       <span class="n">VectorField</span><span class="p">:</span> <span class="n">VectorFieldPlot</span><span class="p">,</span>
+                       <span class="n">ErrorBars</span><span class="p">:</span> <span class="n">ErrorPlot</span><span class="p">})</span>
 
 <span class="n">Plot</span><span class="o">.</span><span class="n">sideplots</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">Histogram</span><span class="p">:</span> <span class="n">SideHistogramPlot</span><span class="p">})</span>
 </pre></div>
