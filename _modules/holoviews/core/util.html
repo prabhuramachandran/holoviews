@@ -127,7 +127,7 @@
           <div role="main">
             
   <h1>Source code for holoviews.core.util</h1><div class="highlight"><pre>
-<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">warnings</span><span class="o">,</span> <span class="nn">operator</span>
 <span class="kn">import</span> <span class="nn">numbers</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">import</span> <span class="nn">string</span>
@@ -635,8 +635,44 @@
    <span class="n">group_orderings</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
    <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">ordering</span><span class="p">:</span>
       <span class="n">group_orderings</span><span class="p">[</span><span class="n">el</span><span class="p">[:</span><span class="n">length</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">el</span><span class="p">)</span>
-   <span class="k">return</span> <span class="n">group_orderings</span></div>
-</pre></div>
+   <span class="k">return</span> <span class="n">group_orderings</span>
+
+</div>
+<div class="viewcode-block" id="group_select"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.group_select">[docs]</a><span class="k">def</span> <span class="nf">group_select</span><span class="p">(</span><span class="n">selects</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a list of key tuples to select, groups them into sensible</span>
+<span class="sd">    chunks to avoid duplicating indexing operations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">length</span> <span class="o">==</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">depth</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="n">depth</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">selects</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">getter</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="n">depth</span><span class="o">-</span><span class="n">length</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">length</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">selects</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">selects</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">getter</span><span class="p">)</span>
+        <span class="n">grouped_selects</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">selects</span><span class="p">,</span> <span class="n">getter</span><span class="p">):</span>
+            <span class="n">grouped_selects</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">group_select</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">length</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">grouped_selects</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">selects</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="iterative_select"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.iterative_select">[docs]</a><span class="k">def</span> <span class="nf">iterative_select</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">selects</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Takes the output of group_select selecting subgroups iteratively,</span>
+<span class="sd">    avoiding duplicating select operations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ndims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span>
+    <span class="n">depth</span> <span class="o">=</span> <span class="n">depth</span> <span class="k">if</span> <span class="n">depth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">ndims</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">selects</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">selects</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">items</span> <span class="o">+=</span> <span class="n">iterative_select</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">dimensions</span><span class="p">[</span><span class="n">ndims</span><span class="o">-</span><span class="n">depth</span><span class="p">]:</span> <span class="n">k</span><span class="p">}),</span>
+                                      <span class="n">dimensions</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">depth</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">selects</span><span class="p">:</span>
+            <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">s</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">dimensions</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span> <span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]})))</span>
+    <span class="k">return</span> <span class="n">items</span>
+</pre></div></div>
 
           </div>
           <footer>
