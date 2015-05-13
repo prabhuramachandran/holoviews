@@ -337,8 +337,16 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">key_dimensions</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">)</span>
 
-
 </div></div>
+<span class="k">def</span> <span class="nf">is_type</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">baseType</span><span class="p">):</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="p">[</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">baseType</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">test</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s">&quot;numeric&quot;</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">is_number</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">is_type</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">number</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="DFrame"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.pandas.DFrame">[docs]</a><span class="k">class</span> <span class="nc">DFrame</span><span class="p">(</span><span class="n">DataFrameView</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    DFrame is a DataFrameView type, which additionally provides</span>
@@ -370,8 +378,9 @@
         <span class="n">sel_dims</span> <span class="o">=</span> <span class="n">kdims</span> <span class="o">+</span> <span class="n">vdims</span> <span class="o">+</span> <span class="n">mdims</span>
         <span class="n">el_dims</span> <span class="o">=</span> <span class="n">kdims</span> <span class="o">+</span> <span class="n">vdims</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">mdims</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">reduce_fn</span><span class="p">:</span>
+            <span class="n">numeric</span> <span class="o">=</span> <span class="n">is_number</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
             <span class="n">mdims</span> <span class="o">=</span> <span class="p">[</span><span class="n">dim</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-                     <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sel_dims</span><span class="p">]</span>
+                     <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sel_dims</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">numeric</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">dim</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span>
         <span class="c"># Find leftover dimensions to reduce</span>
         <span class="k">if</span> <span class="n">reduce_fn</span><span class="p">:</span>
             <span class="n">reduce_dims</span> <span class="o">=</span> <span class="n">kdims</span>
