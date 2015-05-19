@@ -156,9 +156,9 @@
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">seaborn</span> <span class="c"># pyflakes:ignore (API import)</span>
 
 <span class="c"># Tags used when matplotlib output is to be embedded in HTML</span>
-<span class="n">IMAGE_TAG</span> <span class="o">=</span> <span class="s">&quot;&lt;center&gt;&lt;img src=&#39;{src}&#39; style=&#39;max-width:100%&#39;/&gt;&lt;center/&gt;&quot;</span>
+<span class="n">IMAGE_TAG</span> <span class="o">=</span> <span class="s">&quot;&lt;img src=&#39;{src}&#39; style=&#39;max-width:100%; margin: auto; {css}&#39;/&gt;&quot;</span>
 <span class="n">VIDEO_TAG</span> <span class="o">=</span> <span class="s">&quot;&quot;&quot;</span>
-<span class="s">&lt;center&gt;&lt;video controls style=&#39;max-width:100%&#39;&gt;</span>
+<span class="s">&lt;center&gt;&lt;video controls style=&#39;max-width:100%; margin: auto; {css}&#39;&gt;</span>
 <span class="s">&lt;source src=&#39;{src}&#39; type=&#39;{mime_type}&#39;&gt;</span>
 <span class="s">Your browser does not support the video tag.</span>
 <span class="s">&lt;/video&gt;&lt;center/&gt;&quot;&quot;&quot;</span>
@@ -192,10 +192,11 @@
 <span class="p">}</span>
 
 
-<span class="k">def</span> <span class="nf">opts</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">opts</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">percent_size</span><span class="p">):</span>
     <span class="s">&quot;Returns the plot options with supplied size (if not overridden)&quot;</span>
     <span class="n">obj</span> <span class="o">=</span> <span class="n">el</span><span class="o">.</span><span class="n">last</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">)</span> <span class="k">else</span> <span class="n">el</span>
-    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">fig_inches</span><span class="o">=</span><span class="n">size</span><span class="p">),</span> <span class="o">**</span><span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">fig_inches</span><span class="o">=</span><span class="n">get_plot_size</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">percent_size</span><span class="p">)),</span>
+                <span class="o">**</span><span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">get_plot_size</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">percent_size</span><span class="p">):</span>
@@ -211,25 +212,15 @@
 <span class="sd">    utility. Note that this can be overridden explicitly per object</span>
 <span class="sd">    using the fig_size and size plot options.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">):</span>
-        <span class="n">factor</span> <span class="o">=</span> <span class="n">percent_size</span> <span class="o">/</span> <span class="mf">100.0</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">Plot</span><span class="o">.</span><span class="n">fig_inches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">factor</span><span class="p">,</span>
-                <span class="n">Plot</span><span class="o">.</span><span class="n">fig_inches</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">factor</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="p">(</span><span class="n">Layout</span><span class="p">,</span> <span class="n">NdLayout</span><span class="p">))</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
-                <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">):</span>
-        <span class="n">max_dim</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-        <span class="c"># Reduce plot size as GridSpace gets larger</span>
-        <span class="n">shape_factor</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">max_dim</span>
-        <span class="c"># Expand small grids to a sensible viewing size</span>
-        <span class="n">expand_factor</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">max_dim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>
-        <span class="n">scale_factor</span> <span class="o">=</span> <span class="n">expand_factor</span> <span class="o">*</span> <span class="n">shape_factor</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">scale_factor</span> <span class="o">*</span> <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
-                <span class="n">scale_factor</span> <span class="o">*</span> <span class="n">obj</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">factor</span> <span class="o">=</span> <span class="n">percent_size</span> <span class="o">/</span> <span class="mf">100.0</span>
+    <span class="n">plot_type</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">type</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">)</span> <span class="k">else</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="n">options</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span>
+    <span class="n">fig_inches</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;fig_inches&#39;</span><span class="p">,</span> <span class="n">Plot</span><span class="o">.</span><span class="n">fig_inches</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fig_inches</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">fig_inches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">factor</span><span class="p">,</span>
+                <span class="n">fig_inches</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">factor</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">rescale_figure</span><span class="p">(</span><span class="n">percent_size</span><span class="p">)</span>
-
+        <span class="k">return</span> <span class="n">Plot</span><span class="o">.</span><span class="n">fig_inches</span> <span class="o">*</span> <span class="n">factor</span> 
 
 
 <div class="viewcode-block" id="MPLPlotRenderer"><a class="viewcode-back" href="../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.MPLPlotRenderer">[docs]</a><span class="k">class</span> <span class="nc">MPLPlotRenderer</span><span class="p">(</span><span class="n">Exporter</span><span class="p">):</span>
