@@ -910,7 +910,29 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">traversal</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">NdMapping</span><span class="p">([(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">data</span><span class="p">)])):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;HoloMaps dimensions must be consistent in </span><span class="si">%s</span><span class="s">.&quot;</span> <span class="o">%</span>
                              <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">UniformNdMapping</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_item_check</span><span class="p">(</span><span class="n">dim_vals</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span></div>
+        <span class="nb">super</span><span class="p">(</span><span class="n">UniformNdMapping</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_item_check</span><span class="p">(</span><span class="n">dim_vals</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="UniformNdMapping.dframe"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.ndmapping.UniformNdMapping.dframe">[docs]</a>    <span class="k">def</span> <span class="nf">dframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gets a dframe for each Element in the HoloMap, appends the</span>
+<span class="sd">        dimensions of the HoloMap as series and concatenates the</span>
+<span class="sd">        dframes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">pandas</span>
+        <span class="n">dframes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">view</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">view_frame</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">dframe</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">val</span><span class="p">,</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">)):</span>
+                <span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="s">&#39;_&#39;</span><span class="p">)</span>
+                <span class="n">dimn</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">while</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">view_frame</span><span class="p">:</span>
+                    <span class="n">dim</span> <span class="o">=</span> <span class="n">dim</span><span class="o">+</span><span class="s">&#39;_</span><span class="si">%d</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">dimn</span>
+                    <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">view_frame</span><span class="p">:</span>
+                        <span class="n">dimn</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">view_frame</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dim</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+            <span class="n">dframes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">view_frame</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pandas</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">dframes</span><span class="p">)</span></div></div>
 </pre></div>
 
           </div>
