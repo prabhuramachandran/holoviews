@@ -152,7 +152,7 @@
 <span class="kn">from</span> <span class="nn">numpy.testing</span> <span class="kn">import</span> <span class="n">assert_array_almost_equal</span>
 
 <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="o">*</span>    <span class="c"># pyflakes:ignore (All Elements need to support comparison)</span>
-<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Element</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">,</span> \
+<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Element</span><span class="p">,</span> <span class="n">Empty</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">,</span> \
                    <span class="n">Dimensioned</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">NdLayout</span><span class="p">,</span> <span class="n">NdOverlay</span><span class="p">,</span> <span class="n">GridSpace</span>
 <span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Options</span><span class="p">,</span> <span class="n">Cycle</span>
 <span class="kn">from</span> <span class="nn">..interface.pandas</span> <span class="kn">import</span> <span class="n">DFrame</span> <span class="k">as</span> <span class="n">PandasDFrame</span>
@@ -244,8 +244,9 @@
         <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">Element</span><span class="p">]</span>     <span class="o">=</span>  <span class="n">cls</span><span class="o">.</span><span class="n">compare_elements</span>     <span class="c"># Used in unit tests</span>
 
         <span class="c"># Composition (+ and *)</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">Overlay</span><span class="p">]</span> <span class="o">=</span>       <span class="n">cls</span><span class="o">.</span><span class="n">compare_overlays</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">Layout</span><span class="p">]</span> <span class="o">=</span>    <span class="n">cls</span><span class="o">.</span><span class="n">compare_layouttrees</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">Overlay</span><span class="p">]</span> <span class="o">=</span>     <span class="n">cls</span><span class="o">.</span><span class="n">compare_overlays</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">Layout</span><span class="p">]</span> <span class="o">=</span>      <span class="n">cls</span><span class="o">.</span><span class="n">compare_layouttrees</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">Empty</span><span class="p">]</span> <span class="o">=</span>       <span class="n">cls</span><span class="o">.</span><span class="n">compare_empties</span>
 
         <span class="c"># Annotations</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">equality_type_funcs</span><span class="p">[</span><span class="n">VLine</span><span class="p">]</span> <span class="o">=</span>       <span class="n">cls</span><span class="o">.</span><span class="n">compare_vline</span>
@@ -416,6 +417,11 @@
     <span class="k">def</span> <span class="nf">compare_layouttrees</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">compare_dimensioned</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">)</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">compare_trees</span><span class="p">(</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;Layouts&#39;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">compare_empties</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="n">Empty</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="p">[</span><span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="n">cls</span><span class="o">.</span><span class="n">failureException</span><span class="p">(</span><span class="s">&quot;Compared elements are not both Empty()&quot;</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compare_overlays</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">el1</span><span class="p">,</span> <span class="n">el2</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
