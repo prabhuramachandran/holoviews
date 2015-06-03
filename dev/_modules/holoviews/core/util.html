@@ -1,0 +1,737 @@
+
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>holoviews.core.util &mdash; HoloViews</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../../../_static/bootstrap.css" type="text/css" />
+  
+    <link rel="stylesheet" href="../../../_static/codehilite.css" type="text/css" />
+  
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+    <link rel="stylesheet" href="../../../_static/rtd_bootstrap.css" type="text/css" />
+  
+        <link rel="author" title="About these documents"
+              href="../../../about.html"/>
+    <link rel="top" title="HoloViews" href="../../../index.html"/>
+        <link rel="up" title="holoviews.core" href="../core.html"/>
+    <script type="text/javascript" src='../../../_static/jquery.js'></script>
+    <script type="text/javascript" src='../../../_static/underscore.js'></script>
+    <script type="text/javascript" src='../../../_static/doctools.js'></script>
+    <script type="text/javascript" src='../../../_static/require.js'></script>
+    <script type="text/javascript" src='../../../_static/bootstrap.js'></script>
+    <script type="text/javascript" src='../../../_static/custom.js'></script>
+    <script type="text/javascript" src='../../../_static/js/theme.js'></script>
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+
+        
+          <img src="../../../_static/holoviews_logo.png" class="logo" />
+        
+
+        <a href="../../../index.html" class="fa"> HoloViews</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../features.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">Tutorials</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Examples/index.html">Examples</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Reference_Manual/index.html">Reference Manual</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.core.html">core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.element.html">element</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.interface.html">interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.ipython.html">ipython</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.operation.html">operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.plotting.html">plotting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../FAQ.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://github.com/ioam/holoviews">Github source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../about.html">About</a><ul class="simple">
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">HoloViews</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="main">
+            
+  <h1>Source code for holoviews.core.util</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">sys</span><span class="o">,</span> <span class="nn">warnings</span><span class="o">,</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">numbers</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">string</span>
+<span class="kn">import</span> <span class="nn">unicodedata</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="c"># Python3 compatibility</span>
+<span class="nb">basestring</span> <span class="o">=</span> <span class="nb">str</span> <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">3</span> <span class="k">else</span> <span class="nb">basestring</span>
+
+
+<span class="k">def</span> <span class="nf">safe_unicode</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+   <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span> <span class="k">return</span> <span class="n">value</span>
+   <span class="k">else</span><span class="p">:</span> <span class="k">return</span> <span class="nb">unicode</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">))</span>
+
+
+
+<div class="viewcode-block" id="capitalize_unicode_name"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.capitalize_unicode_name">[docs]</a><span class="k">def</span> <span class="nf">capitalize_unicode_name</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Turns a string such as &#39;capital delta&#39; into the shortened,</span>
+<span class="sd">    capitalized version, in this case simply &#39;Delta&#39;. Used as a</span>
+<span class="sd">    transform in sanitize_identifier.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">index</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;capital&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="k">return</span> <span class="n">s</span>
+    <span class="n">tail</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">index</span><span class="p">:]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;capital&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">tail</span> <span class="o">=</span> <span class="n">tail</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">+</span> <span class="n">tail</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="n">s</span><span class="p">[:</span><span class="n">index</span><span class="p">]</span> <span class="o">+</span> <span class="n">tail</span>
+
+</div>
+<div class="viewcode-block" id="sanitize_identifier_fn"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.sanitize_identifier_fn">[docs]</a><span class="k">class</span> <span class="nc">sanitize_identifier_fn</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">ParameterizedFunction</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sanitizes group/label values for use in AttrTree attribute</span>
+<span class="sd">    access. Depending on the version parameter, either sanitization</span>
+<span class="sd">    appropriate for Python 2 (no unicode gn identifiers allowed) or</span>
+<span class="sd">    Python 3 (some unicode allowed) is used.</span>
+
+<span class="sd">    Note that if you are using Python 3, you can switch to version 2</span>
+<span class="sd">    for compatibility but you cannot enable relaxed sanitization if</span>
+<span class="sd">    you are using Python 2.</span>
+
+<span class="sd">    Special characters are sanitized using their (lowercase) unicode</span>
+<span class="sd">    name using the unicodedata module. For instance:</span>
+
+<span class="sd">    &gt;&gt;&gt; unicodedata.name(u&#39;$&#39;).lower()</span>
+<span class="sd">    &#39;dollar sign&#39;</span>
+
+<span class="sd">    As these names are often very long, this parameterized function</span>
+<span class="sd">    allows filtered, substitions and transforms to help shorten these</span>
+<span class="sd">    names appropriately.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">version</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span><span class="p">,</span> <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The sanitization version. If set to 2, more aggresive</span>
+<span class="s">        sanitization appropriate for Python 2 is applied. Otherwise,</span>
+<span class="s">        if set to 3, more relaxed, Python 3 sanitization is used.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">capitalize</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Whether the first letter should be converted to</span>
+<span class="s">       uppercase. Note, this will only be applied to ASCII characters</span>
+<span class="s">       in order to make sure paths aren&#39;t confused with method</span>
+<span class="s">       names.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">eliminations</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">([</span><span class="s">&#39;extended&#39;</span><span class="p">,</span> <span class="s">&#39;accent&#39;</span><span class="p">,</span> <span class="s">&#39;small&#39;</span><span class="p">,</span> <span class="s">&#39;letter&#39;</span><span class="p">,</span> <span class="s">&#39;sign&#39;</span><span class="p">,</span> <span class="s">&#39;digit&#39;</span><span class="p">,</span>
+                               <span class="s">&#39;latin&#39;</span><span class="p">,</span> <span class="s">&#39;greek&#39;</span><span class="p">,</span> <span class="s">&#39;arabic-indic&#39;</span><span class="p">,</span> <span class="s">&#39;with&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Lowercase strings to be eliminated from the unicode names in</span>
+<span class="s">       order to shorten the sanitized name ( lowercase). Redundant</span>
+<span class="s">       strings should be removed but too much elimination could cause</span>
+<span class="s">       two unique strings to map to the same sanitized output.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">substitutions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;circumflex&#39;</span><span class="p">:</span><span class="s">&#39;power&#39;</span><span class="p">,</span>
+                                        <span class="s">&#39;asterisk&#39;</span><span class="p">:</span><span class="s">&#39;times&#39;</span><span class="p">,</span>
+                                        <span class="s">&#39;solidus&#39;</span><span class="p">:</span><span class="s">&#39;over&#39;</span><span class="p">},</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Lowercase substitutions of substrings in unicode names. For</span>
+<span class="s">       instance the ^ character has the name &#39;circumflex accent&#39; even</span>
+<span class="s">       though it is more typically used for exponentiation. Note that</span>
+<span class="s">       substitutions occur after filtering and that there should be no</span>
+<span class="s">       ordering dependence between substitutions.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">transforms</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="n">capitalize_unicode_name</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       List of string transformation functions to apply after</span>
+<span class="s">       filtering and substitution in order to further compress the</span>
+<span class="s">       unicode name. For instance, the defaultcapitalize_unicode_name</span>
+<span class="s">       function will turn the string &quot;capital delta&quot; into &quot;Delta&quot;.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">disallowed</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;trait_names&#39;</span><span class="p">,</span> <span class="s">&#39;_ipython_display_&#39;</span><span class="p">,</span>
+                                     <span class="s">&#39;_getAttributeNames&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       An explicit list of name that should not be allowed as</span>
+<span class="s">       attribute names on Tree objects.</span>
+
+<span class="s">       By default, prevents IPython from creating an entry called</span>
+<span class="s">       Trait_names due to an inconvenient getattr check (during</span>
+<span class="s">       tab-completion).&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">disable_leading_underscore</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Boolean</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       Whether leading underscores should be allowed to be sanitized</span>
+<span class="s">       with the leading prefix.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">prefix</span> <span class="o">=</span> <span class="s">&#39;A_&#39;</span>
+
+    <span class="nd">@param.parameterized.bothmethod</span>
+    <span class="k">def</span> <span class="nf">allowable</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">disable_leading_underscore</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+       <span class="n">disabled_reprs</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;javascript&#39;</span><span class="p">,</span> <span class="s">&#39;jpeg&#39;</span><span class="p">,</span> <span class="s">&#39;json&#39;</span><span class="p">,</span> <span class="s">&#39;latex&#39;</span><span class="p">,</span>
+                         <span class="s">&#39;latex&#39;</span><span class="p">,</span> <span class="s">&#39;pdf&#39;</span><span class="p">,</span> <span class="s">&#39;png&#39;</span><span class="p">,</span> <span class="s">&#39;svg&#39;</span><span class="p">,</span> <span class="s">&#39;markdown&#39;</span><span class="p">]</span>
+       <span class="n">disabled_</span> <span class="o">=</span> <span class="p">(</span><span class="n">self_or_cls</span><span class="o">.</span><span class="n">disable_leading_underscore</span>
+                    <span class="k">if</span> <span class="n">disable_leading_underscore</span> <span class="ow">is</span> <span class="bp">None</span>
+                    <span class="k">else</span> <span class="n">disable_leading_underscore</span><span class="p">)</span>
+       <span class="k">if</span> <span class="n">disabled_</span> <span class="ow">and</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>
+          <span class="k">return</span> <span class="bp">False</span>
+       <span class="n">isrepr</span> <span class="o">=</span> <span class="nb">any</span><span class="p">((</span><span class="s">&#39;_repr_</span><span class="si">%s</span><span class="s">_&#39;</span> <span class="o">%</span> <span class="n">el</span><span class="p">)</span> <span class="o">==</span> <span class="n">name</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">disabled_reprs</span><span class="p">)</span>
+       <span class="k">return</span> <span class="p">(</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">disallowed</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">isrepr</span>
+
+    <span class="nd">@param.parameterized.bothmethod</span>
+<div class="viewcode-block" id="sanitize_identifier_fn.prefixed"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.sanitize_identifier_fn.prefixed">[docs]</a>    <span class="k">def</span> <span class="nf">prefixed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Whether or not the identifier will be prefixed.</span>
+<span class="sd">        Strings that require the prefix are generally not recommended.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">invalid_starting</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Mn&#39;</span><span class="p">,</span> <span class="s">&#39;Mc&#39;</span><span class="p">,</span> <span class="s">&#39;Nd&#39;</span><span class="p">,</span> <span class="s">&#39;Pc&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">identifier</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>  <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">return</span><span class="p">((</span><span class="n">identifier</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="p">)</span> <span class="k">if</span> <span class="n">version</span><span class="o">==</span><span class="mi">2</span>
+               <span class="k">else</span> <span class="p">(</span><span class="n">unicodedata</span><span class="o">.</span><span class="n">category</span><span class="p">(</span><span class="n">identifier</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="ow">in</span> <span class="n">invalid_starting</span><span class="p">))</span>
+</div>
+    <span class="nd">@param.parameterized.bothmethod</span>
+<div class="viewcode-block" id="sanitize_identifier_fn.remove_diacritics"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.sanitize_identifier_fn.remove_diacritics">[docs]</a>    <span class="k">def</span> <span class="nf">remove_diacritics</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">identifier</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Remove diacritics and accents from the input leaving other</span>
+<span class="sd">        unicode characters alone.&quot;&quot;&quot;</span>
+        <span class="n">chars</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">identifier</span><span class="p">:</span>
+            <span class="n">replacement</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s">&#39;NFKD&#39;</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s">&#39;ASCII&#39;</span><span class="p">,</span> <span class="s">&#39;ignore&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">replacement</span> <span class="o">!=</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+                <span class="n">chars</span> <span class="o">+=</span> <span class="n">safe_unicode</span><span class="p">(</span><span class="n">replacement</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">chars</span> <span class="o">+=</span> <span class="n">c</span>
+        <span class="k">return</span> <span class="n">chars</span>
+</div>
+    <span class="nd">@param.parameterized.bothmethod</span>
+<div class="viewcode-block" id="sanitize_identifier_fn.shortened_character_name"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.sanitize_identifier_fn.shortened_character_name">[docs]</a>    <span class="k">def</span> <span class="nf">shortened_character_name</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="n">eliminations</span><span class="o">=</span><span class="p">[],</span> <span class="n">substitutions</span><span class="o">=</span><span class="p">{},</span> <span class="n">transforms</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given a unicode character c, return the shortened unicode name</span>
+<span class="sd">        (as a list of tokens) by applying the eliminations,</span>
+<span class="sd">        substitutions and transforms.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">name</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="c"># Filtering</span>
+        <span class="k">for</span> <span class="n">elim</span> <span class="ow">in</span> <span class="n">eliminations</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">elim</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+        <span class="c"># Substitition</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">o</span> <span class="ow">in</span> <span class="n">substitutions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">transform</span> <span class="ow">in</span> <span class="n">transforms</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">())</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span><span class="s">&#39;_&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;-&#39;</span><span class="p">,</span><span class="s">&#39;_&#39;</span><span class="p">)</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">]:</span> <span class="k">return</span> <span class="n">name</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">safe_unicode</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="k">if</span> <span class="n">version</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">version</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">allowable</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&quot;String </span><span class="si">%r</span><span class="s"> is in the disallowed list of attribute names: </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">disallowed</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">version</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">remove_diacritics</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">capitalize</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">and</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">:</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">+</span><span class="n">name</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="n">sanitized</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sanitize_py2</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">if</span> <span class="n">version</span><span class="o">==</span><span class="mi">2</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize_py3</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefixed</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span> <span class="k">return</span> <span class="n">sanitized</span>
+        <span class="k">else</span><span class="p">:</span>                                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">sanitized</span>
+
+
+    <span class="k">def</span> <span class="nf">_process_underscores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">):</span>
+        <span class="s">&quot;Strip underscores to make sure the number is correct after join&quot;</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="p">[[</span><span class="nb">str</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">el</span><span class="p">))]</span> <span class="k">if</span> <span class="n">b</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">el</span><span class="p">)</span>
+                  <span class="k">for</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span><span class="n">el</span><span class="p">)</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">k</span><span class="o">==</span><span class="s">&#39;_&#39;</span><span class="p">)]</span>
+        <span class="n">flattened</span> <span class="o">=</span> <span class="p">[</span><span class="n">el</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">group</span><span class="p">]</span>
+        <span class="n">processed</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">flattened</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">token</span> <span class="o">==</span> <span class="s">&#39;_&#39;</span><span class="p">:</span>  <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>
+                <span class="n">token</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">token</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+            <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">):</span>
+                <span class="n">token</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">token</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">processed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">processed</span>
+
+    <span class="k">def</span> <span class="nf">sanitize_py2</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="c"># This fix works but masks an issue in self.sanitize (py2)</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="s">&#39;_&#39;</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="n">valid_chars</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span><span class="o">+</span><span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="o">+</span><span class="s">&#39;_&#39;</span>
+        <span class="k">return</span> <span class="n">prefix</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="s">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">valid_chars</span><span class="p">)))</span>
+
+
+    <span class="k">def</span> <span class="nf">sanitize_py3</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">isidentifier</span><span class="p">():</span>
+            <span class="k">return</span> <span class="s">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sanitize</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;_&#39;</span><span class="o">+</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">isidentifier</span><span class="p">()))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">name</span>
+
+<div class="viewcode-block" id="sanitize_identifier_fn.sanitize"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.sanitize_identifier_fn.sanitize">[docs]</a>    <span class="k">def</span> <span class="nf">sanitize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">valid_fn</span><span class="p">):</span>
+        <span class="s">&quot;Accumulate blocks of hex and separate blocks by underscores&quot;</span>
+        <span class="n">sanitized</span><span class="p">,</span> <span class="n">chars</span> <span class="o">=</span> <span class="p">[],</span> <span class="s">&#39;&#39;</span>
+        <span class="k">for</span> <span class="n">split</span> <span class="ow">in</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">split</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">valid_fn</span><span class="p">(</span><span class="n">c</span><span class="p">):</span> <span class="n">chars</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">if</span> <span class="n">c</span><span class="o">==</span><span class="s">&#39;_&#39;</span> <span class="k">else</span> <span class="n">c</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">short</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">shortened_character_name</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eliminations</span><span class="p">,</span>
+                                                         <span class="bp">self</span><span class="o">.</span><span class="n">substitutions</span><span class="p">,</span>
+                                                         <span class="bp">self</span><span class="o">.</span><span class="n">transforms</span><span class="p">)</span>
+                    <span class="n">sanitized</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">chars</span><span class="p">]</span> <span class="k">if</span> <span class="n">chars</span> <span class="k">else</span> <span class="p">[])</span>
+                    <span class="n">sanitized</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">short</span><span class="p">)</span>
+                    <span class="n">chars</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+            <span class="k">if</span> <span class="n">chars</span><span class="p">:</span>
+                <span class="n">sanitized</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">chars</span><span class="p">])</span>
+                <span class="n">chars</span><span class="o">=</span><span class="s">&#39;&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_underscores</span><span class="p">(</span><span class="n">sanitized</span> <span class="o">+</span> <span class="p">([</span><span class="n">chars</span><span class="p">]</span> <span class="k">if</span> <span class="n">chars</span> <span class="k">else</span> <span class="p">[]))</span>
+</div></div>
+<span class="n">sanitize_identifier</span> <span class="o">=</span> <span class="n">sanitize_identifier_fn</span><span class="o">.</span><span class="n">instance</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="find_minmax"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.find_minmax">[docs]</a><span class="k">def</span> <span class="nf">find_minmax</span><span class="p">(</span><span class="n">lims</span><span class="p">,</span> <span class="n">olims</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Takes (a1, a2) and (b1, b2) as input and returns</span>
+<span class="sd">    (np.nanmin(a1, b1), np.nanmax(a2, b2)). Used to calculate</span>
+<span class="sd">    min and max values of a number of items.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">limzip</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">lims</span><span class="p">),</span> <span class="nb">list</span><span class="p">(</span><span class="n">olims</span><span class="p">),</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">])</span>
+        <span class="n">limits</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">fn</span><span class="p">([</span><span class="n">l</span><span class="p">,</span> <span class="n">ol</span><span class="p">]))</span> <span class="k">for</span> <span class="n">l</span><span class="p">,</span> <span class="n">ol</span><span class="p">,</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">limzip</span><span class="p">])</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">limits</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">limits</span>
+
+</div>
+<div class="viewcode-block" id="find_range"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.find_range">[docs]</a><span class="k">def</span> <span class="nf">find_range</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">soft_range</span><span class="o">=</span><span class="p">[]):</span>
+   <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">   Safely finds either the numerical min and max of</span>
+<span class="sd">   a set of values, falling back to the first and</span>
+<span class="sd">   the last value in the sorted list of values.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+   <span class="k">try</span><span class="p">:</span>
+      <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+      <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">values</span>
+      <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">values</span><span class="p">,</span> <span class="n">soft_range</span><span class="p">])</span>
+      <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">values</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+   <span class="k">except</span><span class="p">:</span>
+      <span class="k">try</span><span class="p">:</span>
+         <span class="n">values</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+         <span class="k">return</span> <span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">values</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+      <span class="k">except</span><span class="p">:</span>
+         <span class="k">return</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="max_range"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.max_range">[docs]</a><span class="k">def</span> <span class="nf">max_range</span><span class="p">(</span><span class="n">ranges</span><span class="p">):</span>
+   <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">   Computes the maximal lower and upper bounds from a list bounds.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+   <span class="k">try</span><span class="p">:</span>
+      <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+         <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s">&#39;ignore&#39;</span><span class="p">,</span> <span class="s">r&#39;All-NaN (slice|axis) encountered&#39;</span><span class="p">)</span>
+         <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ranges</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+         <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">arr</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">arr</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]))</span>
+   <span class="k">except</span><span class="p">:</span>
+      <span class="k">return</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="max_extents"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.max_extents">[docs]</a><span class="k">def</span> <span class="nf">max_extents</span><span class="p">(</span><span class="n">extents</span><span class="p">,</span> <span class="n">zrange</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+   <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">   Computes the maximal extent in 2D and 3D space from</span>
+<span class="sd">   list of 4-tuples or 6-tuples. If zrange is enabled</span>
+<span class="sd">   all extents are converted to 6-tuples to comput</span>
+<span class="sd">   x-, y- and z-limits.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+
+   <span class="k">if</span> <span class="n">zrange</span><span class="p">:</span>
+      <span class="n">num</span> <span class="o">=</span> <span class="mi">6</span>
+      <span class="n">inds</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)]</span>
+      <span class="n">extents</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="o">==</span> <span class="mi">6</span> <span class="k">else</span> <span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">None</span><span class="p">,</span>
+                                        <span class="n">e</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">e</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="bp">None</span><span class="p">)</span>
+                 <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">extents</span><span class="p">]</span>
+   <span class="k">else</span><span class="p">:</span>
+      <span class="n">num</span> <span class="o">=</span> <span class="mi">4</span>
+      <span class="n">inds</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">)]</span>
+   <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">extents</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="n">ndmin</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+   <span class="n">extents</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">]</span> <span class="o">*</span> <span class="n">num</span>
+   <span class="k">if</span> <span class="mi">0</span> <span class="ow">in</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+      <span class="k">return</span> <span class="n">extents</span>
+   <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+      <span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s">&#39;ignore&#39;</span><span class="p">,</span> <span class="s">r&#39;All-NaN (slice|axis) encountered&#39;</span><span class="p">)</span>
+      <span class="k">for</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="ow">in</span> <span class="n">inds</span><span class="p">:</span>
+         <span class="n">extents</span><span class="p">[</span><span class="n">lower</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">arr</span><span class="p">[:,</span> <span class="n">lower</span><span class="p">])</span>
+         <span class="n">extents</span><span class="p">[</span><span class="n">upper</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">arr</span><span class="p">[:,</span> <span class="n">upper</span><span class="p">])</span>
+   <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">extents</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="int_to_alpha"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.int_to_alpha">[docs]</a><span class="k">def</span> <span class="nf">int_to_alpha</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">upper</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="s">&quot;Generates alphanumeric labels of form A-Z, AA-ZZ etc.&quot;</span>
+    <span class="n">casenum</span> <span class="o">=</span> <span class="mi">65</span> <span class="k">if</span> <span class="n">upper</span> <span class="k">else</span> <span class="mi">97</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+    <span class="n">count</span><span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="n">casenum</span><span class="p">))</span>
+    <span class="k">while</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">mod</span><span class="p">,</span> <span class="n">div</span> <span class="o">=</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">26</span><span class="p">,</span> <span class="n">n</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">count</span><span class="p">):</span>
+            <span class="n">div</span> <span class="o">//=</span> <span class="mi">26</span>
+        <span class="n">div</span> <span class="o">%=</span> <span class="mi">26</span>
+        <span class="k">if</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">mod</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">div</span>
+        <span class="n">label</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="n">val</span> <span class="o">+</span> <span class="n">casenum</span><span class="p">))</span>
+        <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">n</span> <span class="o">-=</span> <span class="mi">26</span><span class="o">**</span><span class="n">count</span>
+    <span class="k">return</span> <span class="n">label</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+</div>
+<span class="k">def</span> <span class="nf">int_to_roman</span><span class="p">(</span><span class="nb">input</span><span class="p">):</span>
+   <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">type</span><span class="p">(</span><span class="mi">1</span><span class="p">):</span>
+      <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;expected integer, got </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="nb">input</span><span class="p">))</span>
+   <span class="k">if</span> <span class="ow">not</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="nb">input</span> <span class="o">&lt;</span> <span class="mi">4000</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Argument must be between 1 and 3999&quot;</span><span class="p">)</span>
+   <span class="n">ints</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">900</span><span class="p">,</span>  <span class="mi">500</span><span class="p">,</span> <span class="mi">400</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span>  <span class="mi">90</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span>  <span class="mi">40</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span>  <span class="mi">9</span><span class="p">,</span>   <span class="mi">5</span><span class="p">,</span>  <span class="mi">4</span><span class="p">,</span>   <span class="mi">1</span><span class="p">)</span>
+   <span class="n">nums</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;M&#39;</span><span class="p">,</span>  <span class="s">&#39;CM&#39;</span><span class="p">,</span> <span class="s">&#39;D&#39;</span><span class="p">,</span> <span class="s">&#39;CD&#39;</span><span class="p">,</span><span class="s">&#39;C&#39;</span><span class="p">,</span> <span class="s">&#39;XC&#39;</span><span class="p">,</span><span class="s">&#39;L&#39;</span><span class="p">,</span><span class="s">&#39;XL&#39;</span><span class="p">,</span><span class="s">&#39;X&#39;</span><span class="p">,</span><span class="s">&#39;IX&#39;</span><span class="p">,</span><span class="s">&#39;V&#39;</span><span class="p">,</span><span class="s">&#39;IV&#39;</span><span class="p">,</span><span class="s">&#39;I&#39;</span><span class="p">)</span>
+   <span class="n">result</span> <span class="o">=</span> <span class="s">&quot;&quot;</span>
+   <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">ints</span><span class="p">)):</span>
+      <span class="n">count</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">input</span> <span class="o">/</span> <span class="n">ints</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+      <span class="n">result</span> <span class="o">+=</span> <span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">count</span>
+      <span class="nb">input</span> <span class="o">-=</span> <span class="n">ints</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">count</span>
+   <span class="k">return</span> <span class="n">result</span>
+
+
+<div class="viewcode-block" id="unique_iterator"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.unique_iterator">[docs]</a><span class="k">def</span> <span class="nf">unique_iterator</span><span class="p">(</span><span class="n">seq</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns an iterator containing all non-duplicate elements</span>
+<span class="sd">    in the input sequence.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">seq</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">item</span>
+
+</div>
+<div class="viewcode-block" id="match_spec"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.match_spec">[docs]</a><span class="k">def</span> <span class="nf">match_spec</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">specification</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Matches the group.label specification of the supplied</span>
+<span class="sd">    element against the supplied specification dictionary</span>
+<span class="sd">    returning the value of the best match.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">match_tuple</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">specification</span><span class="o">.</span><span class="n">get</span><span class="p">((),</span> <span class="p">{})</span>
+    <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">element</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
+                 <span class="n">sanitize_identifier</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">group</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">False</span><span class="p">),</span>
+                 <span class="n">sanitize_identifier</span><span class="p">(</span><span class="n">element</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">False</span><span class="p">)]:</span>
+        <span class="n">match_tuple</span> <span class="o">+=</span> <span class="p">(</span><span class="n">spec</span><span class="p">,)</span>
+        <span class="k">if</span> <span class="n">match_tuple</span> <span class="ow">in</span> <span class="n">specification</span><span class="p">:</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="n">specification</span><span class="p">[</span><span class="n">match_tuple</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">match</span>
+
+</div>
+<span class="k">def</span> <span class="nf">python2sort</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">key</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span> <span class="k">return</span> <span class="n">x</span>
+    <span class="n">it</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="p">[[</span><span class="nb">next</span><span class="p">(</span><span class="n">it</span><span class="p">)]]</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">it</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">item_precedence</span> <span class="o">=</span> <span class="n">item</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">key</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="n">group_precedence</span> <span class="o">=</span> <span class="n">group</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">key</span><span class="p">(</span><span class="n">group</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">item_precedence</span> <span class="o">&lt;</span> <span class="n">group_precedence</span>  <span class="c"># exception if not comparable</span>
+                <span class="n">group</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="k">break</span>
+            <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c"># did not break, make new group</span>
+            <span class="n">groups</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">item</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="dimension_sort"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.dimension_sort">[docs]</a><span class="k">def</span> <span class="nf">dimension_sort</span><span class="p">(</span><span class="n">odict</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">categorical</span><span class="p">,</span> <span class="n">cached_values</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sorts data by key using usual Python tuple sorting semantics</span>
+<span class="sd">    or sorts in categorical order for any categorical Dimensions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sortkws</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">categorical</span><span class="p">:</span>
+       <span class="n">sortkws</span><span class="p">[</span><span class="s">&#39;key&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">cached_values</span><span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">])</span>
+                                        <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">values</span> <span class="k">else</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+                                        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">dimensions</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">python2sort</span><span class="p">(</span><span class="n">odict</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="o">**</span><span class="n">sortkws</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">odict</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="o">**</span><span class="n">sortkws</span><span class="p">)</span>
+
+
+<span class="c"># Copied from param should make param version public</span></div>
+<span class="k">def</span> <span class="nf">is_number</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Number</span><span class="p">):</span> <span class="k">return</span> <span class="bp">True</span>
+    <span class="c"># The extra check is for classes that behave like numbers, such as those</span>
+    <span class="c"># found in numpy, gmpy, etc.</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;__int__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;__add__&#39;</span><span class="p">)):</span> <span class="k">return</span> <span class="bp">True</span>
+    <span class="c"># This is for older versions of gmpy</span>
+    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;qdiv&#39;</span><span class="p">):</span> <span class="k">return</span> <span class="bp">True</span>
+    <span class="k">else</span><span class="p">:</span> <span class="k">return</span> <span class="bp">False</span>
+
+
+<div class="viewcode-block" id="ProgressIndicator"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.ProgressIndicator">[docs]</a><span class="k">class</span> <span class="nc">ProgressIndicator</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Baseclass for any ProgressIndicator that indicates progress</span>
+<span class="sd">    as a completion percentage.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">percent_range</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">NumericTuple</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The total percentage spanned by the progress bar when called</span>
+<span class="s">        with a value between 0% and 100%. This allows an overall</span>
+<span class="s">        completion in percent to be broken down into smaller sub-tasks</span>
+<span class="s">        that individually complete to 100 percent.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">label</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Progress&#39;</span><span class="p">,</span> <span class="n">allow_None</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">        The label of the current progress bar.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">completion</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+</div>
+<div class="viewcode-block" id="sort_topologically"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.sort_topologically">[docs]</a><span class="k">def</span> <span class="nf">sort_topologically</span><span class="p">(</span><span class="n">graph</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stackless topological sorting.</span>
+
+<span class="sd">    graph = {</span>
+<span class="sd">        3: [1],</span>
+<span class="sd">        5: [3],</span>
+<span class="sd">        4: [2],</span>
+<span class="sd">        6: [4],</span>
+<span class="sd">    }</span>
+
+<span class="sd">    sort_topologically(graph)</span>
+<span class="sd">    [set([1, 2]), set([3, 4]), set([5, 6])]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">levels_by_name</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">names_by_level</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">add_level_to_name</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">level</span><span class="p">):</span>
+        <span class="n">levels_by_name</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">level</span>
+        <span class="n">names_by_level</span><span class="p">[</span><span class="n">level</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">walk_depth_first</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="n">stack</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="k">while</span><span class="p">(</span><span class="n">stack</span><span class="p">):</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">levels_by_name</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">graph</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">graph</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
+                <span class="n">level</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">add_level_to_name</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="n">children</span> <span class="o">=</span> <span class="n">graph</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+
+            <span class="n">children_not_calculated</span> <span class="o">=</span> <span class="p">[</span><span class="n">child</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">children</span> <span class="k">if</span> <span class="n">child</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">levels_by_name</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">children_not_calculated</span><span class="p">:</span>
+                <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">stack</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">children_not_calculated</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="n">level</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="nb">max</span><span class="p">(</span><span class="n">levels_by_name</span><span class="p">[</span><span class="n">lname</span><span class="p">]</span> <span class="k">for</span> <span class="n">lname</span> <span class="ow">in</span> <span class="n">children</span><span class="p">)</span>
+            <span class="n">add_level_to_name</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">:</span>
+        <span class="n">walk_depth_first</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">takewhile</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">,</span>
+                                    <span class="p">(</span><span class="n">names_by_level</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                                     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">count</span><span class="p">())))</span>
+
+</div>
+<div class="viewcode-block" id="layer_sort"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.layer_sort">[docs]</a><span class="k">def</span> <span class="nf">layer_sort</span><span class="p">(</span><span class="n">hmap</span><span class="p">):</span>
+   <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">   Find a global ordering for layers in a HoloMap of CompositeOverlay</span>
+<span class="sd">   types.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+   <span class="n">orderings</span> <span class="o">=</span> <span class="p">{}</span>
+   <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">hmap</span><span class="p">:</span>
+      <span class="n">okeys</span> <span class="o">=</span> <span class="p">[(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">group</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">label</span><span class="p">)</span> <span class="o">+</span> <span class="n">k</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">)</span> <span class="k">else</span>
+               <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">,)</span> <span class="o">+</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">o</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+      <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">okeys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">okeys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">orderings</span><span class="p">:</span>
+         <span class="n">orderings</span><span class="p">[</span><span class="n">okeys</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+      <span class="k">else</span><span class="p">:</span>
+         <span class="n">orderings</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="n">v</span> <span class="k">else</span> <span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">okeys</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">okeys</span><span class="p">)})</span>
+   <span class="k">return</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">sort_topologically</span><span class="p">(</span><span class="n">orderings</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">g</span><span class="p">)]</span>
+
+</div>
+<div class="viewcode-block" id="layer_groups"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.layer_groups">[docs]</a><span class="k">def</span> <span class="nf">layer_groups</span><span class="p">(</span><span class="n">ordering</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+   <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">   Splits a global ordering of Layers into groups based on a slice of</span>
+<span class="sd">   the spec.  The grouping behavior can be modified by changing the</span>
+<span class="sd">   length of spec the entries are grouped by.</span>
+<span class="sd">   &quot;&quot;&quot;</span>
+   <span class="n">group_orderings</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+   <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">ordering</span><span class="p">:</span>
+      <span class="n">group_orderings</span><span class="p">[</span><span class="n">el</span><span class="p">[:</span><span class="n">length</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">el</span><span class="p">)</span>
+   <span class="k">return</span> <span class="n">group_orderings</span>
+
+</div>
+<div class="viewcode-block" id="group_select"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.group_select">[docs]</a><span class="k">def</span> <span class="nf">group_select</span><span class="p">(</span><span class="n">selects</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Given a list of key tuples to select, groups them into sensible</span>
+<span class="sd">    chunks to avoid duplicating indexing operations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">length</span> <span class="o">==</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">depth</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">length</span> <span class="o">=</span> <span class="n">depth</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">selects</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">getter</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="n">depth</span><span class="o">-</span><span class="n">length</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">length</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">selects</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">selects</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">getter</span><span class="p">)</span>
+        <span class="n">grouped_selects</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">selects</span><span class="p">,</span> <span class="n">getter</span><span class="p">):</span>
+            <span class="n">grouped_selects</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">group_select</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="n">length</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">grouped_selects</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">selects</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="iterative_select"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.util.iterative_select">[docs]</a><span class="k">def</span> <span class="nf">iterative_select</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">selects</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Takes the output of group_select selecting subgroups iteratively,</span>
+<span class="sd">    avoiding duplicating select operations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ndims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span>
+    <span class="n">depth</span> <span class="o">=</span> <span class="n">depth</span> <span class="k">if</span> <span class="n">depth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">ndims</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">selects</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">selects</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">items</span> <span class="o">+=</span> <span class="n">iterative_select</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">dimensions</span><span class="p">[</span><span class="n">ndims</span><span class="o">-</span><span class="n">depth</span><span class="p">]:</span> <span class="n">k</span><span class="p">}),</span>
+                                      <span class="n">dimensions</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">depth</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">selects</span><span class="p">:</span>
+            <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">s</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">**</span><span class="p">{</span><span class="n">dimensions</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span> <span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]})))</span>
+    <span class="k">return</span> <span class="n">items</span>
+</pre></div></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015 IOAM: Jean-Luc R. Stevens, Philipp Rudiger, and James A. Bednar.
+    </p>
+  </div>
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-61554933-1', 'auto');
+  ga('send', 'pageview');
+
+  </script>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'2014.05.14',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

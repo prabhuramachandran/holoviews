@@ -1,0 +1,555 @@
+
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>holoviews.interface.pandas &mdash; HoloViews</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../../../_static/bootstrap.css" type="text/css" />
+  
+    <link rel="stylesheet" href="../../../_static/codehilite.css" type="text/css" />
+  
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+    <link rel="stylesheet" href="../../../_static/rtd_bootstrap.css" type="text/css" />
+  
+        <link rel="author" title="About these documents"
+              href="../../../about.html"/>
+    <link rel="top" title="HoloViews" href="../../../index.html"/>
+        <link rel="up" title="holoviews.interface" href="../interface.html"/>
+    <script type="text/javascript" src='../../../_static/jquery.js'></script>
+    <script type="text/javascript" src='../../../_static/underscore.js'></script>
+    <script type="text/javascript" src='../../../_static/doctools.js'></script>
+    <script type="text/javascript" src='../../../_static/require.js'></script>
+    <script type="text/javascript" src='../../../_static/bootstrap.js'></script>
+    <script type="text/javascript" src='../../../_static/custom.js'></script>
+    <script type="text/javascript" src='../../../_static/js/theme.js'></script>
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+
+        
+          <img src="../../../_static/holoviews_logo.png" class="logo" />
+        
+
+        <a href="../../../index.html" class="fa"> HoloViews</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../features.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">Tutorials</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Examples/index.html">Examples</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Reference_Manual/index.html">Reference Manual</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.core.html">core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.element.html">element</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.interface.html">interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.ipython.html">ipython</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.operation.html">operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.plotting.html">plotting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../FAQ.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://github.com/ioam/holoviews">Github source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../about.html">About</a><ul class="simple">
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">HoloViews</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="main">
+            
+  <h1>Source code for holoviews.interface.pandas</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The interface subpackage provides View and Plot types to wrap external</span>
+<span class="sd">objects with. Currently only a Pandas compatibility wrapper is</span>
+<span class="sd">provided, which allows integrating Pandas DataFrames within the</span>
+<span class="sd">HoloViews compositioning and animation framework. Additionally, it</span>
+<span class="sd">provides methods to apply operations to the underlying data and</span>
+<span class="sd">convert it to standard HoloViews View types.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="n">pd</span> <span class="o">=</span> <span class="bp">None</span>
+
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">ViewableElement</span><span class="p">,</span> <span class="n">NdMapping</span><span class="p">,</span> <span class="n">NdOverlay</span><span class="p">,</span>\
+    <span class="n">NdLayout</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">,</span> <span class="n">Element</span><span class="p">,</span> <span class="n">HoloMap</span>
+<span class="kn">from</span> <span class="nn">..element</span> <span class="kn">import</span> <span class="n">Chart</span><span class="p">,</span> <span class="n">Table</span><span class="p">,</span> <span class="n">Curve</span><span class="p">,</span> <span class="n">Scatter</span><span class="p">,</span> <span class="n">Bars</span><span class="p">,</span> <span class="n">Points</span><span class="p">,</span> <span class="n">VectorField</span><span class="p">,</span> <span class="n">HeatMap</span><span class="p">,</span> <span class="n">Scatter3D</span><span class="p">,</span> <span class="n">Surface</span>
+
+
+<div class="viewcode-block" id="DataFrameView"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.pandas.DataFrameView">[docs]</a><span class="k">class</span> <span class="nc">DataFrameView</span><span class="p">(</span><span class="n">Element</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    DataFrameView provides a convenient compatibility wrapper around</span>
+<span class="sd">    Pandas DataFrames. It provides several core functions:</span>
+
+<span class="sd">        * Allows integrating several Pandas plot types with the</span>
+<span class="sd">          HoloViews plotting system (includes plot, boxplot, histogram</span>
+<span class="sd">          and scatter_matrix).</span>
+
+<span class="sd">        * Provides several convenient wrapper methods to apply</span>
+<span class="sd">          DataFrame methods and slice data. This includes:</span>
+
+<span class="sd">              1) The apply method, which takes the DataFrame method to</span>
+<span class="sd">                 be applied as the first argument and passes any</span>
+<span class="sd">                 supplied args or kwargs along.</span>
+
+<span class="sd">              2) The select and __getitem__ method which allow for</span>
+<span class="sd">                 selecting and slicing the data using NdMapping.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">plot_type</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                                     <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;plot&#39;</span><span class="p">,</span> <span class="s">&#39;boxplot&#39;</span><span class="p">,</span>
+                                              <span class="s">&#39;hist&#39;</span><span class="p">,</span> <span class="s">&#39;scatter_matrix&#39;</span><span class="p">,</span>
+                                              <span class="s">&#39;autocorrelation_plot&#39;</span><span class="p">,</span>
+                                              <span class="bp">None</span><span class="p">],</span>
+                                     <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;Selects which Pandas plot type to use,</span>
+<span class="s">                                            when visualizing the ViewableElement.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;Dimension to visualize along the x-axis.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;Dimension to visualize along a second</span>
+<span class="s">                             dependent axis.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">y</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;Dimension to visualize along the y-axis.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">group</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;DFrame&#39;</span><span class="p">,</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">value_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;DataFrameView has no value dimension.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="p">{},</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">clone_override</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">index</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">pd</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Pandas is required for the Pandas interface.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">copy</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">clone_override</span><span class="p">:</span>
+            <span class="n">dim_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">key_dimensions</span><span class="p">}</span>
+            <span class="n">dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">dim_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">key_dimensions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_dimensions</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Supplied key dimensions do not match data columns&quot;</span><span class="p">)</span>
+            <span class="n">dims</span> <span class="o">=</span> <span class="n">key_dimensions</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">dims</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+                <span class="n">dims</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">name</span><span class="p">)]</span> <span class="o">=</span> <span class="n">dim</span>
+
+        <span class="n">ViewableElement</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="n">dims</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span>
+
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Allows slicing and selecting along the DataFrameView dimensions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="p">():</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">,</span> <span class="n">key</span><span class="p">)))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Selection contains </span><span class="si">%d</span><span class="s"> dimensions, DataFrameView &#39;</span>
+                                <span class="s">&#39;only has </span><span class="si">%d</span><span class="s"> index dimensions.&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ndims</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
+
+
+<div class="viewcode-block" id="DataFrameView.select"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.pandas.DataFrameView.select">[docs]</a>    <span class="k">def</span> <span class="nf">select</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">selection_specs</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">select</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Allows slice and select individual values along the DataFrameView</span>
+<span class="sd">        dimensions. Supply the dimensions and values or slices as</span>
+<span class="sd">        keyword arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">select</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[(</span><span class="n">k</span><span class="o">.</span><span class="n">start</span> <span class="o">&lt;</span> <span class="n">df</span><span class="p">[</span><span class="n">dim</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">k</span><span class="o">.</span><span class="n">stop</span><span class="p">)]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">==</span> <span class="n">k</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">dimension_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dim</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">dim</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">DataFrameView</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="DataFrameView.apply"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.pandas.DataFrameView.apply">[docs]</a>    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Applies the Pandas dframe method corresponding to the supplied</span>
+<span class="sd">        name with the supplied args and kwargs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">name</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span>
+                          <span class="n">clone_override</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="DataFrameView.dframe"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.pandas.DataFrameView.dframe">[docs]</a>    <span class="k">def</span> <span class="nf">dframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns a copy of the internal dframe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="DataFrameView.aggregate"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.pandas.DataFrameView.aggregate">[docs]</a>    <span class="k">def</span> <span class="nf">aggregate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="p">[],</span> <span class="n">function</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">reductions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The aggregate function accepts either a list of Dimensions</span>
+<span class="sd">        and a function to apply to find the aggregate across</span>
+<span class="sd">        those Dimensions or a list of dimension/function pairs</span>
+<span class="sd">        to apply one by one.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dimensions</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">reductions</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Supply either a list of Dimensions or&quot;</span>
+                            <span class="s">&quot;reductions as keyword arguments&quot;</span><span class="p">)</span>
+        <span class="n">reduced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">dfnumeric</span> <span class="o">=</span> <span class="n">reduced</span><span class="o">.</span><span class="n">applymap</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isreal</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">unreducable</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dfnumeric</span><span class="p">[</span><span class="n">dfnumeric</span> <span class="o">==</span> <span class="bp">False</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dimensions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">function</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Supply a function to reduce the Dimensions with&quot;</span><span class="p">)</span>
+            <span class="n">reduced</span> <span class="o">=</span> <span class="n">reduced</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">dimensions</span><span class="o">+</span><span class="n">unreducable</span><span class="p">,</span> <span class="n">as_index</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">function</span><span class="p">)</span>
+            <span class="n">reduced_indexes</span> <span class="o">=</span> <span class="p">[</span><span class="n">reduced</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">unreducable</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="p">]</span>
+            <span class="n">reduced</span> <span class="o">=</span> <span class="n">reduced</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">reduced_indexes</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reductions</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">dim</span><span class="p">,</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">reductions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">reduced</span> <span class="o">=</span> <span class="n">reduced</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">as_index</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+                <span class="n">reduced_indexes</span> <span class="o">=</span> <span class="p">[</span><span class="n">reduced</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">unreducable</span><span class="p">]</span>
+                <span class="n">reduced</span> <span class="o">=</span> <span class="n">reduced</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">reduced_indexes</span><span class="p">)</span>
+        <span class="n">key_dimensions</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">reduced</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">reduced</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="n">key_dimensions</span><span class="p">)</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">groupby</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">,</span> <span class="n">container_type</span><span class="o">=</span><span class="n">NdMapping</span><span class="p">):</span>
+        <span class="n">invalid_dims</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">invalid_dims</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Following dimensions could not be found </span><span class="si">%s</span><span class="s">.&#39;</span>
+                            <span class="o">%</span> <span class="n">invalid_dims</span><span class="p">)</span>
+
+        <span class="n">index_dims</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dimensions</span><span class="p">]</span>
+        <span class="n">mapping</span> <span class="o">=</span> <span class="n">container_type</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="n">index_dims</span><span class="p">)</span>
+        <span class="n">view_dims</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span>
+        <span class="n">view_dims</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">view_dims</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">dimensions</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">mapping</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">data</span><span class="p">,</span>
+                                    <span class="n">key_dimensions</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+                                                    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">columns</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">mapping</span>
+
+
+    <span class="k">def</span> <span class="nf">overlay</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">NdOverlay</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">layout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="p">[],</span> <span class="n">cols</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">NdLayout</span><span class="p">)</span><span class="o">.</span><span class="n">cols</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="DataFrameView.grid"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.pandas.DataFrameView.grid">[docs]</a>    <span class="k">def</span> <span class="nf">grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dimensions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Splits the supplied the dimensions out into a GridSpace.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dimensions</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&#39;Grids hold a maximum of two dimensions.&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">dimensions</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="DataFrameView.holomap"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.pandas.DataFrameView.holomap">[docs]</a>    <span class="k">def</span> <span class="nf">holomap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Splits the supplied dimensions out into a HoloMap.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">key_dimensions</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">)</span>
+
+</div></div>
+<span class="k">def</span> <span class="nf">is_type</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">baseType</span><span class="p">):</span>
+    <span class="n">test</span> <span class="o">=</span> <span class="p">[</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">baseType</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">dtypes</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">test</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s">&quot;numeric&quot;</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">is_number</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">is_type</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">number</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="DFrame"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.pandas.DFrame">[docs]</a><span class="k">class</span> <span class="nc">DFrame</span><span class="p">(</span><span class="n">DataFrameView</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    DFrame is a DataFrameView type, which additionally provides</span>
+<span class="sd">    methods to convert Pandas DataFrames to different ViewableElement types,</span>
+<span class="sd">    currently including Tables and HeatMaps.</span>
+
+<span class="sd">    The ViewableElement conversion methods all share a common signature:</span>
+
+<span class="sd">      * The value dimension (string).</span>
+<span class="sd">      * The index dimensions (list of strings).</span>
+<span class="sd">      * An optional reduce_fn.</span>
+<span class="sd">      * Optional map_dims (list of strings).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_convert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kdims</span><span class="o">=</span><span class="p">[],</span> <span class="n">vdims</span><span class="o">=</span><span class="p">[],</span> <span class="n">mdims</span><span class="o">=</span><span class="p">[],</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">view_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dropna</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Conversion method to generate HoloViews objects from a</span>
+<span class="sd">        DFrame. Accepts key, value and HoloMap dimensions.</span>
+<span class="sd">        If no HoloMap dimensions are supplied then non-numeric</span>
+<span class="sd">        dimensions are used. If a reduce_fn such as np.mean is</span>
+<span class="sd">        supplied the data is aggregated for each group along the</span>
+<span class="sd">        key_dimensions. Also supports a dropna option.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kdims</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span> <span class="n">kdims</span> <span class="o">=</span> <span class="p">[</span><span class="n">kdims</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vdims</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span> <span class="n">vdims</span> <span class="o">=</span> <span class="p">[</span><span class="n">vdims</span><span class="p">]</span>
+
+        <span class="c"># Process dimensions</span>
+        <span class="n">sel_dims</span> <span class="o">=</span> <span class="n">kdims</span> <span class="o">+</span> <span class="n">vdims</span> <span class="o">+</span> <span class="n">mdims</span>
+        <span class="n">el_dims</span> <span class="o">=</span> <span class="n">kdims</span> <span class="o">+</span> <span class="n">vdims</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mdims</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">reduce_fn</span><span class="p">:</span>
+            <span class="n">numeric</span> <span class="o">=</span> <span class="n">is_number</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">mdims</span> <span class="o">=</span> <span class="p">[</span><span class="n">dim</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+                     <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">sel_dims</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">numeric</span><span class="o">.</span><span class="n">ix</span><span class="p">[</span><span class="n">dim</span><span class="p">][</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="c"># Find leftover dimensions to reduce</span>
+        <span class="k">if</span> <span class="n">reduce_fn</span><span class="p">:</span>
+            <span class="n">reduce_dims</span> <span class="o">=</span> <span class="n">kdims</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">reduce_dims</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">key_dims</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">kdims</span><span class="p">]</span>
+        <span class="n">val_dims</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">vdims</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">mdims</span><span class="p">:</span>
+            <span class="n">groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">mdims</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">)</span>
+            <span class="n">mdims</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">mdims</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">groups</span> <span class="o">=</span> <span class="n">NdMapping</span><span class="p">({</span><span class="mi">0</span><span class="p">:</span> <span class="bp">self</span><span class="p">})</span>
+            <span class="n">mdims</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Default&#39;</span><span class="p">]</span>
+        <span class="n">create_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">key_dimensions</span><span class="o">=</span><span class="n">key_dims</span><span class="p">,</span>
+                             <span class="n">value_dimensions</span><span class="o">=</span><span class="n">val_dims</span><span class="p">,</span>
+                             <span class="n">view_type</span><span class="o">=</span><span class="n">view_type</span><span class="p">)</span>
+        <span class="n">create_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c"># Convert each element in the HoloMap</span>
+        <span class="n">hmap</span> <span class="o">=</span> <span class="n">HoloMap</span><span class="p">(</span><span class="n">key_dimensions</span><span class="o">=</span><span class="n">mdims</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">reduce_dims</span><span class="p">:</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">reduce_dims</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="n">reduce_fn</span><span class="p">)</span>
+                <span class="n">v_indexes</span> <span class="o">=</span> <span class="p">[</span><span class="n">v</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">kdims</span>
+                             <span class="k">if</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">names</span><span class="p">]</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="s">&#39;reset_index&#39;</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">v_indexes</span><span class="p">)</span>
+
+            <span class="n">vdata</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">el_dims</span><span class="p">)</span>
+            <span class="n">vdata</span> <span class="o">=</span> <span class="n">vdata</span><span class="o">.</span><span class="n">dropna</span><span class="p">()</span> <span class="k">if</span> <span class="n">dropna</span> <span class="k">else</span> <span class="n">vdata</span>
+            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">view_type</span><span class="p">,</span> <span class="n">Chart</span><span class="p">):</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vdata</span><span class="p">[</span><span class="n">d</span><span class="p">])</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">el_dims</span><span class="p">]</span>
+                <span class="n">hmap</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_chart</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">create_kwargs</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">vdata</span><span class="p">[</span><span class="n">d</span><span class="p">])</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">el_dims</span><span class="p">]</span>
+                <span class="n">hmap</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_table</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">create_kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">hmap</span> <span class="k">if</span> <span class="n">mdims</span> <span class="o">!=</span> <span class="p">[</span><span class="s">&#39;Default&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="n">hmap</span><span class="o">.</span><span class="n">last</span>
+
+
+    <span class="k">def</span> <span class="nf">_create_chart</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">value_dimensions</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                      <span class="n">view_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">inherited</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">key_dimensions</span><span class="o">=</span><span class="n">key_dimensions</span><span class="p">,</span>
+                         <span class="n">value_dimensions</span><span class="o">=</span><span class="n">value_dimensions</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">view_type</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">inherited</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
+
+    <span class="k">def</span> <span class="nf">_create_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">value_dimensions</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                      <span class="n">view_type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">ndims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_dimensions</span><span class="p">)</span>
+        <span class="n">key_data</span><span class="p">,</span> <span class="n">value_data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">ndims</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="n">ndims</span><span class="p">:]</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">key_data</span><span class="p">)</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">value_data</span><span class="p">)</span>
+        <span class="n">inherited</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">key_dimensions</span><span class="o">=</span><span class="n">key_dimensions</span><span class="p">,</span>
+                         <span class="n">value_dimensions</span><span class="o">=</span><span class="n">value_dimensions</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">view_type</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">values</span><span class="p">),</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">inherited</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+
+
+    <span class="k">def</span> <span class="nf">curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="o">=</span><span class="p">[],</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert</span><span class="p">(</span><span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="p">,</span>
+                             <span class="n">view_type</span><span class="o">=</span><span class="n">Curve</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">points</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="o">=</span><span class="p">[],</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert</span><span class="p">(</span><span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="p">,</span>
+                             <span class="n">view_type</span><span class="o">=</span><span class="n">Points</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">scatter3d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="o">=</span><span class="p">[],</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert</span><span class="p">(</span><span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="p">,</span>
+                             <span class="n">view_type</span><span class="o">=</span><span class="n">Scatter3D</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">scatter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="o">=</span><span class="p">[],</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert</span><span class="p">(</span><span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="p">,</span>
+                             <span class="n">view_type</span><span class="o">=</span><span class="n">Scatter</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">vectorfield</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="o">=</span><span class="p">[],</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert</span><span class="p">(</span><span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="p">,</span>
+                             <span class="n">view_type</span><span class="o">=</span><span class="n">VectorField</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">bars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="o">=</span><span class="p">[],</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert</span><span class="p">(</span><span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="p">,</span>
+                             <span class="n">view_type</span><span class="o">=</span><span class="n">Bars</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="o">=</span><span class="p">[],</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert</span><span class="p">(</span><span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="p">,</span>
+                             <span class="n">view_type</span><span class="o">=</span><span class="n">Table</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">heatmap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="o">=</span><span class="p">[],</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">tables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tables</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">):</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">tables</span><span class="o">.</span><span class="n">last</span><span class="o">.</span><span class="n">get_param_values</span><span class="p">(</span><span class="n">onlychanged</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
+                          <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">tables</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">HeatMap</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="p">[</span><span class="s">&#39;Table&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">tables</span><span class="o">.</span><span class="n">get_param_values</span><span class="p">(</span><span class="n">onlychanged</span><span class="o">=</span><span class="bp">True</span><span class="p">),</span>
+                          <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">HeatMap</span><span class="p">(</span><span class="n">tables</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">surface</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="o">=</span><span class="p">[],</span> <span class="n">reduce_fn</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kdims</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span> <span class="n">kdims</span> <span class="o">=</span> <span class="p">[</span><span class="n">kdims</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vdims</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span> <span class="n">vdims</span> <span class="o">=</span> <span class="p">[</span><span class="n">vdims</span><span class="p">]</span>
+        <span class="n">heatmap</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">kdims</span><span class="p">,</span> <span class="n">vdims</span><span class="p">,</span> <span class="n">mdims</span><span class="p">,</span> <span class="n">reduce_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">key_dims</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">kdims</span><span class="p">]</span>
+        <span class="n">val_dims</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_dimension</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">vdims</span><span class="p">]</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="n">key_dims</span><span class="p">,</span> <span class="n">value_dimensions</span><span class="o">=</span><span class="n">val_dims</span><span class="p">,</span>
+                      <span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">heatmap</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">heatmap</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">Surface</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">),</span> <span class="p">[</span><span class="s">&#39;HeatMap&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Surface</span><span class="p">(</span><span class="n">heatmap</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015 IOAM: Jean-Luc R. Stevens, Philipp Rudiger, and James A. Bednar.
+    </p>
+  </div>
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-61554933-1', 'auto');
+  ga('send', 'pageview');
+
+  </script>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'2014.05.14',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

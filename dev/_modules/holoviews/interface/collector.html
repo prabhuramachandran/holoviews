@@ -1,0 +1,829 @@
+
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>holoviews.interface.collector &mdash; HoloViews</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../../../_static/bootstrap.css" type="text/css" />
+  
+    <link rel="stylesheet" href="../../../_static/codehilite.css" type="text/css" />
+  
+    <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+    <link rel="stylesheet" href="../../../_static/rtd_bootstrap.css" type="text/css" />
+  
+        <link rel="author" title="About these documents"
+              href="../../../about.html"/>
+    <link rel="top" title="HoloViews" href="../../../index.html"/>
+        <link rel="up" title="holoviews.interface" href="../interface.html"/>
+    <script type="text/javascript" src='../../../_static/jquery.js'></script>
+    <script type="text/javascript" src='../../../_static/underscore.js'></script>
+    <script type="text/javascript" src='../../../_static/doctools.js'></script>
+    <script type="text/javascript" src='../../../_static/require.js'></script>
+    <script type="text/javascript" src='../../../_static/bootstrap.js'></script>
+    <script type="text/javascript" src='../../../_static/custom.js'></script>
+    <script type="text/javascript" src='../../../_static/js/theme.js'></script>
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+
+        
+          <img src="../../../_static/holoviews_logo.png" class="logo" />
+        
+
+        <a href="../../../index.html" class="fa"> HoloViews</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../index.html">Home</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../features.html">Features</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Tutorials/index.html">Tutorials</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Examples/index.html">Examples</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../Reference_Manual/index.html">Reference Manual</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.core.html">core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.element.html">element</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.interface.html">interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.ipython.html">ipython</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.operation.html">operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../Reference_Manual/holoviews.plotting.html">plotting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../FAQ.html">FAQ</a></li>
+<li class="toctree-l1"><a class="reference external" href="http://github.com/ioam/holoviews">Github source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../about.html">About</a><ul class="simple">
+</ul>
+</li>
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../index.html">HoloViews</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="main">
+            
+  <h1>Source code for holoviews.interface.collector</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">AttributeTree, Collector and related classes offer optional functionality</span>
+<span class="sd">for holding and collecting DataView objects.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">param</span>
+
+<span class="kn">from</span> <span class="nn">..core</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">ViewableElement</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">,</span>\
+ <span class="n">GridSpace</span><span class="p">,</span> <span class="n">AttrTree</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">HoloMap</span>
+<span class="kn">from</span> <span class="nn">..core.util</span> <span class="kn">import</span> <span class="n">ProgressIndicator</span>
+<span class="kn">from</span> <span class="nn">..core.io</span> <span class="kn">import</span> <span class="n">Reference</span>
+
+<span class="n">Time</span> <span class="o">=</span> <span class="n">Dimension</span><span class="p">(</span><span class="s">&quot;Time&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">Dynamic</span><span class="o">.</span><span class="n">time_fn</span><span class="o">.</span><span class="n">time_type</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AttrDict"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.AttrDict">[docs]</a><span class="k">class</span> <span class="nc">AttrDict</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A dictionary type object that supports attribute access (e.g. for IPython</span>
+<span class="sd">    tab completion).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">AttrDict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span> <span class="o">=</span> <span class="bp">self</span>
+
+</div>
+<div class="viewcode-block" id="ViewRef"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.ViewRef">[docs]</a><span class="k">class</span> <span class="nc">ViewRef</span><span class="p">(</span><span class="n">Reference</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A ViewRef object is a Reference to a dataview object in an</span>
+<span class="sd">    Attrtree that may not exist when initialized. This makes it</span>
+<span class="sd">    possible to schedule tasks for processing data not yet present.</span>
+
+<span class="sd">    ViewRefs compose with the * operator to specify Overlays and also</span>
+<span class="sd">    support slicing of the referenced elements:</span>
+
+<span class="sd">    &gt;&gt;&gt; from ..element.raster import Image</span>
+<span class="sd">    &gt;&gt;&gt; ref = ViewRef(&#39;Example.Path1 * Example.Path2&#39;)</span>
+
+<span class="sd">    &gt;&gt;&gt; tree = Layout()</span>
+<span class="sd">    &gt;&gt;&gt; tree.Example.Path1 = Image(np.random.rand(5,5))</span>
+<span class="sd">    &gt;&gt;&gt; tree.Example.Path2 = Image(np.random.rand(5,5))</span>
+<span class="sd">    &gt;&gt;&gt; overlay = ref.resolve(tree)</span>
+<span class="sd">    &gt;&gt;&gt; len(overlay)</span>
+<span class="sd">    2</span>
+
+<span class="sd">    Note that the operands of * must be distinct ViewRef objects.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The specification is a string that follows attribute access on</span>
+<span class="sd">        an Layout. The &#39;*&#39; operator is supported, as well as slicing</span>
+<span class="sd">        syntax - an example specification is &#39;A.B.C[2:4] *D.E&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">specification</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">slices</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slices</span><span class="p">):</span> <span class="bp">self</span><span class="o">.</span><span class="n">slices</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isupper</span><span class="p">()</span> <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specification</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">path</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;All path components must be capitalized.&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">spec</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">spec</span><span class="p">)</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">specification</span><span class="p">]</span>
+        <span class="n">indexed_paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pprint_index</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">p</span><span class="p">,</span><span class="n">s</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">slices</span><span class="p">)]</span>
+        <span class="n">ref</span> <span class="o">=</span> <span class="s">&#39; * &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">indexed_paths</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slices</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">ref</span> <span class="o">=</span> <span class="s">&#39;(&#39;</span> <span class="o">+</span> <span class="n">ref</span> <span class="o">+</span> <span class="s">&#39;)&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pprint_index</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slices</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">ref</span>
+
+
+    <span class="k">def</span> <span class="nf">_parse_spec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+
+        <span class="k">class</span> <span class="nc">Index</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">val</span>
+
+        <span class="n">specs</span><span class="p">,</span> <span class="n">slices</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">specs</span><span class="p">,</span> <span class="n">slices</span>
+        <span class="n">components</span> <span class="o">=</span> <span class="p">[</span><span class="n">el</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">spec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">components</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">component</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;[&#39;</span><span class="p">)</span> <span class="o">!=</span>  <span class="n">component</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;]&#39;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Mismatched parentheses in </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">component</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">component</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;[&#39;</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">component</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;[&#39;</span><span class="p">):</span>
+                    <span class="n">pstart</span><span class="p">,</span> <span class="n">pstop</span> <span class="o">=</span> <span class="n">component</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s">&#39;[&#39;</span><span class="p">),</span> <span class="n">component</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s">&#39;]&#39;</span><span class="p">)</span>
+                    <span class="n">subcomponent</span> <span class="o">=</span> <span class="n">component</span><span class="p">[:</span><span class="n">pstart</span><span class="p">]</span> <span class="o">+</span> <span class="n">component</span><span class="p">[</span><span class="n">pstop</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">subcomponent</span> <span class="o">=</span> <span class="n">component</span>
+                <span class="n">path_spec</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">subcomponent</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">))</span>
+                <span class="n">specs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path_spec</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Invalid syntax </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">component</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">component</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s">&#39;[&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">opening</span> <span class="o">=</span> <span class="n">component</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;[&#39;</span><span class="p">)</span>
+                <span class="n">closing</span> <span class="o">=</span> <span class="n">component</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s">&#39;]&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">opening</span> <span class="o">&gt;</span> <span class="n">closing</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Invalid syntax </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">component</span><span class="p">)</span>
+                <span class="n">slices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">eval</span><span class="p">(</span><span class="s">&#39;Index()[</span><span class="si">%s</span><span class="s">]&#39;</span> <span class="o">%</span> <span class="n">component</span><span class="p">[</span><span class="n">opening</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="n">closing</span><span class="p">]))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">slices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">specs</span><span class="p">,</span> <span class="n">slices</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">resolved_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">ViewableElement</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_resolve_ref</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref</span><span class="p">,</span> <span class="n">attrtree</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the ViewableElement referred to by a single reference tuple if the</span>
+<span class="sd">        data exists, otherwise raise AttributeError.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">attrtree</span>
+        <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">ref</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+                <span class="n">obj</span><span class="o">=</span> <span class="n">obj</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">info</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ref</span><span class="p">),</span> <span class="n">label</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&quot;Could not resolve </span><span class="si">%r</span><span class="s"> at level </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">info</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">obj</span>
+
+
+<div class="viewcode-block" id="ViewRef.resolve"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.ViewRef.resolve">[docs]</a>    <span class="k">def</span> <span class="nf">resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrtree</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resolve the current ViewRef object into the appropriate ViewableElement</span>
+<span class="sd">        object (if available).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">overlaid_view</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">ref</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">specification</span><span class="p">):</span>
+            <span class="n">view</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_ref</span><span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="n">attrtree</span><span class="p">)</span>
+            <span class="c"># Access specified slices for the view</span>
+            <span class="n">slc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">slices</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">view</span> <span class="o">=</span> <span class="n">view</span> <span class="k">if</span> <span class="n">slc</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">view</span><span class="p">[</span><span class="n">slc</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">overlaid_view</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">overlaid_view</span> <span class="o">=</span> <span class="n">view</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">overlaid_view</span> <span class="o">=</span> <span class="n">overlaid_view</span> <span class="o">*</span> <span class="n">view</span>
+        <span class="k">return</span> <span class="n">overlaid_view</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">specification</span> <span class="k">else</span> <span class="n">attrtree</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Slice the referenced Chart.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slices</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">slices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">index</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">slices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Multi-level attribute access on a ViewRef() object creates a</span>
+<span class="sd">        reference with the same specified attribute access path.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">ViewRef</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__getattr__</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">label</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">isupper</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&quot;Reference path element </span><span class="si">%r</span><span class="s"> must capitalized&quot;</span> <span class="o">%</span> <span class="n">label</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">specification</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&quot;Cannot use attribute specification for overlays.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">specification</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">specification</span> <span class="o">=</span> <span class="p">[(</span><span class="n">label</span><span class="p">,)]</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">specification</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">specification</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">specification</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="p">(</span><span class="n">label</span><span class="p">,)]</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+    <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        ViewRef object can be composed in to overlays.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">id</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Please ensure that each operand are distinct ViewRef objects.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ViewRef</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spec</span> <span class="o">+</span> <span class="s">&#39; * &#39;</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">spec</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_pprint_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inds</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">inds</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span> <span class="s">&#39;&#39;</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inds</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span> <span class="n">inds</span> <span class="o">=</span> <span class="p">(</span><span class="n">inds</span><span class="p">,)</span>
+        <span class="n">index_strings</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ind</span> <span class="ow">in</span> <span class="n">inds</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ind</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+                <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">el</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="p">[</span><span class="n">ind</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">ind</span><span class="o">.</span><span class="n">stop</span><span class="p">,</span> <span class="n">ind</span><span class="o">.</span><span class="n">step</span><span class="p">]]</span>
+                <span class="n">parts</span> <span class="o">=</span> <span class="n">parts</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">==</span><span class="s">&#39;None&#39;</span> <span class="k">else</span> <span class="n">parts</span>
+                <span class="n">index_strings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="s">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">el</span> <span class="k">if</span> <span class="n">el</span><span class="o">!=</span><span class="s">&#39;None&#39;</span> <span class="k">else</span> <span class="s">&#39;&#39;</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">index_strings</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">ind</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&#39;[&#39;</span> <span class="o">+</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">index_strings</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;]&#39;</span>
+
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&#39;ViewRef(</span><span class="si">%r</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">specification</span><span class="p">)</span>
+
+
+
+</div>
+<div class="viewcode-block" id="Collect"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Collect">[docs]</a><span class="k">class</span> <span class="nc">Collect</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An Collect takes an object and corresponding hook and when</span>
+<span class="sd">    called with an Layout, updates it with the output of the hook</span>
+<span class="sd">    (given the object). The output of the hook should be a ViewableElement or an</span>
+<span class="sd">    Layout.</span>
+
+<span class="sd">    The input object may be a picklable object (e.g. a</span>
+<span class="sd">    ParameterizedFunction) or a Reference to the target object.  The</span>
+<span class="sd">    supplied *args and **kwargs are passed to the hook together with</span>
+<span class="sd">    the resolved object.</span>
+
+<span class="sd">    When mode is &#39;merge&#39; the return value of the hook needs to be an</span>
+<span class="sd">    Layout to be merged with the attrtree when called.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Collect.select_hook"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Collect.select_hook">[docs]</a>    <span class="k">def</span> <span class="nf">select_hook</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">hooks</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Select the most appropriate hook by the most specific type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">obj_class</span> <span class="o">=</span> <span class="n">obj</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="k">else</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">obj_class</span> <span class="o">==</span> <span class="n">param</span><span class="o">.</span><span class="n">parameterized</span><span class="o">.</span><span class="n">ParameterizedMetaclass</span><span class="p">:</span>
+            <span class="n">obj_class</span> <span class="o">=</span> <span class="n">obj</span>
+
+        <span class="k">for</span> <span class="n">tp</span> <span class="ow">in</span> <span class="n">hooks</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">obj_class</span><span class="p">,</span> <span class="n">tp</span><span class="p">):</span>
+                <span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tp</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;No hook found for object of type </span><span class="si">%s</span><span class="s">&quot;</span>
+                            <span class="o">%</span> <span class="n">obj</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">obj_cls</span> <span class="ow">in</span> <span class="n">obj_class</span><span class="o">.</span><span class="n">mro</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">obj_cls</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">hooks</span><span class="p">[</span><span class="n">obj_cls</span><span class="p">]</span>
+
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Match not in object classes mro()&quot;</span><span class="p">)</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s">&#39;times&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">times</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;times&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">times</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="o">=</span><span class="n">kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">resolveable</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;resolve&#39;</span><span class="p">):</span>
+            <span class="n">resolveable</span> <span class="o">=</span> <span class="n">obj</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">resolved_type</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">hook</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="n">resolver</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">select_hook</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Collector</span><span class="o">.</span><span class="n">type_hooks</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resolveable</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">resolveable</span> <span class="o">=</span> <span class="n">obj</span> <span class="k">if</span> <span class="n">resolver</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">resolver</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">resolveable</span>
+
+
+
+    <span class="k">def</span> <span class="nf">_get_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrtree</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">times</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Method returning a ViewableElement or Layout to be merged into the</span>
+<span class="sd">        attrtree (via the specified hook) in the call.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">resolvable</span> <span class="o">=</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;resolve&#39;</span><span class="p">)</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="k">if</span> <span class="n">resolvable</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">hook</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrtree</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">times</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update and return the supplied Layout with the output of</span>
+<span class="sd">        the hook at the given time out of the given list of times.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Aggregation path not set.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">times</span> <span class="ow">and</span> <span class="n">time</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">times</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">attrtree</span>
+
+        <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_result</span><span class="p">(</span><span class="n">attrtree</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">times</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>  <span class="k">return</span> <span class="n">attrtree</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;merge&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">Layout</span><span class="p">):</span>
+                <span class="n">attrtree</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">attrtree</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Return value is not a Layout and mode is &#39;merge&#39;.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">attrtree</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="p">(</span><span class="n">UniformNdMapping</span><span class="p">,</span> <span class="n">Layout</span><span class="p">)):</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">HoloMap</span><span class="p">([((</span><span class="n">time</span><span class="p">,),</span> <span class="n">val</span><span class="p">)],</span> <span class="n">key_dimensions</span><span class="o">=</span><span class="p">[</span><span class="n">Time</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">current_val</span> <span class="o">=</span> <span class="n">attrtree</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">]</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_merge_views</span><span class="p">(</span><span class="n">current_val</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>
+
+        <span class="n">attrtree</span><span class="o">.</span><span class="n">set_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>  <span class="n">val</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">attrtree</span>
+
+
+    <span class="k">def</span> <span class="nf">_merge_views</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_val</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Helper for merging views together. For instance, this method</span>
+<span class="sd">        will add a Image to a HoloMap or merge two ViewMaps.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">ViewableElement</span><span class="p">):</span>
+            <span class="n">current_val</span><span class="p">[</span><span class="n">time</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">current_val</span><span class="p">,</span> <span class="n">UniformNdMapping</span><span class="p">)</span> <span class="ow">and</span> <span class="s">&#39;Time&#39;</span> <span class="ow">not</span> <span class="ow">in</span>
+              <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">current_val</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Time dimension is missing.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">current_val</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">current_val</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">el</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">=</span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">())</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="o">.</span><span class="n">name</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;name&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&#39;Collect(</span><span class="si">%s%s%s</span><span class="s">)&#39;</span> <span class="o">%</span>  <span class="p">(</span><span class="n">name</span><span class="p">,</span>
+                                        <span class="p">(</span><span class="s">&#39;, </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">,</span>
+                                        <span class="p">(</span><span class="s">&#39;, </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">kwargs</span><span class="p">)</span> <span class="k">if</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;name&#39;</span><span class="p">):</span>
+            <span class="n">obj_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">obj_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">obj</span>
+
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">el</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">]</span><span class="o">+</span><span class="p">[</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">=</span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="n">arguments</span> <span class="o">=</span> <span class="s">&#39;&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span> <span class="k">else</span> <span class="s">&#39; [</span><span class="si">%s</span><span class="s">]&#39;</span> <span class="o">%</span> <span class="s">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">obj_name</span><span class="p">,</span> <span class="n">arguments</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Analyze"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Analyze">[docs]</a><span class="k">class</span> <span class="nc">Analyze</span><span class="p">(</span><span class="n">Collect</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An Analyze is a type of Collect that updates an Attrtree with</span>
+<span class="sd">    the results of a ElementOperation. Analyze takes a ViewRef object as</span>
+<span class="sd">    input which is resolved to generate input for the ElementOperation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">analysis</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reference</span> <span class="o">=</span> <span class="n">reference</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span> <span class="o">=</span> <span class="n">analysis</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s">&#39;times&#39;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">times</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;times&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">times</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mapwise</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;mapwise&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;mode&#39;</span><span class="p">,</span> <span class="s">&#39;set&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="bp">None</span>
+
+
+    <span class="k">def</span> <span class="nf">_get_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrtree</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">times</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">mapwise</span> <span class="ow">and</span> <span class="n">time</span> <span class="o">!=</span> <span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">view</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">resolve</span><span class="p">(</span><span class="n">attrtree</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">info</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+                <span class="n">param</span><span class="o">.</span><span class="n">main</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;Reference </span><span class="si">%r</span><span class="s"> could not be resolved at time &#39;</span>
+                                   <span class="s">&#39;</span><span class="si">%s</span><span class="s">, skipping analysis </span><span class="si">%r</span><span class="s">.&#39;</span> <span class="o">%</span> <span class="n">info</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">None</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">el</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">=</span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">())</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+        <span class="k">return</span> <span class="s">&quot;Analyze(</span><span class="si">%r</span><span class="s">, </span><span class="si">%s%s%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                         <span class="p">(</span><span class="s">&#39;, </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">args</span><span class="p">)</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">,</span>
+                                         <span class="p">(</span><span class="s">&#39;, </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">kwargs</span><span class="p">)</span> <span class="k">if</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">analysis</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference</span><span class="p">)</span>
+
+
+</div>
+<div class="viewcode-block" id="Collector"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Collector">[docs]</a><span class="k">class</span> <span class="nc">Collector</span><span class="p">(</span><span class="n">AttrTree</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A Collector specifies a template for how to populate a Layout</span>
+<span class="sd">    with data over time. Two methods are used to schedule data</span>
+<span class="sd">    collection: &#39;collect&#39; and &#39;analyze&#39;.</span>
+
+<span class="sd">    The collect method takes an object (or reference) and collects</span>
+<span class="sd">    views from it (as configured by setting an appropriate hook set</span>
+<span class="sd">    with the for_type classmethod).</span>
+
+<span class="sd">    The analysis method takes a reference to data on the attrtree (a</span>
+<span class="sd">    ViewRef) and passes the resolved output to the given analysisfn</span>
+<span class="sd">    ElementOperation.</span>
+
+<span class="sd">    &gt;&gt;&gt; Collector.for_type(str, lambda x: ViewableElement(x, name=x))</span>
+<span class="sd">    &gt;&gt;&gt; Collector.interval_hook = param.Dynamic.time_fn.advance</span>
+
+<span class="sd">    &gt;&gt;&gt; c = Collector()</span>
+<span class="sd">    &gt;&gt;&gt; c.Target.Path = c.collect(&#39;example string&#39;)</span>
+
+<span class="sd">    # Start collection...</span>
+<span class="sd">    &gt;&gt;&gt; data = c(times=[1,2,3,4,5])</span>
+<span class="sd">    &gt;&gt;&gt; isinstance(data, Layout)</span>
+<span class="sd">    True</span>
+<span class="sd">    &gt;&gt;&gt; isinstance(data.Target.Path, UniformNdMapping)</span>
+<span class="sd">    True</span>
+
+<span class="sd">    &gt;&gt;&gt; times = data.Target.Path.keys()</span>
+<span class="sd">    &gt;&gt;&gt; print(&quot;Collected the data for %d time values&quot; % len(times))</span>
+<span class="sd">    Collected the data for 5 time values</span>
+
+<span class="sd">    &gt;&gt;&gt; results = data.Target.Path.last</span>
+<span class="sd">    &gt;&gt;&gt; results.name</span>
+<span class="sd">    &#39;example string&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c"># A callable that advances by the specified time before the next</span>
+    <span class="c"># batch of collection tasks is executed. If set to a subclass of</span>
+    <span class="c"># RunProgress, the class will be instantiated and precent_range</span>
+    <span class="c"># updated to allow a progress bar to be displayed</span>
+    <span class="n">interval_hook</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dynamic</span><span class="o">.</span><span class="n">time_fn</span><span class="o">.</span><span class="n">advance</span>
+
+
+    <span class="c"># A callable that returns the time where the time may be the</span>
+    <span class="c"># simulation time or wall-clock time. The time values are</span>
+    <span class="c"># recorded by the UniformNdMapping keys</span>
+    <span class="n">time_fn</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dynamic</span><span class="o">.</span><span class="n">time_fn</span>
+
+    <span class="n">type_hooks</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Collector.for_type"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Collector.for_type">[docs]</a>    <span class="k">def</span> <span class="nf">for_type</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">tp</span><span class="p">,</span> <span class="n">hookfn</span><span class="p">,</span> <span class="n">referencer</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;set&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        For an object of a given type, apply the hookfn and use the</span>
+<span class="sd">        specified mode to aggregate the data.</span>
+
+<span class="sd">        To allow pickling (or any other defered access) of the target</span>
+<span class="sd">        object, a referencer (a Reference subclass) may be specified</span>
+<span class="sd">        to wrap the object as required.</span>
+
+<span class="sd">        If mode is &#39;merge&#39;, merge the Layout output by the hook,</span>
+<span class="sd">        otherwise if &#39;set&#39;, add the output to the path specified by</span>
+<span class="sd">        the ViewRef.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">type_hooks</span><span class="p">[</span><span class="n">tp</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">hookfn</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">referencer</span><span class="p">)</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">specs</span><span class="o">=</span><span class="p">[],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Collector</span><span class="p">,</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="n">path_spec</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span> <span class="ow">in</span> <span class="n">specs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">path_spec</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;data&#39;</span><span class="p">][</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">]</span> <span class="o">=</span> <span class="n">obj</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="n">path_spec</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_tasks</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">fixed_error</span> <span class="o">=</span> <span class="s">&#39;Cannot set </span><span class="si">%r</span><span class="s"> as Collector specification disabled after first call.&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_fixed_error&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fixed_error</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;progress_label&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Completion&#39;</span>
+
+
+    <span class="nd">@property</span>
+<div class="viewcode-block" id="Collector.ref"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Collector.ref">[docs]</a>    <span class="k">def</span> <span class="nf">ref</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A convenient property to easily generate ViewRef object (via</span>
+<span class="sd">        attribute access). Used to define ViewableElement references for analysis</span>
+<span class="sd">        or for setting a path for an Collect on the Collector.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">ViewRef</span><span class="p">()</span>
+
+</div>
+<div class="viewcode-block" id="Collector.collect"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Collector.collect">[docs]</a>    <span class="k">def</span> <span class="nf">collect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Aggregate views from the object at each step by passing the</span>
+<span class="sd">        arguments to the corresponding hook. The object may represent</span>
+<span class="sd">        itself, or it may be a Reference. If a referencer class was</span>
+<span class="sd">        specified when the hook was defined, the object will</span>
+<span class="sd">        automatically be wrapped into a reference.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="n">Collect</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;merge&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">]</span> <span class="o">=</span> <span class="n">task</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="n">task</span>
+
+</div>
+<div class="viewcode-block" id="Collector.analyze"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Collector.analyze">[docs]</a>    <span class="k">def</span> <span class="nf">analyze</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">analysisfn</span><span class="p">,</span>  <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given a ViewRef and the ElementOperation analysisfn, process the</span>
+<span class="sd">        data resolved by the reference with analysisfn at each step.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">task</span> <span class="o">=</span> <span class="n">Analyze</span><span class="p">(</span><span class="n">reference</span><span class="p">,</span> <span class="n">analysisfn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;merge&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="p">]</span> <span class="o">=</span> <span class="n">task</span>
+        <span class="k">return</span> <span class="n">task</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrtree</span><span class="o">=</span><span class="n">Layout</span><span class="p">(),</span> <span class="n">times</span><span class="o">=</span><span class="p">[],</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+
+        <span class="n">current_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_fn</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">times</span> <span class="o">!=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">times</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Please supply the list of times in ascending order&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">current_time</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;The first time value is prior to the current time.&quot;</span><span class="p">)</span>
+
+        <span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">current_time</span><span class="p">]</span> <span class="o">+</span> <span class="n">times</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">times</span><span class="p">))</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">completion</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">100</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">completion</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="p">(</span><span class="n">times</span> <span class="o">-</span> <span class="n">times</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">/</span> <span class="p">(</span><span class="n">times</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">times</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+
+        <span class="n">update_progress</span> <span class="o">=</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval_hook</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span>
+                           <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval_hook</span><span class="p">,</span> <span class="n">ProgressIndicator</span><span class="p">))</span>
+
+        <span class="c"># If an instance of RunProgress, instantiate the progress bar</span>
+        <span class="n">interval_hook</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interval_hook</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">progress_label</span><span class="p">)</span>
+                         <span class="k">if</span> <span class="n">update_progress</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_hook</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_schedule_tasks</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">strict</span><span class="p">)</span>
+        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="p">,</span> <span class="n">attrtree</span><span class="o">.</span><span class="n">fixed</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="bp">False</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">t</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">times</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">update_progress</span><span class="p">:</span>
+                <span class="n">interval_hook</span><span class="o">.</span><span class="n">percent_range</span> <span class="o">=</span> <span class="p">(</span><span class="n">completion</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">completion</span><span class="p">[</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="n">interval_hook</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+
+            <span class="c"># An empty attrtree buffer stops analysis repeatedly</span>
+            <span class="c"># computing results over the entire accumulated map</span>
+            <span class="n">attrtree_buffer</span> <span class="o">=</span> <span class="n">Layout</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_tasks</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">Analyze</span><span class="p">)</span> <span class="ow">and</span> <span class="n">task</span><span class="o">.</span><span class="n">mapwise</span><span class="p">:</span>
+                    <span class="n">task</span><span class="p">(</span><span class="n">attrtree</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_fn</span><span class="p">(),</span> <span class="n">times</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">task</span><span class="p">(</span><span class="n">attrtree_buffer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_fn</span><span class="p">(),</span> <span class="n">times</span><span class="p">)</span>
+                    <span class="n">attrtree</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">attrtree_buffer</span><span class="p">)</span>
+
+        <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fixed</span><span class="p">,</span> <span class="n">attrtree</span><span class="o">.</span><span class="n">fixed</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">attrtree</span>
+
+
+<div class="viewcode-block" id="Collector.verify_times"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.interface.html#holoviews.interface.collector.Collector.verify_times">[docs]</a>    <span class="k">def</span> <span class="nf">verify_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given a set of times this method checks that all</span>
+<span class="sd">        scheduled measurements will actually be carried out.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">times</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_verify_task_times</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">strict</span><span class="p">)</span>
+
+</div>
+    <span class="k">def</span> <span class="nf">_verify_task_times</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">task</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Checks that a given task that is scheduled to be run at</span>
+<span class="sd">        certain times will actually be executed. The strict flag</span>
+<span class="sd">        determines whether to simply warn or raise an Exception.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">task</span><span class="o">.</span><span class="n">times</span><span class="p">:</span>
+            <span class="n">unsatisfied</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">times</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">times</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">unsatisfied</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Task </span><span class="si">%r</span><span class="s"> has been requested for times </span><span class="si">%s</span><span class="s">, &quot;</span> \
+                      <span class="s">&quot;not scheduled for collection.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">unsatisfied</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">unsatisfied</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">strict</span><span class="p">:</span> <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>      <span class="n">param</span><span class="o">.</span><span class="n">main</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_schedule_tasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inspect the data to find all the Collects that have</span>
+<span class="sd">        been specified and add them to the scheduled tasks list.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_tasks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">task</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+
+            <span class="k">if</span> <span class="n">task</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Incorrect task definition for </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">Collect</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_tasks</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Only Collects or Analyze objects allowed, not </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">task</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="n">task</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s">&#39;merge&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_tasks</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Setting path for Task that is in &#39;merge&#39; mode.&quot;</span><span class="p">)</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_verify_task_times</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">strict</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_tasks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">spec_strs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">))</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="s">&#39;None&#39;</span>
+            <span class="n">spec_strs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">(</span><span class="si">%s</span><span class="s">, </span><span class="si">%r</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s">&#39;Collector([</span><span class="si">%s</span><span class="s">])&#39;</span> <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">spec_strs</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">indent</span> <span class="o">=</span> <span class="s">&#39;  &#39;</span>
+        <span class="n">padding</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)))</span>
+        <span class="n">num_fmt</span> <span class="o">=</span> <span class="s">&#39;</span><span class="si">%%</span><span class="s">0</span><span class="si">%d</span><span class="s">d.&#39;</span> <span class="o">%</span> <span class="n">padding</span>
+
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;</span><span class="si">%d</span><span class="s"> tasks scheduled:</span><span class="se">\n</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)]</span>
+        <span class="n">dotted_line</span> <span class="o">=</span> <span class="n">indent</span> <span class="o">+</span> <span class="n">num_fmt</span> <span class="o">+</span><span class="s">&quot;  </span><span class="si">%s</span><span class="s">&quot;</span>
+        <span class="n">merge_line</span> <span class="o">=</span> <span class="n">indent</span> <span class="o">+</span> <span class="n">num_fmt</span> <span class="o">+</span> <span class="s">&quot;  [...] &quot;</span>
+        <span class="n">value_line</span> <span class="o">=</span> <span class="n">indent</span><span class="o">*</span><span class="mi">3</span> <span class="o">+</span> <span class="s">&#39; &#39;</span><span class="o">*</span><span class="n">padding</span> <span class="o">+</span> <span class="s">&quot; </span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dotted_line</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">path</span><span class="p">)))</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value_line</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">merge_line</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value_line</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+        <span class="k">return</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+</pre></div></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2015 IOAM: Jean-Luc R. Stevens, Philipp Rudiger, and James A. Bednar.
+    </p>
+  </div>
+
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-61554933-1', 'auto');
+  ga('send', 'pageview');
+
+  </script>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'2014.05.14',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
