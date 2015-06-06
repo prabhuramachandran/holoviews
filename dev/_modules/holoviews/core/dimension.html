@@ -146,6 +146,26 @@
 <span class="kn">from</span> <span class="nn">.pprint</span> <span class="kn">import</span> <span class="n">PrettyPrinter</span>
 
 
+<span class="c"># Alias parameter support for pickle loading</span>
+
+<span class="n">ALIASES</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;key_dimensions&#39;</span><span class="p">:</span> <span class="s">&#39;kdims&#39;</span><span class="p">,</span> <span class="s">&#39;value_dimensions&#39;</span><span class="p">:</span> <span class="s">&#39;vdims&#39;</span><span class="p">,</span>
+           <span class="s">&#39;constant_dimensions&#39;</span><span class="p">:</span> <span class="s">&#39;cdims&#39;</span><span class="p">}</span>
+
+<div class="viewcode-block" id="param_aliases"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.dimension.param_aliases">[docs]</a><span class="k">def</span> <span class="nf">param_aliases</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Called from __setstate__ in LabelledData in order to load</span>
+<span class="sd">    old pickles with outdated parameter names.</span>
+
+<span class="sd">    Warning: We want to keep pickle hacking to a minimum!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span> <span class="ow">in</span> <span class="n">ALIASES</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">old_param</span> <span class="o">=</span> <span class="s">&#39;_</span><span class="si">%s</span><span class="s">_param_value&#39;</span> <span class="o">%</span> <span class="n">old</span>
+        <span class="n">new_param</span> <span class="o">=</span> <span class="s">&#39;_</span><span class="si">%s</span><span class="s">_param_value&#39;</span> <span class="o">%</span> <span class="n">new</span>
+        <span class="k">if</span> <span class="n">old_param</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">new_param</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">old_param</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">d</span>
+
+</div>
 <div class="viewcode-block" id="Dimension"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.dimension.Dimension">[docs]</a><span class="k">class</span> <span class="nc">Dimension</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">Parameterized</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Dimension objects are used to specify some important general</span>
@@ -389,17 +409,18 @@
         <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span> <span class="k">return</span> <span class="n">spec</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span> <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">)</span>
         <span class="n">specification</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">)</span>
-        <span class="n">identifier_specification</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">sanitize_identifier</span><span class="p">(</span><span class="n">ident</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-                                         <span class="k">for</span> <span class="n">ident</span> <span class="ow">in</span> <span class="n">specification</span><span class="p">)</span>
         <span class="n">split_spec</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">))</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="n">spec</span>
         <span class="n">split_spec</span><span class="p">,</span> <span class="n">nocompare</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="p">((</span><span class="bp">None</span><span class="p">,</span> <span class="bp">True</span><span class="p">)</span> <span class="k">if</span> <span class="n">s</span> <span class="o">==</span> <span class="s">&#39;*&#39;</span> <span class="ow">or</span> <span class="n">s</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
                                     <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">split_spec</span><span class="p">))</span>
         <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">nocompare</span><span class="p">):</span> <span class="k">return</span> <span class="bp">True</span>
         <span class="n">match_fn</span> <span class="o">=</span> <span class="n">itemgetter</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">nc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">nocompare</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">nc</span><span class="p">))</span>
         <span class="n">self_spec</span> <span class="o">=</span> <span class="n">match_fn</span><span class="p">(</span><span class="n">split_spec</span><span class="p">)</span>
+        <span class="n">unescaped_match</span> <span class="o">=</span> <span class="n">match_fn</span><span class="p">(</span><span class="n">specification</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">split_spec</span><span class="p">)])</span> <span class="o">==</span> <span class="n">self_spec</span>
+        <span class="k">if</span> <span class="n">unescaped_match</span><span class="p">:</span> <span class="k">return</span> <span class="bp">True</span>
+        <span class="n">identifier_specification</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">sanitize_identifier</span><span class="p">(</span><span class="n">ident</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+                                         <span class="k">for</span> <span class="n">ident</span> <span class="ow">in</span> <span class="n">specification</span><span class="p">)</span>
         <span class="n">identifier_match</span> <span class="o">=</span> <span class="n">match_fn</span><span class="p">(</span><span class="n">identifier_specification</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">split_spec</span><span class="p">)])</span> <span class="o">==</span> <span class="n">self_spec</span>
-        <span class="n">unescaped_match</span> <span class="o">=</span> <span class="n">specification</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">split_spec</span><span class="p">)]</span> <span class="o">==</span> <span class="n">self_spec</span>
-        <span class="k">return</span> <span class="n">identifier_match</span> <span class="ow">or</span> <span class="n">unescaped_match</span>
+        <span class="k">return</span> <span class="n">identifier_match</span>
 
 </div>
 <div class="viewcode-block" id="LabelledData.traverse"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.dimension.LabelledData.traverse">[docs]</a>    <span class="k">def</span> <span class="nf">traverse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="n">specs</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">full_breadth</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
@@ -470,6 +491,7 @@
 <span class="sd">        When unpickled, restore the saved style and plotting options</span>
 <span class="sd">        to ViewableElement.options.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">param_aliases</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">load_options</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">load_counter_offset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span>
             <span class="k">if</span> <span class="n">load_options</span><span class="p">:</span>
@@ -494,7 +516,7 @@
 <span class="sd">    class to be associated with dimensions. The contents associated</span>
 <span class="sd">    with dimensions may be partitioned into one of three types</span>
 
-<span class="sd">    * key_dimensions: These are the dimensions that can be indexed via</span>
+<span class="sd">    * key dimensions: These are the dimensions that can be indexed via</span>
 <span class="sd">                      the __getitem__ method. Dimension objects</span>
 <span class="sd">                      supporting key dimensions must support indexing</span>
 <span class="sd">                      over these dimensions and may also support</span>
@@ -507,7 +529,9 @@
 <span class="sd">                      object &#39;obj&#39;, then obj[80,175] indexes a weight</span>
 <span class="sd">                      of 80 and height of 175.</span>
 
-<span class="sd">    * value_dimensions: These dimensions correspond to any data held</span>
+<span class="sd">                      Accessed using either kdims or key_dimensions.</span>
+
+<span class="sd">    * value dimensions: These dimensions correspond to any data held</span>
 <span class="sd">                        on the Dimensioned object not in the key</span>
 <span class="sd">                        dimensions. Indexing by value dimension is</span>
 <span class="sd">                        supported by dimension name (when there are</span>
@@ -515,14 +539,19 @@
 <span class="sd">                        slicing semantics is supported and all the</span>
 <span class="sd">                        data associated with that dimension will be</span>
 <span class="sd">                        returned at once. Note that it is not possible</span>
-<span class="sd">                        to mix value_dimensions and deep_dimensions.</span>
+<span class="sd">                        to mix value dimensions and deep dimensions.</span>
 
-<span class="sd">    * deep_dimensions: These are dynamically computed dimensions that</span>
+<span class="sd">                        Accessed using either vdims or value_dimensions.</span>
+
+
+<span class="sd">    * deep dimensions: These are dynamically computed dimensions that</span>
 <span class="sd">                       belong to other Dimensioned objects that are</span>
 <span class="sd">                       nested in the data. Objects that support this</span>
 <span class="sd">                       should enable the _deep_indexable flag. Note</span>
-<span class="sd">                       that it is not possible to mix value_dimensions</span>
-<span class="sd">                       and deep_dimensions.</span>
+<span class="sd">                       that it is not possible to mix value dimensions</span>
+<span class="sd">                       and deep dimensions.</span>
+
+<span class="sd">                       Accessed using either ddims or deep_dimensions.</span>
 
 <span class="sd">    Dimensioned class support generalized methods for finding the</span>
 <span class="sd">    range and type of values along a particular Dimension. The range</span>
@@ -534,48 +563,72 @@
 <span class="sd">    by the value dimensions and ending with the deep dimensions.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">constant_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">OrderedDict</span><span class="p">(),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">       A dictionary of Dimension:value pairs providing additional</span>
-<span class="s">       dimension information about the object.&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">cdims</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Dict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">OrderedDict</span><span class="p">(),</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The constant dimensions defined as a dictionary of Dimension:value</span>
+<span class="s">       pairs providing additional dimension information about the object.</span>
 
-    <span class="n">key_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">       The list of dimensions that may be used in indexing (and</span>
-<span class="s">       potential slicing) semantics. The order of the dimensions</span>
-<span class="s">       listed here determines the semantics of each component of a</span>
-<span class="s">       multi-dimensional indexing operation.&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">       Aliased with constant_dimensions.&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="n">value_dimensions</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
-<span class="s">       The list of dimensions used to describe the components of the</span>
-<span class="s">       data. If multiple value dimensions are supplied, a particular</span>
-<span class="s">       value dimension may be indexed by name after the key</span>
-<span class="s">       dimensions.&quot;&quot;&quot;</span><span class="p">)</span>
+    <span class="n">kdims</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The key dimensions defined as list of dimensions that may be</span>
+<span class="s">       used in indexing (and potential slicing) semantics. The order</span>
+<span class="s">       of the dimensions listed here determines the semantics of each</span>
+<span class="s">       component of a multi-dimensional indexing operation.</span>
+
+<span class="s">       Aliased with key_dimensions.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">vdims</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">List</span><span class="p">(</span><span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">),</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">       The value dimensions defined as the list of dimensions used to</span>
+<span class="s">       describe the components of the data. If multiple value</span>
+<span class="s">       dimensions are supplied, a particular value dimension may be</span>
+<span class="s">       indexed by name after the key dimensions.</span>
+
+<span class="s">       Aliased with value_dimensions.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">group</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;Dimensioned&#39;</span><span class="p">,</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">       A string describing the data wrapped by the object.&quot;&quot;&quot;</span><span class="p">)</span>
 
-
     <span class="n">__abstract</span> <span class="o">=</span> <span class="bp">True</span>
     <span class="n">_sorted</span> <span class="o">=</span> <span class="bp">False</span>
-    <span class="n">_dim_groups</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;key_dimensions&#39;</span><span class="p">,</span>
-                   <span class="s">&#39;value_dimensions&#39;</span><span class="p">,</span>
-                   <span class="s">&#39;deep_dimensions&#39;</span><span class="p">]</span>
+    <span class="n">_dim_groups</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;kdims&#39;</span><span class="p">,</span> <span class="s">&#39;vdims&#39;</span><span class="p">,</span> <span class="s">&#39;cdims&#39;</span><span class="p">,</span> <span class="s">&#39;ddims&#39;</span><span class="p">]</span>
+    <span class="n">_dim_aliases</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">key_dimensions</span><span class="o">=</span><span class="s">&#39;kdims&#39;</span><span class="p">,</span> <span class="n">value_dimensions</span><span class="o">=</span><span class="s">&#39;vdims&#39;</span><span class="p">,</span>
+                        <span class="n">constant_dimensions</span><span class="o">=</span><span class="s">&#39;cdims&#39;</span><span class="p">,</span> <span class="n">deep_dimensions</span><span class="o">=</span><span class="s">&#39;ddims&#39;</span><span class="p">)</span>
+
+
+    <span class="c"># Long-name aliases</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">key_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kdims</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">value_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">vdims</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">constant_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cdims</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">deep_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ddims</span>
 
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim_groups</span><span class="o">+</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dim_aliases</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">if</span> <span class="n">group</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;deep_dimensions&#39;</span><span class="p">,</span> <span class="s">&#39;ddims&#39;</span><span class="p">]:</span> <span class="k">continue</span>
             <span class="k">if</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
-                <span class="k">if</span> <span class="s">&#39;constant&#39;</span> <span class="ow">in</span> <span class="n">group</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">group</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim_aliases</span><span class="p">:</span>
+                    <span class="n">params</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_dim_aliases</span><span class="p">[</span><span class="n">group</span><span class="p">]]</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+                    <span class="n">group</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim_aliases</span><span class="p">[</span><span class="n">group</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">group</span> <span class="o">==</span> <span class="s">&#39;cdims&#39;</span><span class="p">:</span>
                     <span class="n">dimensions</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">)</span> <span class="k">else</span> <span class="n">Dimension</span><span class="p">(</span><span class="n">d</span><span class="p">):</span> <span class="n">val</span>
-                                  <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">group</span><span class="p">)}</span>
+                                  <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">group</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">dimensions</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">Dimension</span><span class="p">)</span> <span class="k">else</span> <span class="n">Dimension</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
                                   <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">group</span><span class="p">)]</span>
                 <span class="n">params</span><span class="p">[</span><span class="n">group</span><span class="p">]</span> <span class="o">=</span> <span class="n">dimensions</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Dimensioned</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">)</span>
-        <span class="n">constant_dimensions</span> <span class="o">=</span> <span class="p">[(</span><span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constant_dimensions</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_constants</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="n">constant_dimensions</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_value_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ndims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kdims</span><span class="p">)</span>
+        <span class="n">cdims</span> <span class="o">=</span> <span class="p">[(</span><span class="n">d</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cdims</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_constants</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span><span class="n">cdims</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kdims</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_value_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vdims</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_settings</span> <span class="o">=</span> <span class="bp">None</span>
 
 
@@ -591,8 +644,9 @@
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Supplied dimensions </span><span class="si">%s</span><span class="s"> not found.&quot;</span> <span class="o">%</span> <span class="n">dim</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">dimensions</span>
 
+
     <span class="nd">@property</span>
-<div class="viewcode-block" id="Dimensioned.deep_dimensions"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.dimension.Dimensioned.deep_dimensions">[docs]</a>    <span class="k">def</span> <span class="nf">deep_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="Dimensioned.ddims"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.dimension.Dimensioned.ddims">[docs]</a>    <span class="k">def</span> <span class="nf">ddims</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="s">&quot;The list of deep dimensions&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deep_indexable</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dimensions</span><span class="p">()</span>
@@ -607,16 +661,18 @@
 <span class="sd">        by their type, i.e. &#39;key&#39; or &#39;value&#39; dimensions.</span>
 <span class="sd">        By default &#39;all&#39; dimensions are returned.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">lambdas</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;key&#39;</span><span class="p">:</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">key_dimensions</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;full_breadth&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">}),</span>
-                   <span class="s">&#39;value&#39;</span><span class="p">:</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">,</span> <span class="p">{}),</span>
-                   <span class="s">&#39;constant&#39;</span><span class="p">:</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">constant_dimensions</span><span class="p">,</span> <span class="p">{})}</span>
+        <span class="n">lambdas</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;k&#39;</span><span class="p">:</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">kdims</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;full_breadth&#39;</span><span class="p">:</span> <span class="bp">False</span><span class="p">}),</span>
+                   <span class="s">&#39;v&#39;</span><span class="p">:</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">vdims</span><span class="p">,</span> <span class="p">{}),</span>
+                   <span class="s">&#39;c&#39;</span><span class="p">:</span> <span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">cdims</span><span class="p">,</span> <span class="p">{})}</span>
+        <span class="n">aliases</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;key&#39;</span><span class="p">:</span> <span class="s">&#39;k&#39;</span><span class="p">,</span> <span class="s">&#39;value&#39;</span><span class="p">:</span> <span class="s">&#39;v&#39;</span><span class="p">,</span> <span class="s">&#39;constant&#39;</span><span class="p">:</span> <span class="s">&#39;c&#39;</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">selection</span> <span class="o">==</span> <span class="s">&#39;all&#39;</span><span class="p">:</span>
             <span class="n">dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">dim</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim_groups</span>
                     <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">)]</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">selection</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
             <span class="n">dims</span> <span class="o">=</span>  <span class="p">[</span><span class="n">dim</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">selection</span>
-                     <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">_dimensions&#39;</span> <span class="o">%</span> <span class="n">group</span><span class="p">)]</span>
-        <span class="k">elif</span> <span class="n">selection</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;key&#39;</span><span class="p">,</span> <span class="s">&#39;value&#39;</span><span class="p">,</span> <span class="s">&#39;constant&#39;</span><span class="p">]:</span>
+                     <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s">&#39;</span><span class="si">%s</span><span class="s">dims&#39;</span> <span class="o">%</span> <span class="n">aliases</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">group</span><span class="p">))]</span>
+        <span class="k">elif</span> <span class="n">aliases</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">selection</span><span class="p">)</span> <span class="ow">in</span> <span class="n">lambdas</span><span class="p">:</span>
+            <span class="n">selection</span> <span class="o">=</span> <span class="n">aliases</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">selection</span><span class="p">,</span> <span class="n">selection</span><span class="p">)</span>
             <span class="n">lmbd</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="n">lambdas</span><span class="p">[</span><span class="n">selection</span><span class="p">]</span>
             <span class="n">key_traversal</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="n">lmbd</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="n">dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">dim</span> <span class="k">for</span> <span class="n">keydims</span> <span class="ow">in</span> <span class="n">key_traversal</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">keydims</span><span class="p">]</span>
@@ -669,7 +725,7 @@
     <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Multi-dimensional indexing semantics is determined by the list</span>
-<span class="sd">        of key_dimensions. For instance, the first indexing component</span>
+<span class="sd">        of key dimensions. For instance, the first indexing component</span>
 <span class="sd">        will index the first key dimension.</span>
 
 <span class="sd">        After the key dimensions are given, *either* a value dimension</span>
@@ -687,7 +743,7 @@
 <span class="sd">        value pairs. Select descends recursively through the</span>
 <span class="sd">        data structure applying the key dimension selection.</span>
 <span class="sd">        The &#39;value&#39; keyword allows selecting the</span>
-<span class="sd">        value_dimensions on objects which have any declared.</span>
+<span class="sd">        value dimensions on objects which have any declared.</span>
 
 <span class="sd">        The selection may also be selectively applied to</span>
 <span class="sd">        specific objects by supplying the selection_specs</span>
@@ -696,7 +752,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="c"># Apply all indexes applying on this object</span>
-        <span class="n">val_dim</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_dimensions</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="n">val_dim</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">vdims</span> <span class="k">else</span> <span class="p">[]</span>
         <span class="n">local_dims</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_index_names</span> <span class="o">+</span> <span class="n">val_dim</span>
         <span class="n">local_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
                         <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">local_dims</span><span class="p">}</span>
@@ -726,7 +782,7 @@
 
         <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">selection</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
             <span class="c"># Apply the selection on the selected object of a different type</span>
-            <span class="n">val_dim</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">selection</span><span class="o">.</span><span class="n">value_dimensions</span> <span class="k">else</span> <span class="p">[]</span>
+            <span class="n">val_dim</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">selection</span><span class="o">.</span><span class="n">vdims</span> <span class="k">else</span> <span class="p">[]</span>
             <span class="n">key_dims</span> <span class="o">=</span> <span class="n">selection</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(</span><span class="s">&#39;key&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="o">+</span> <span class="n">val_dim</span>
             <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">kw</span> <span class="ow">in</span> <span class="n">key_dims</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">):</span>
                 <span class="n">selection</span> <span class="o">=</span> <span class="n">selection</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">selection_specs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -734,7 +790,7 @@
             <span class="c"># Apply the deep selection on each item in local selection</span>
             <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">selection</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="n">val_dim</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">value_dimensions</span> <span class="k">else</span> <span class="p">[]</span>
+                <span class="n">val_dim</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;value&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">vdims</span> <span class="k">else</span> <span class="p">[]</span>
                 <span class="n">key_dims</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">dimensions</span><span class="p">(</span><span class="s">&#39;key&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="o">+</span> <span class="n">val_dim</span>
                 <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">kw</span> <span class="ow">in</span> <span class="n">key_dims</span> <span class="k">for</span> <span class="n">kw</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">):</span>
                     <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">selection_specs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)))</span>
@@ -774,7 +830,7 @@
             <span class="k">return</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="n">soft_range</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dimension</span><span class="o">.</span><span class="n">soft_range</span>
                       <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">dimension</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_dimensions</span> <span class="ow">or</span> <span class="n">dimension</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_dimensions</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dimension</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kdims</span> <span class="ow">or</span> <span class="n">dimension</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vdims</span><span class="p">:</span>
             <span class="n">dim_vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension_values</span><span class="p">(</span><span class="n">dimension</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">find_range</span><span class="p">(</span><span class="n">dim_vals</span><span class="p">,</span> <span class="n">soft_range</span><span class="p">)</span>
         <span class="n">dname</span> <span class="o">=</span> <span class="n">dimension</span><span class="o">.</span><span class="n">name</span>
