@@ -139,6 +139,8 @@
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">animation</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">ticker</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">rc_params_from_file</span>
+<span class="kn">import</span> <span class="nn">matplotlib.tight_bbox</span> <span class="kn">as</span> <span class="nn">tight_bbox</span>
+<span class="kn">from</span> <span class="nn">matplotlib.transforms</span> <span class="kn">import</span> <span class="n">Bbox</span><span class="p">,</span> <span class="n">TransformedBbox</span><span class="p">,</span> <span class="n">Affine2D</span>
 
 <span class="kn">from</span> <span class="nn">param.parameterized</span> <span class="kn">import</span> <span class="n">bothmethod</span>
 
@@ -267,6 +269,7 @@
 
     <span class="c"># Error messages generated when testing potentially supported formats</span>
     <span class="n">HOLOMAP_FORMAT_ERROR_MESSAGES</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">drawn</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -355,6 +358,53 @@
         <span class="k">return</span> <span class="n">video</span>
 
 </div>
+    <span class="k">def</span> <span class="nf">_compute_bbox</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">kw</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the tight bounding box for each figure once, reducing</span>
+<span class="sd">        number of required canvas draw calls from N*2 to N+1 as a</span>
+<span class="sd">        function of the number of frames.</span>
+
+<span class="sd">        Tight bounding box computing code here mirrors:</span>
+<span class="sd">        matplotlib.backend_bases.FigureCanvasBase.print_figure</span>
+<span class="sd">        as it hasn&#39;t been factored out as a function.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fig_id</span> <span class="o">=</span> <span class="nb">id</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">kw</span><span class="p">[</span><span class="s">&#39;bbox_inches&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;tight&#39;</span> <span class="ow">and</span> <span class="n">kw</span><span class="p">[</span><span class="s">&#39;format&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&#39;png&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">fig_id</span> <span class="ow">in</span> <span class="n">MPLPlotRenderer</span><span class="o">.</span><span class="n">drawn</span><span class="p">:</span>
+                <span class="n">fig</span><span class="o">.</span><span class="n">set_dpi</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dpi</span><span class="p">)</span>
+                <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">draw</span><span class="p">()</span>
+                <span class="n">renderer</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">_cachedRenderer</span>
+                <span class="n">bbox_inches</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">get_tightbbox</span><span class="p">(</span><span class="n">renderer</span><span class="p">)</span>
+                <span class="n">bbox_artists</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">get_default_bbox_extra_artists</span><span class="p">()</span>
+                <span class="n">bbox_filtered</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">bbox_artists</span><span class="p">:</span>
+                    <span class="n">bbox</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">get_window_extent</span><span class="p">(</span><span class="n">renderer</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">get_clip_on</span><span class="p">():</span>
+                        <span class="n">clip_box</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">get_clip_box</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="n">clip_box</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                            <span class="n">bbox</span> <span class="o">=</span> <span class="n">Bbox</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">bbox</span><span class="p">,</span> <span class="n">clip_box</span><span class="p">)</span>
+                        <span class="n">clip_path</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">get_clip_path</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="n">clip_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">bbox</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                            <span class="n">clip_path</span> <span class="o">=</span> <span class="n">clip_path</span><span class="o">.</span><span class="n">get_fully_transformed_path</span><span class="p">()</span>
+                            <span class="n">bbox</span> <span class="o">=</span> <span class="n">Bbox</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">bbox</span><span class="p">,</span>
+                                                     <span class="n">clip_path</span><span class="o">.</span><span class="n">get_extents</span><span class="p">())</span>
+                    <span class="k">if</span> <span class="n">bbox</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="p">(</span><span class="n">bbox</span><span class="o">.</span><span class="n">width</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">or</span>
+                                             <span class="n">bbox</span><span class="o">.</span><span class="n">height</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+                        <span class="n">bbox_filtered</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bbox</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">bbox_filtered</span><span class="p">:</span>
+                    <span class="n">_bbox</span> <span class="o">=</span> <span class="n">Bbox</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">bbox_filtered</span><span class="p">)</span>
+                    <span class="n">trans</span> <span class="o">=</span> <span class="n">Affine2D</span><span class="p">()</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">dpi</span><span class="p">)</span>
+                    <span class="n">bbox_extra</span> <span class="o">=</span> <span class="n">TransformedBbox</span><span class="p">(</span><span class="n">_bbox</span><span class="p">,</span> <span class="n">trans</span><span class="p">)</span>
+                    <span class="n">bbox_inches</span> <span class="o">=</span> <span class="n">Bbox</span><span class="o">.</span><span class="n">union</span><span class="p">([</span><span class="n">bbox_inches</span><span class="p">,</span> <span class="n">bbox_extra</span><span class="p">])</span>
+                <span class="n">pad</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s">&#39;savefig.pad_inches&#39;</span><span class="p">]</span>
+                <span class="n">bbox_inches</span> <span class="o">=</span> <span class="n">bbox_inches</span><span class="o">.</span><span class="n">padded</span><span class="p">(</span><span class="n">pad</span><span class="p">)</span>
+                <span class="n">MPLPlotRenderer</span><span class="o">.</span><span class="n">drawn</span><span class="p">[</span><span class="n">fig_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">bbox_inches</span>
+                <span class="n">kw</span><span class="p">[</span><span class="s">&#39;bbox_inches&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bbox_inches</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">kw</span><span class="p">[</span><span class="s">&#39;bbox_inches&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">MPLPlotRenderer</span><span class="o">.</span><span class="n">drawn</span><span class="p">[</span><span class="n">fig_id</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">kw</span>
+
+
 <div class="viewcode-block" id="MPLPlotRenderer.figure_data"><a class="viewcode-back" href="../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.MPLPlotRenderer.figure_data">[docs]</a>    <span class="k">def</span> <span class="nf">figure_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fig</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s">&#39;png&#39;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s">&#39;tight&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Render matplotlib figure object and return the corresponding data.</span>
@@ -370,6 +420,12 @@
             <span class="n">bbox_inches</span><span class="o">=</span><span class="n">bbox_inches</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">kw</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c"># Attempts to precompute the tight bounding box</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">kw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_bbox</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">kw</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
 
         <span class="n">bytes_io</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
         <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">print_figure</span><span class="p">(</span><span class="n">bytes_io</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>

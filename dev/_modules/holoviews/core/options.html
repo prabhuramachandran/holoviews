@@ -1153,6 +1153,25 @@
 
 </div>
     <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="StoreOptions.state"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.state">[docs]</a>    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Method to capture and restore option state. When called</span>
+<span class="sd">        without any state supplied, the current state is</span>
+<span class="sd">        returned. Then if this state is supplied back in a later call</span>
+<span class="sd">        using the same object, the original state is restored.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">ids</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">capture_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="n">original_custom_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="n">original_custom_keys</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="n">original_custom_keys</span><span class="p">)</span> <span class="o">=</span> <span class="n">state</span>
+            <span class="n">current_custom_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">current_custom_keys</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">original_custom_keys</span><span class="p">):</span>
+                <span class="k">del</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="n">cls</span><span class="o">.</span><span class="n">restore_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
+</div>
+    <span class="nd">@classmethod</span>
     <span class="nd">@contextmanager</span>
 <div class="viewcode-block" id="StoreOptions.options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.options">[docs]</a>    <span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -1167,16 +1186,12 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">options</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="n">kwargs</span> <span class="o">==</span> <span class="p">{}:</span> <span class="k">yield</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="n">optstate</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">state</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
             <span class="n">options</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">merge_options</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-            <span class="n">ids</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">capture_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-            <span class="n">original_custom_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
             <span class="n">cls</span><span class="o">.</span><span class="n">set_options</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
             <span class="k">yield</span>
         <span class="k">if</span> <span class="n">options</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">current_custom_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">current_custom_keys</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">original_custom_keys</span><span class="p">):</span>
-                <span class="k">del</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
-                <span class="n">cls</span><span class="o">.</span><span class="n">restore_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">state</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="n">optstate</span><span class="p">)</span>
 
 </div>
     <span class="nd">@classmethod</span>
