@@ -127,8 +127,19 @@
           <div role="main">
             
   <h1>Source code for holoviews.plotting</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">HoloViews plotting sub-system the defines the interface to be used by</span>
+<span class="sd">any third-party plotting/rendering package.</span>
+
+<span class="sd">This file defines the HTML tags used to wrap renderered output for</span>
+<span class="sd">display in the IPython Notebook (optional). Currently only a</span>
+<span class="sd">matplotlib renderer is supported.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">DEFAULT_RENDERER</span>
 <span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Cycle</span>
 <span class="kn">from</span> <span class="nn">.plot</span> <span class="kn">import</span> <span class="n">Plot</span>
+<span class="kn">from</span> <span class="nn">.renderer</span> <span class="kn">import</span> <span class="n">Renderer</span><span class="p">,</span> <span class="n">MIME_TYPES</span>
 
 <span class="c"># Tags used when matplotlib output is to be embedded in HTML</span>
 <span class="n">IMAGE_TAG</span> <span class="o">=</span> <span class="s">&quot;&lt;img src=&#39;{src}&#39; style=&#39;max-width:100%; margin: auto; display: block; {css}&#39;/&gt;&quot;</span>
@@ -150,25 +161,22 @@
     <span class="s">&#39;pdf&#39;</span><span class="p">:</span>  <span class="n">PDF_TAG</span>
 <span class="p">}</span>
 
-<span class="n">MIME_TYPES</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s">&#39;svg&#39;</span><span class="p">:</span>  <span class="s">&#39;image/svg+xml&#39;</span><span class="p">,</span>
-    <span class="s">&#39;png&#39;</span><span class="p">:</span>  <span class="s">&#39;image/png&#39;</span><span class="p">,</span>
-    <span class="s">&#39;gif&#39;</span><span class="p">:</span>  <span class="s">&#39;image/gif&#39;</span><span class="p">,</span>
-    <span class="s">&#39;webm&#39;</span><span class="p">:</span> <span class="s">&#39;video/webm&#39;</span><span class="p">,</span>
-    <span class="s">&#39;mp4&#39;</span><span class="p">:</span>  <span class="s">&#39;video/mp4&#39;</span><span class="p">,</span>
-    <span class="s">&#39;pdf&#39;</span><span class="p">:</span>  <span class="s">&#39;application/pdf&#39;</span>
-<span class="p">}</span>
-
-
-<span class="kn">from</span> <span class="nn">.mpl</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="n">DEFAULT_RENDER_CLASS</span><span class="o">=</span><span class="bp">None</span>
 
 <span class="k">def</span> <span class="nf">public</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="k">global</span> <span class="n">DEFAULT_RENDER_CLASS</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span> <span class="k">return</span> <span class="bp">False</span>
-    <span class="n">baseclasses</span> <span class="o">=</span> <span class="p">[</span><span class="n">Plot</span><span class="p">,</span> <span class="n">Cycle</span><span class="p">]</span>
-    <span class="k">return</span> <span class="nb">any</span><span class="p">([</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">bc</span><span class="p">)</span> <span class="k">for</span> <span class="n">bc</span> <span class="ow">in</span> <span class="n">baseclasses</span><span class="p">])</span>
+    <span class="n">is_plot_or_cycle</span> <span class="o">=</span> <span class="nb">any</span><span class="p">([</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">bc</span><span class="p">)</span> <span class="k">for</span> <span class="n">bc</span> <span class="ow">in</span> <span class="p">[</span><span class="n">Plot</span><span class="p">,</span> <span class="n">Cycle</span><span class="p">]])</span>
+    <span class="n">is_renderer</span> <span class="o">=</span> <span class="nb">any</span><span class="p">([</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">bc</span><span class="p">)</span> <span class="k">for</span> <span class="n">bc</span> <span class="ow">in</span> <span class="p">[</span><span class="n">Renderer</span><span class="p">]])</span>
+    <span class="k">if</span> <span class="n">is_renderer</span> <span class="ow">and</span> <span class="p">(</span><span class="n">obj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Renderer</span><span class="p">):</span>
+        <span class="n">DEFAULT_RENDER_CLASS</span> <span class="o">=</span> <span class="n">obj</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">is_plot_or_cycle</span> <span class="ow">or</span> <span class="n">is_renderer</span><span class="p">)</span>
 
+<span class="c"># Load the default renderer</span>
+<span class="k">if</span> <span class="n">DEFAULT_RENDERER</span><span class="o">==</span><span class="s">&#39;matplotlib&#39;</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.mpl</span> <span class="kn">import</span> <span class="o">*</span>
 
-<span class="n">_public</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;MPLPlotRenderer&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">_k</span> <span class="k">for</span> <span class="n">_k</span><span class="p">,</span> <span class="n">_v</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">public</span><span class="p">(</span><span class="n">_v</span><span class="p">)]))</span>
+<span class="n">_public</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">_k</span> <span class="k">for</span> <span class="n">_k</span><span class="p">,</span> <span class="n">_v</span> <span class="ow">in</span> <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">public</span><span class="p">(</span><span class="n">_v</span><span class="p">)]))</span>
 <span class="n">__all__</span> <span class="o">=</span> <span class="n">_public</span>
 </pre></div>
 
