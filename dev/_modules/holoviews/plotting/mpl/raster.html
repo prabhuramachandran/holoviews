@@ -364,7 +364,7 @@
 
         <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="n">ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_ranges</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;projs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;projs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">b_w</span><span class="p">,</span> <span class="n">b_h</span>
         <span class="k">for</span> <span class="n">xidx</span><span class="p">,</span> <span class="n">xkey</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_xkeys</span><span class="p">):</span>
             <span class="n">w</span> <span class="o">=</span> <span class="n">widths</span><span class="p">[</span><span class="n">xidx</span><span class="p">]</span>
@@ -389,7 +389,7 @@
                 <span class="n">plot</span><span class="o">.</span><span class="n">set_clim</span><span class="p">(</span><span class="n">valrange</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
                     <span class="n">plot</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;projs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;projs&#39;</span><span class="p">][(</span><span class="n">xkey</span><span class="p">,</span> <span class="n">ykey</span><span class="p">)]</span> <span class="o">=</span> <span class="n">plot</span>
                 <span class="n">y</span> <span class="o">+=</span> <span class="n">h</span> <span class="o">+</span> <span class="n">b_h</span>
                 <span class="k">if</span> <span class="n">xidx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_yticks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="o">-</span><span class="n">b_h</span><span class="o">-</span><span class="n">h</span><span class="o">/</span><span class="mf">2.</span><span class="p">)</span>
@@ -411,16 +411,19 @@
 
 
     <span class="k">def</span> <span class="nf">update_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="n">grid_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_frame</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_frame</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="n">ranges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_ranges</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">ranges</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">plot</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;projs&#39;</span><span class="p">]):</span>
-            <span class="n">view</span> <span class="o">=</span> <span class="n">grid_values</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-            <span class="k">if</span> <span class="n">view</span><span class="p">:</span>
-                <span class="n">plot</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
-                <span class="n">data</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="n">CompositeOverlay</span><span class="p">)</span> <span class="k">else</span> <span class="n">view</span><span class="o">.</span><span class="n">data</span>
-                <span class="n">plot</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">plot</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">xkey</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xkeys</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">ykey</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ykeys</span><span class="p">:</span>
+                <span class="n">plot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">handles</span><span class="p">[</span><span class="s">&#39;projs&#39;</span><span class="p">][(</span><span class="n">xkey</span><span class="p">,</span> <span class="n">ykey</span><span class="p">)]</span>
+                <span class="n">grid_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">xkey</span><span class="p">,</span> <span class="n">ykey</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">ndims</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="p">(</span><span class="n">xkey</span><span class="p">,)</span>
+                <span class="n">element</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">grid_key</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">element</span><span class="p">:</span>
+                    <span class="n">plot</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">True</span><span class="p">)</span>
+                    <span class="n">data</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">values</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">CompositeOverlay</span><span class="p">)</span> <span class="k">else</span> <span class="n">element</span><span class="o">.</span><span class="n">data</span>
+                    <span class="n">plot</span><span class="o">.</span><span class="n">set_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">plot</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="bp">False</span><span class="p">)</span>
 
         <span class="n">xdim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">kdims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">ydim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">kdims</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">layout</span><span class="o">.</span><span class="n">ndims</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="bp">None</span>
@@ -463,11 +466,11 @@
         <span class="k">return</span> <span class="nb">max</span><span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">),</span> <span class="mi">1</span><span class="p">])</span>
 
 </div>
-<span class="n">Store</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">Raster</span><span class="p">:</span> <span class="n">RasterPlot</span><span class="p">,</span>
-                       <span class="n">HeatMap</span><span class="p">:</span> <span class="n">RasterPlot</span><span class="p">,</span>
-                       <span class="n">Image</span><span class="p">:</span> <span class="n">RasterPlot</span><span class="p">,</span>
-                       <span class="n">RGB</span><span class="p">:</span> <span class="n">RasterPlot</span><span class="p">,</span>
-                       <span class="n">HSV</span><span class="p">:</span> <span class="n">RasterPlot</span><span class="p">})</span>
+<span class="n">Store</span><span class="o">.</span><span class="n">register</span><span class="p">({</span><span class="n">Raster</span><span class="p">:</span> <span class="n">RasterPlot</span><span class="p">,</span>
+                <span class="n">HeatMap</span><span class="p">:</span> <span class="n">RasterPlot</span><span class="p">,</span>
+                <span class="n">Image</span><span class="p">:</span> <span class="n">RasterPlot</span><span class="p">,</span>
+                <span class="n">RGB</span><span class="p">:</span> <span class="n">RasterPlot</span><span class="p">,</span>
+                <span class="n">HSV</span><span class="p">:</span> <span class="n">RasterPlot</span><span class="p">},</span> <span class="s">&#39;matplotlib&#39;</span><span class="p">)</span>
 </pre></div>
 
           </div>

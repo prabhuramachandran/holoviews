@@ -135,6 +135,7 @@
 <span class="kn">import</span> <span class="nn">param</span>
 <span class="kn">from</span> <span class="nn">..core.io</span> <span class="kn">import</span> <span class="n">Exporter</span>
 <span class="kn">from</span> <span class="nn">..core.options</span> <span class="kn">import</span> <span class="n">Store</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">Store</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">,</span> <span class="n">AdjointLayout</span>
 
 <span class="kn">from</span> <span class="nn">param.parameterized</span> <span class="kn">import</span> <span class="n">bothmethod</span>
 
@@ -163,8 +164,11 @@
 
     <span class="n">backend</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        The full, lowercase name of the rendering backend or third</span>
-<span class="s">        part plotting package used e.g &#39;matplotlib&#39; or &#39;cairo&#39;. To be</span>
-<span class="s">        matched against the DEFAULT_RENDERER string.&quot;&quot;&quot;</span><span class="p">)</span>
+<span class="s">        part plotting package used e.g &#39;matplotlib&#39; or &#39;cairo&#39;.&quot;&quot;&quot;</span><span class="p">)</span>
+
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;default&#39;</span><span class="p">,</span> <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;default&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">         The available rendering modes. As a minimum, the &#39;default&#39;</span>
+<span class="s">         mode must be supported.&quot;&quot;&quot;</span><span class="p">)</span>
 
     <span class="n">fig</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;svg&#39;</span><span class="p">,</span>
                                <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;png&#39;</span><span class="p">,</span> <span class="s">&#39;svg&#39;</span><span class="p">,</span> <span class="s">&#39;pdf&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
@@ -191,22 +195,41 @@
     <span class="n">key_fn</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">Callable</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="n">allow_None</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">constant</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>  <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
 <span class="s">        Renderers do not support the saving of object key metadata&quot;&quot;&quot;</span><span class="p">)</span>
 
-    <span class="c"># Error messages generated when testing potentially supported formats</span>
-    <span class="n">HOLOMAP_FORMAT_ERROR_MESSAGES</span> <span class="o">=</span> <span class="p">{}</span>
-
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">Renderer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Render the supplied HoloViews component using the appropriate</span>
-<span class="sd">        backend. The output is not a file format but a suitable,</span>
-<span class="sd">        in-memory byte stream together with any suitable metadata.</span>
+<span class="sd">        Render the supplied HoloViews component or plot instance using</span>
+<span class="sd">        the appropriate backend. The output is not a file format but a</span>
+<span class="sd">        suitable, in-memory byte stream together with any suitable</span>
+<span class="sd">        metadata.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c"># Example of the return format where the first value is the rendered data.</span>
         <span class="k">return</span> <span class="bp">None</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;file-ext&#39;</span><span class="p">:</span><span class="n">fmt</span><span class="p">,</span> <span class="s">&#39;mime_type&#39;</span><span class="p">:</span><span class="n">MIME_TYPES</span><span class="p">[</span><span class="n">fmt</span><span class="p">]}</span>
 
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Renderer.plotting_class"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.renderer.Renderer.plotting_class">[docs]</a>    <span class="k">def</span> <span class="nf">plotting_class</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Given an object or Element class, return the suitable plotting</span>
+<span class="sd">        class needed to render it with the current renderer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">)</span> <span class="k">else</span> <span class="n">obj</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+            <span class="n">element_type</span> <span class="o">=</span> <span class="n">obj</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">element_type</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">type</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">)</span> <span class="k">else</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">plotclass</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">cls</span><span class="o">.</span><span class="n">backend</span><span class="p">][</span><span class="n">element_type</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;No corresponding plot type found for </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">plotclass</span>
+
+
+</div>
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Renderer.plot_options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.renderer.Renderer.plot_options">[docs]</a>    <span class="k">def</span> <span class="nf">plot_options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">percent_size</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>

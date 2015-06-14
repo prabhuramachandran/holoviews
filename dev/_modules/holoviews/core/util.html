@@ -230,6 +230,8 @@
 
     <span class="n">prefix</span> <span class="o">=</span> <span class="s">&#39;A_&#39;</span>
 
+    <span class="n">_lookup_table</span> <span class="o">=</span> <span class="p">{}</span>
+
     <span class="nd">@param.parameterized.bothmethod</span>
     <span class="k">def</span> <span class="nf">allowable</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">disable_leading_underscore</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
        <span class="n">disabled_reprs</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;javascript&#39;</span><span class="p">,</span> <span class="s">&#39;jpeg&#39;</span><span class="p">,</span> <span class="s">&#39;json&#39;</span><span class="p">,</span> <span class="s">&#39;latex&#39;</span><span class="p">,</span>
@@ -287,7 +289,10 @@
 
 </div>
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">escape</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">]:</span> <span class="k">return</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">]:</span>
+           <span class="k">return</span> <span class="n">name</span>
+        <span class="k">elif</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup_table</span><span class="p">:</span>
+           <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lookup_table</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
         <span class="n">name</span> <span class="o">=</span> <span class="n">safe_unicode</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
         <span class="n">version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="k">if</span> <span class="n">version</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">version</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">allowable</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
@@ -299,8 +304,10 @@
             <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="o">+</span><span class="n">name</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 
         <span class="n">sanitized</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sanitize_py2</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">if</span> <span class="n">version</span><span class="o">==</span><span class="mi">2</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">sanitize_py3</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefixed</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span> <span class="k">return</span> <span class="n">sanitized</span>
-        <span class="k">else</span><span class="p">:</span>                                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">sanitized</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefixed</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">version</span><span class="p">):</span>
+           <span class="n">sanitized</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">sanitized</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lookup_table</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">sanitized</span>
+        <span class="k">return</span> <span class="n">sanitized</span>
 
 
     <span class="k">def</span> <span class="nf">_process_underscores</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">):</span>

@@ -816,8 +816,10 @@
 <span class="sd">    object.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="n">renderers</span> <span class="o">=</span> <span class="p">{}</span> <span class="c"># The set of available Renderers across all backends.</span>
+
     <span class="c"># A mapping from ViewableElement types to their corresponding plot</span>
-    <span class="c"># types. Set using the register_plots methods.</span>
+    <span class="c"># types grouped by the backend. Set using the register method.</span>
     <span class="n">registry</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="c"># Once register_plotting_classes is called, this OptionTree is populated</span>
@@ -846,12 +848,12 @@
 
 </div>
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Store.info"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<div class="viewcode-block" id="Store.info"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s">&#39;matplotlib&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Show information about a particular object or component class</span>
 <span class="sd">        including the applicable style and plot options.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">print</span><span class="p">(</span><span class="n">InfoPrinter</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">))</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">InfoPrinter</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">))</span>
 </div>
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Store.loads"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.loads">[docs]</a>    <span class="k">def</span> <span class="nf">loads</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">pickle_string</span><span class="p">):</span>
@@ -913,7 +915,7 @@
 
 </div>
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Store.add_style_opts"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.add_style_opts">[docs]</a>    <span class="k">def</span> <span class="nf">add_style_opts</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">component</span><span class="p">,</span> <span class="n">new_options</span><span class="p">):</span>
+<div class="viewcode-block" id="Store.add_style_opts"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.add_style_opts">[docs]</a>    <span class="k">def</span> <span class="nf">add_style_opts</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">component</span><span class="p">,</span> <span class="n">new_options</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s">&#39;matplotlib&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given a component such as an Element (e.g. Image, Curve) or a</span>
 <span class="sd">        container (e.g Layout) specify new style options to be</span>
@@ -923,7 +925,7 @@
 <span class="sd">        additional style keywords are appropriate for the</span>
 <span class="sd">        corresponding plotting class.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">component</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">component</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">backend</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Component </span><span class="si">%r</span><span class="s"> not registered to a plotting class&quot;</span> <span class="o">%</span> <span class="n">component</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">new_options</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">el</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">new_options</span><span class="p">):</span>
@@ -931,13 +933,24 @@
 
         <span class="k">with</span> <span class="n">param</span><span class="o">.</span><span class="n">logging_level</span><span class="p">(</span><span class="s">&#39;CRITICAL&#39;</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">option</span> <span class="ow">in</span> <span class="n">new_options</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">option</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">component</span><span class="p">]</span><span class="o">.</span><span class="n">style_opts</span><span class="p">:</span>
-                    <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">component</span><span class="p">]</span><span class="o">.</span><span class="n">style_opts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">option</span><span class="p">)</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">register_plots</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">option</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">backend</span><span class="p">][</span><span class="n">component</span><span class="p">]</span><span class="o">.</span><span class="n">style_opts</span><span class="p">:</span>
+                    <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">backend</span><span class="p">][</span><span class="n">component</span><span class="p">]</span><span class="o">.</span><span class="n">style_opts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">option</span><span class="p">)</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">register_plots</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">)</span>
 
 </div>
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Store.register_plots"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.register_plots">[docs]</a>    <span class="k">def</span> <span class="nf">register_plots</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">style_aliases</span><span class="o">=</span><span class="p">{}):</span>
+<div class="viewcode-block" id="Store.register"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">associations</span><span class="p">,</span> <span class="n">backend</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Register the supplied dictionary of associations between</span>
+<span class="sd">        elements and plotting classes to the specified backend.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">backend</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="p">:</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">associations</span><span class="p">)</span>
+
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Store.register_plots"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.register_plots">[docs]</a>    <span class="k">def</span> <span class="nf">register_plots</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">style_aliases</span><span class="o">=</span><span class="p">{},</span> <span class="n">backend</span><span class="o">=</span><span class="s">&#39;matplotlib&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given that the Store.registry dictionary has been populate</span>
 <span class="sd">        with {&lt;element&gt;:&lt;plot-class&gt;} items, build an OptionTree for the</span>
@@ -958,7 +971,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span> <span class="nn">.overlay</span> <span class="kn">import</span> <span class="n">CompositeOverlay</span>
         <span class="n">path_items</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">view_class</span><span class="p">,</span> <span class="n">plot</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">view_class</span><span class="p">,</span> <span class="n">plot</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="n">name</span> <span class="o">=</span> <span class="n">view_class</span><span class="o">.</span><span class="n">__name__</span>
             <span class="n">plot_opts</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">plot</span><span class="o">.</span><span class="n">params</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]]</span>
             <span class="n">expanded_opts</span> <span class="o">=</span> <span class="p">[</span><span class="n">opt</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">plot</span><span class="o">.</span><span class="n">style_opts</span>

@@ -136,6 +136,7 @@
 <span class="kn">from</span> <span class="nn">...core.options</span> <span class="kn">import</span> <span class="n">Store</span><span class="p">,</span> <span class="n">StoreOptions</span>
 
 <span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">MIME_TYPES</span>
+<span class="kn">from</span> <span class="nn">..plot</span> <span class="kn">import</span> <span class="n">Plot</span>
 <span class="kn">from</span> <span class="nn">..renderer</span> <span class="kn">import</span> <span class="n">Renderer</span>
 
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
@@ -166,6 +167,12 @@
 
     <span class="n">backend</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">String</span><span class="p">(</span><span class="s">&#39;matplotlib&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;The backend name.&quot;</span><span class="p">)</span>
 
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">ObjectSelector</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s">&#39;default&#39;</span><span class="p">,</span>
+                                <span class="n">objects</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;default&#39;</span><span class="p">,</span> <span class="s">&#39;d3&#39;</span><span class="p">,</span> <span class="s">&#39;nbagg&#39;</span><span class="p">],</span> <span class="n">doc</span><span class="o">=</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">         The &#39;d3&#39; mode uses the mpld3 library whereas the &#39;nbagg&#39; uses</span>
+<span class="s">         matplotlib&#39;ss the experiemental nbagg backend. &quot;&quot;&quot;</span><span class="p">)</span>
+
+
     <span class="c"># &lt;format name&gt; : (animation writer, format,  anim_kwargs, extra_args)</span>
     <span class="n">ANIMATION_OPTS</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s">&#39;webm&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;ffmpeg&#39;</span><span class="p">,</span> <span class="s">&#39;webm&#39;</span><span class="p">,</span> <span class="p">{},</span>
@@ -179,32 +186,30 @@
 
     <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Render the supplied HoloViews component using matplotlib.</span>
+<span class="sd">        Render the supplied HoloViews component or MPLPlot instance</span>
+<span class="sd">        using matplotlib.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">):</span>
-            <span class="n">obj</span> <span class="o">=</span> <span class="n">Layout</span><span class="o">.</span><span class="n">from_values</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Plot</span><span class="p">):</span>
+            <span class="n">plot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">plotting_class</span><span class="p">(</span><span class="n">obj</span><span class="p">)(</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_options</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+            <span class="n">plot</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 
-        <span class="n">element_type</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">type</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">HoloMap</span><span class="p">)</span> <span class="k">else</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">plotclass</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">element_type</span><span class="p">]</span>
-        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;No corresponding plot type found for </span><span class="si">%r</span><span class="s">&quot;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">fmt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Format must be specified when supplying a plot instance&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">plot</span> <span class="o">=</span> <span class="n">obj</span>
 
-        <span class="n">plot</span> <span class="o">=</span> <span class="n">plotclass</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">plot_options</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">fmt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">fmt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">holomap</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">fig</span>
             <span class="k">if</span> <span class="n">fmt</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span> <span class="k">return</span>
 
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plot</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">anim_kwargs</span><span class="p">,</span> <span class="n">extra_args</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ANIMATION_OPTS</span><span class="p">[</span><span class="n">fmt</span><span class="p">]</span>
-            <span class="n">anim</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">anim</span><span class="p">(</span><span class="n">fps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">extra_args</span> <span class="o">!=</span> <span class="p">[]:</span>
-                <span class="n">anim_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">anim_kwargs</span><span class="p">,</span> <span class="n">extra_args</span><span class="o">=</span><span class="n">extra_args</span><span class="p">)</span>
-
-            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_anim_data</span><span class="p">(</span><span class="n">anim</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">writer</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fmt</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;png&#39;</span><span class="p">,</span> <span class="s">&#39;svg&#39;</span><span class="p">,</span> <span class="s">&#39;pdf&#39;</span><span class="p">]:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_figure_data</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="o">**</span><span class="p">({</span><span class="s">&#39;dpi&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">dpi</span><span class="p">}</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dpi</span> <span class="k">else</span> <span class="p">{}))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">plot</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">figure_data</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="o">**</span><span class="p">({</span><span class="s">&#39;dpi&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">dpi</span><span class="p">}</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dpi</span> <span class="k">else</span> <span class="p">{}))</span>
+
+            <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">mpl</span><span class="o">.</span><span class="n">__version__</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;1.2&#39;</span><span class="p">,</span> <span class="s">&#39;1.3&#39;</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;&lt;b&gt;Python 3 matplotlib animation support broken &amp;lt;= 1.3&lt;/b&gt;&quot;</span><span class="p">)</span>
+            <span class="n">anim</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">anim</span><span class="p">(</span><span class="n">fps</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">fps</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_anim_data</span><span class="p">(</span><span class="n">anim</span><span class="p">,</span> <span class="n">fmt</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">data</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;file-ext&#39;</span><span class="p">:</span><span class="n">fmt</span><span class="p">,</span>
                       <span class="s">&#39;mime_type&#39;</span><span class="p">:</span><span class="n">MIME_TYPES</span><span class="p">[</span><span class="n">fmt</span><span class="p">]}</span>
@@ -236,31 +241,6 @@
 
         <span class="k">return</span> <span class="nb">dict</span><span class="p">({</span><span class="s">&#39;fig_inches&#39;</span><span class="p">:</span><span class="n">fig_inches</span><span class="p">},</span>
                     <span class="o">**</span><span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
-
-</div>
-    <span class="nd">@bothmethod</span>
-<div class="viewcode-block" id="MPLRenderer.supported_holomap_formats"><a class="viewcode-back" href="../../../../Reference_Manual/holoviews.plotting.mpl.html#holoviews.plotting.mpl.renderer.MPLRenderer.supported_holomap_formats">[docs]</a>    <span class="k">def</span> <span class="nf">supported_holomap_formats</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">optional_formats</span><span class="p">):</span>
-        <span class="s">&quot;Optional formats that are actually supported by this renderer&quot;</span>
-        <span class="n">supported</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">with</span> <span class="n">param</span><span class="o">.</span><span class="n">logging_level</span><span class="p">(</span><span class="s">&#39;CRITICAL&#39;</span><span class="p">):</span>
-            <span class="n">self_or_cls</span><span class="o">.</span><span class="n">HOLOMAP_FORMAT_ERROR_MESSAGES</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">fmt</span> <span class="ow">in</span> <span class="n">optional_formats</span><span class="p">:</span>
-            <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
-                <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s">&quot;ignore&quot;</span><span class="p">)</span>
-                <span class="k">try</span><span class="p">:</span>
-                    <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
-                    <span class="n">anim</span> <span class="o">=</span> <span class="n">animation</span><span class="o">.</span><span class="n">FuncAnimation</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="n">frames</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">])</span>
-                    <span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">anim_kwargs</span><span class="p">,</span> <span class="n">extra_args</span><span class="p">)</span> <span class="o">=</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">ANIMATION_OPTS</span><span class="p">[</span><span class="n">fmt</span><span class="p">]</span>
-                    <span class="k">if</span> <span class="n">extra_args</span> <span class="o">!=</span> <span class="p">[]:</span>
-                        <span class="n">anim_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">anim_kwargs</span><span class="p">,</span> <span class="n">extra_args</span><span class="o">=</span><span class="n">extra_args</span><span class="p">)</span>
-                        <span class="n">renderer</span> <span class="o">=</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">instance</span><span class="p">(</span><span class="n">dpi</span><span class="o">=</span><span class="mi">72</span><span class="p">)</span>
-                        <span class="n">renderer</span><span class="o">.</span><span class="n">_anim_data</span><span class="p">(</span><span class="n">anim</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">writer</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">)</span>
-                    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
-                    <span class="n">supported</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
-                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-                    <span class="n">self_or_cls</span><span class="o">.</span><span class="n">HOLOMAP_FORMAT_ERROR_MESSAGES</span><span class="p">[</span><span class="n">fmt</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">supported</span>
-
 </div>
     <span class="nd">@bothmethod</span>
 <div class="viewcode-block" id="MPLRenderer.save"><a class="viewcode-back" href="../../../../Reference_Manual/holoviews.plotting.mpl.html#holoviews.plotting.mpl.renderer.MPLRenderer.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="p">{},</span> <span class="n">info</span><span class="o">=</span><span class="p">{},</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -278,11 +258,70 @@
         <span class="n">filename</span> <span class="o">=</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">.</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">basename</span><span class="p">,</span> <span class="n">info</span><span class="p">[</span><span class="s">&#39;file-ext&#39;</span><span class="p">])</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
             <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">self_or_cls</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">rendered</span><span class="p">))</span>
+
 </div>
-    <span class="k">def</span> <span class="nf">_anim_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anim</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">writer</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_figure_manager</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">counter</span><span class="p">,</span> <span class="n">plot</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">matplotlib.backends.backend_nbagg</span> <span class="kn">import</span> <span class="n">new_figure_manager_given_figure</span>
+            <span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="kn">import</span> <span class="n">Axes3D</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">state</span>
+        <span class="n">manager</span> <span class="o">=</span> <span class="n">new_figure_manager_given_figure</span><span class="p">(</span><span class="n">counter</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
+        <span class="c"># Need to call mouse_init on each 3D axis to enable rotation support</span>
+        <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">fig</span><span class="o">.</span><span class="n">get_axes</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">Axes3D</span><span class="p">):</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">mouse_init</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">manager</span>
+
+
+    <span class="nd">@bothmethod</span>
+    <span class="k">def</span> <span class="nf">get_size</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">plot</span><span class="p">):</span>
+        <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">get_size_inches</span><span class="p">()</span>
+        <span class="n">dpi</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">dpi</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">w</span><span class="o">*</span><span class="n">dpi</span><span class="p">,</span> <span class="n">h</span><span class="o">*</span><span class="n">dpi</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_figure_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s">&#39;png&#39;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s">&#39;tight&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Render matplotlib figure object and return the corresponding data.</span>
+
+<span class="sd">        Similar to IPython.core.pylabtools.print_figure but without</span>
+<span class="sd">        any IPython dependency.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fig</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">state</span>
+        <span class="n">kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">format</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span>
+            <span class="n">facecolor</span><span class="o">=</span><span class="n">fig</span><span class="o">.</span><span class="n">get_facecolor</span><span class="p">(),</span>
+            <span class="n">edgecolor</span><span class="o">=</span><span class="n">fig</span><span class="o">.</span><span class="n">get_edgecolor</span><span class="p">(),</span>
+            <span class="n">dpi</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dpi</span><span class="p">,</span>
+            <span class="n">bbox_inches</span><span class="o">=</span><span class="n">bbox_inches</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">kw</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c"># Attempts to precompute the tight bounding box</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">kw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_bbox</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">kw</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="n">bytes_io</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">print_figure</span><span class="p">(</span><span class="n">bytes_io</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">bytes_io</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s">&#39;svg&#39;</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+
+    <span class="k">def</span> <span class="nf">_anim_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anim</span><span class="p">,</span> <span class="n">fmt</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Render a matplotlib animation object and return the corresponding data.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">anim_kwargs</span><span class="p">,</span> <span class="n">extra_args</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ANIMATION_OPTS</span><span class="p">[</span><span class="n">fmt</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">extra_args</span> <span class="o">!=</span> <span class="p">[]:</span>
+            <span class="n">anim_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">anim_kwargs</span><span class="p">,</span> <span class="n">extra_args</span><span class="o">=</span><span class="n">extra_args</span><span class="p">)</span>
+
         <span class="n">anim_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">anim_kwargs</span><span class="p">,</span> <span class="o">**</span><span class="p">({</span><span class="s">&#39;dpi&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">dpi</span><span class="p">}</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dpi</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="k">else</span> <span class="p">{}))</span>
         <span class="n">anim_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">({</span><span class="s">&#39;fps&#39;</span><span class="p">:</span><span class="bp">self</span><span class="o">.</span><span class="n">fps</span><span class="p">}</span> <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span><span class="s">&#39;gif&#39;</span> <span class="k">else</span> <span class="p">{},</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">anim</span><span class="p">,</span> <span class="s">&#39;_encoded_video&#39;</span><span class="p">):</span>
@@ -338,71 +377,6 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">kw</span><span class="p">[</span><span class="s">&#39;bbox_inches&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">MPLRenderer</span><span class="o">.</span><span class="n">drawn</span><span class="p">[</span><span class="n">fig_id</span><span class="p">]</span>
         <span class="k">return</span> <span class="n">kw</span>
-
-
-<div class="viewcode-block" id="MPLRenderer.figure_data"><a class="viewcode-back" href="../../../../Reference_Manual/holoviews.plotting.mpl.html#holoviews.plotting.mpl.renderer.MPLRenderer.figure_data">[docs]</a>    <span class="k">def</span> <span class="nf">figure_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s">&#39;png&#39;</span><span class="p">,</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s">&#39;tight&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Render matplotlib figure object and return the corresponding data.</span>
-
-<span class="sd">        Similar to IPython.core.pylabtools.print_figure but without</span>
-<span class="sd">        any IPython dependency.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">fig</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">state</span>
-        <span class="n">kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
-            <span class="n">format</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span>
-            <span class="n">facecolor</span><span class="o">=</span><span class="n">fig</span><span class="o">.</span><span class="n">get_facecolor</span><span class="p">(),</span>
-            <span class="n">edgecolor</span><span class="o">=</span><span class="n">fig</span><span class="o">.</span><span class="n">get_edgecolor</span><span class="p">(),</span>
-            <span class="n">dpi</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dpi</span><span class="p">,</span>
-            <span class="n">bbox_inches</span><span class="o">=</span><span class="n">bbox_inches</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">kw</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
-
-        <span class="c"># Attempts to precompute the tight bounding box</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="n">kw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_bbox</span><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">kw</span><span class="p">)</span>
-        <span class="k">except</span><span class="p">:</span>
-            <span class="k">pass</span>
-
-        <span class="n">bytes_io</span> <span class="o">=</span> <span class="n">BytesIO</span><span class="p">()</span>
-        <span class="n">fig</span><span class="o">.</span><span class="n">canvas</span><span class="o">.</span><span class="n">print_figure</span><span class="p">(</span><span class="n">bytes_io</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">bytes_io</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">fmt</span> <span class="o">==</span> <span class="s">&#39;svg&#39;</span><span class="p">:</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s">&#39;utf-8&#39;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">data</span>
-</div>
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">get_figure_manager</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">counter</span><span class="p">,</span> <span class="n">plot</span><span class="p">):</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="kn">from</span> <span class="nn">matplotlib.backends.backend_nbagg</span> <span class="kn">import</span> <span class="n">new_figure_manager_given_figure</span>
-            <span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="kn">import</span> <span class="n">Axes3D</span>
-        <span class="k">except</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">None</span>
-        <span class="n">fig</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">state</span>
-        <span class="n">manager</span> <span class="o">=</span> <span class="n">new_figure_manager_given_figure</span><span class="p">(</span><span class="n">counter</span><span class="p">,</span> <span class="n">fig</span><span class="p">)</span>
-        <span class="c"># Need to call mouse_init on each 3D axis to enable rotation support</span>
-        <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">fig</span><span class="o">.</span><span class="n">get_axes</span><span class="p">():</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ax</span><span class="p">,</span> <span class="n">Axes3D</span><span class="p">):</span>
-                <span class="n">ax</span><span class="o">.</span><span class="n">mouse_init</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">manager</span>
-
-    <span class="nd">@bothmethod</span>
-    <span class="k">def</span> <span class="nf">get_size</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">plot</span><span class="p">):</span>
-        <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">get_size_inches</span><span class="p">()</span>
-        <span class="n">dpi</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">dpi</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">w</span><span class="o">*</span><span class="n">dpi</span><span class="p">,</span> <span class="n">h</span><span class="o">*</span><span class="n">dpi</span><span class="p">)</span>
-
-    <span class="nd">@bothmethod</span>
-    <span class="k">def</span> <span class="nf">animation_data</span><span class="p">(</span><span class="n">self_or_cls</span><span class="p">,</span> <span class="n">plot</span><span class="p">,</span> <span class="n">holomap_format</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">dpi</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="n">mpl</span><span class="o">.</span><span class="n">__version__</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;1.2&#39;</span><span class="p">,</span> <span class="s">&#39;1.3&#39;</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;&lt;b&gt;Python 3 matplotlib animation support broken &amp;lt;= 1.3&lt;/b&gt;&quot;</span><span class="p">)</span>
-        <span class="n">anim</span> <span class="o">=</span> <span class="n">plot</span><span class="o">.</span><span class="n">anim</span><span class="p">(</span><span class="n">fps</span><span class="o">=</span><span class="n">fps</span><span class="p">)</span>
-        <span class="p">(</span><span class="n">writer</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">anim_kwargs</span><span class="p">,</span> <span class="n">extra_args</span><span class="p">)</span> <span class="o">=</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">ANIMATION_OPTS</span><span class="p">[</span><span class="n">holomap_format</span><span class="p">]</span>
-
-        <span class="k">if</span> <span class="n">extra_args</span> <span class="o">!=</span> <span class="p">[]:</span>
-            <span class="n">anim_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">anim_kwargs</span><span class="p">,</span> <span class="n">extra_args</span><span class="o">=</span><span class="n">extra_args</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">holomap_format</span><span class="o">==</span><span class="s">&#39;gif&#39;</span><span class="p">:</span>
-            <span class="n">anim_kwargs</span><span class="p">[</span><span class="s">&#39;fps&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">fps</span>
-        <span class="k">return</span> <span class="n">self_or_cls</span><span class="o">.</span><span class="n">_anim_data</span><span class="p">(</span><span class="n">anim</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">writer</span><span class="p">,</span> <span class="o">**</span><span class="n">anim_kwargs</span><span class="p">)</span>
 
 
 </div>
