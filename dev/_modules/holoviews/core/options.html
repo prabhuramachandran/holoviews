@@ -570,12 +570,12 @@
             <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="bp">None</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">target</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">target</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">()):</span>
             <span class="n">root_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class__</span><span class="o">.</span><span class="n">__name__</span>
             <span class="n">replacement</span> <span class="o">=</span> <span class="n">root_name</span> <span class="o">+</span> <span class="p">(</span><span class="s">&#39;&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">target</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">root_name</span><span class="p">)</span> <span class="k">else</span> <span class="s">&#39;.&#39;</span><span class="p">)</span>
             <span class="n">option_key</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">replacement</span><span class="p">,</span><span class="s">&#39;&#39;</span><span class="p">)</span>
-            <span class="n">match</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">option_key</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">:</span>
+            <span class="n">match</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">()</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">option_key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">():</span>
                 <span class="k">return</span> <span class="n">match</span><span class="o">.</span><span class="n">options</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">Options</span><span class="p">()</span>
@@ -822,18 +822,35 @@
     <span class="c"># types grouped by the backend. Set using the register method.</span>
     <span class="n">registry</span> <span class="o">=</span> <span class="p">{}</span>
 
-    <span class="c"># Once register_plotting_classes is called, this OptionTree is populated</span>
-    <span class="n">options</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="n">groups</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;plot&#39;</span><span class="p">:</span>  <span class="n">Options</span><span class="p">(),</span>
-                                 <span class="s">&#39;style&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(),</span>
-                                 <span class="s">&#39;norm&#39;</span><span class="p">:</span>  <span class="n">Options</span><span class="p">()})</span>
+    <span class="c"># Once register_plotting_classes is called, this OptionTree is</span>
+    <span class="c"># populated for the given backend.</span>
+    <span class="n">_options</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="c"># A list of hooks to call after registering the plot and style options</span>
     <span class="n">option_setters</span> <span class="o">=</span> <span class="p">[]</span>
 
-    <span class="c"># A dictionary of custom OptionTree by custom object id</span>
-    <span class="n">custom_options</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="c"># A dictionary of custom OptionTree by custom object id by backend</span>
+    <span class="n">_custom_options</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;matplotlib&#39;</span><span class="p">:{}}</span>
     <span class="n">load_counter_offset</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="n">save_option_state</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="n">current_backend</span> <span class="o">=</span> <span class="s">&#39;matplotlib&#39;</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">backend</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">current_backend</span> <span class="k">if</span> <span class="n">backend</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">backend</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">custom_options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">backend</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">current_backend</span> <span class="k">if</span> <span class="n">backend</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">backend</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">_custom_options</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">_custom_options</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
 
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Store.load"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
@@ -841,19 +858,11 @@
 <span class="sd">        Equivalent to pickle.load except that the HoloViews trees is</span>
 <span class="sd">        restored appropriately.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">load_counter_offset</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">custom_options</span><span class="p">)</span> <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">custom_options</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">load_counter_offset</span> <span class="o">=</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span>  <span class="n">cls</span><span class="o">.</span><span class="n">_custom_options</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+                                   <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">custom_options</span><span class="p">()</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">val</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">load_counter_offset</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">return</span> <span class="n">val</span>
-
-</div>
-    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Store.info"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s">&#39;matplotlib&#39;</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Show information about a particular object or component class</span>
-<span class="sd">        including the applicable style and plot options.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">print</span><span class="p">(</span><span class="n">InfoPrinter</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">))</span>
 </div>
     <span class="nd">@classmethod</span>
 <div class="viewcode-block" id="Store.loads"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.loads">[docs]</a>    <span class="k">def</span> <span class="nf">loads</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">pickle_string</span><span class="p">):</span>
@@ -861,7 +870,8 @@
 <span class="sd">        Equivalent to pickle.loads except that the HoloViews trees is</span>
 <span class="sd">        restored appropriately.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">cls</span><span class="o">.</span><span class="n">load_counter_offset</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">custom_options</span><span class="p">)</span> <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">custom_options</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">load_counter_offset</span> <span class="o">=</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span>  <span class="n">cls</span><span class="o">.</span><span class="n">_custom_options</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+                                   <span class="k">if</span> <span class="n">cls</span><span class="o">.</span><span class="n">custom_options</span><span class="p">()</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">val</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pickle_string</span><span class="p">)</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">load_counter_offset</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="k">return</span> <span class="n">val</span>
@@ -887,19 +897,27 @@
         <span class="n">val</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">)</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">save_option_state</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="k">return</span> <span class="n">val</span>
+</div>
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Store.info"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s">&#39;matplotlib&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Show information about a particular object or component class</span>
+<span class="sd">        including the applicable style and plot options.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">InfoPrinter</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ansi</span><span class="o">=</span><span class="n">ansi</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">))</span>
 
 </div>
     <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">lookup_options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">group</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">lookup_options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">backend</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">group</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">id</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">closest</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">obj</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">custom_options</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">custom_options</span><span class="p">[</span><span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">]</span><span class="o">.</span><span class="n">closest</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span><span class="o">.</span><span class="n">closest</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">obj</span><span class="o">.</span><span class="n">id</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">_custom_options</span><span class="p">[</span><span class="n">backend</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">_custom_options</span><span class="p">[</span><span class="n">backend</span><span class="p">][</span><span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">]</span><span class="o">.</span><span class="n">closest</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s">&quot;No custom settings defined for object with id </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
 
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Store.lookup"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.lookup">[docs]</a>    <span class="k">def</span> <span class="nf">lookup</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+<div class="viewcode-block" id="Store.lookup"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.lookup">[docs]</a>    <span class="k">def</span> <span class="nf">lookup</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">backend</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given an object, lookup the corresponding customized option</span>
 <span class="sd">        tree if a single custom tree is applicable.</span>
@@ -911,11 +929,11 @@
             <span class="n">idlist</span> <span class="o">=</span> <span class="s">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">el</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">ids</span><span class="p">)])</span>
             <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Object contains elements combined across &quot;</span>
                             <span class="s">&quot;multiple custom trees (ids </span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="n">idlist</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">custom_options</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">ids</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">_custom_options</span><span class="p">[</span><span class="n">backend</span><span class="p">][</span><span class="nb">list</span><span class="p">(</span><span class="n">ids</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span>
 
 </div>
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Store.add_style_opts"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.add_style_opts">[docs]</a>    <span class="k">def</span> <span class="nf">add_style_opts</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">component</span><span class="p">,</span> <span class="n">new_options</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="s">&#39;matplotlib&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="Store.add_style_opts"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.add_style_opts">[docs]</a>    <span class="k">def</span> <span class="nf">add_style_opts</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">component</span><span class="p">,</span> <span class="n">new_options</span><span class="p">,</span> <span class="n">backend</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given a component such as an Element (e.g. Image, Curve) or a</span>
 <span class="sd">        container (e.g Layout) specify new style options to be</span>
@@ -925,6 +943,7 @@
 <span class="sd">        additional style keywords are appropriate for the</span>
 <span class="sd">        corresponding plotting class.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">backend</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">current_backend</span> <span class="k">if</span> <span class="n">backend</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">backend</span>
         <span class="k">if</span> <span class="n">component</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">backend</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Component </span><span class="si">%r</span><span class="s"> not registered to a plotting class&quot;</span> <span class="o">%</span> <span class="n">component</span><span class="p">)</span>
 
@@ -939,14 +958,38 @@
 
 </div>
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="Store.register"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">associations</span><span class="p">,</span> <span class="n">backend</span><span class="p">):</span>
+<div class="viewcode-block" id="Store.register"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.Store.register">[docs]</a>    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">associations</span><span class="p">,</span> <span class="n">backend</span><span class="p">,</span> <span class="n">style_aliases</span><span class="o">=</span><span class="p">{}):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Register the supplied dictionary of associations between</span>
 <span class="sd">        elements and plotting classes to the specified backend.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">.overlay</span> <span class="kn">import</span> <span class="n">CompositeOverlay</span>
         <span class="k">if</span> <span class="n">backend</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="p">:</span>
             <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">associations</span><span class="p">)</span>
+
+        <span class="n">groups</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">,</span> <span class="s">&#39;norm&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">backend</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">_options</span><span class="p">:</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span> <span class="o">=</span>  <span class="n">OptionTree</span><span class="p">([],</span> <span class="n">groups</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">Options</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">})</span>
+
+        <span class="k">for</span> <span class="n">view_class</span><span class="p">,</span> <span class="n">plot</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">registry</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">expanded_opts</span> <span class="o">=</span> <span class="p">[</span><span class="n">opt</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">plot</span><span class="o">.</span><span class="n">style_opts</span>
+                             <span class="k">for</span> <span class="n">opt</span> <span class="ow">in</span> <span class="n">style_aliases</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])]</span>
+            <span class="n">style_opts</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">expanded_opts</span> <span class="o">+</span> <span class="n">plot</span><span class="o">.</span><span class="n">style_opts</span><span class="p">))</span>
+            <span class="n">plot_opts</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">plot</span><span class="o">.</span><span class="n">params</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]]</span>
+
+            <span class="k">with</span> <span class="n">param</span><span class="o">.</span><span class="n">logging_level</span><span class="p">(</span><span class="s">&#39;CRITICAL&#39;</span><span class="p">):</span>
+                <span class="n">plot</span><span class="o">.</span><span class="n">style_opts</span> <span class="o">=</span> <span class="n">style_opts</span>
+
+            <span class="n">opt_groups</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;plot&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(</span><span class="n">allowed_keywords</span><span class="o">=</span><span class="n">plot_opts</span><span class="p">)}</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">view_class</span><span class="p">,</span> <span class="n">CompositeOverlay</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">plot</span><span class="p">,</span> <span class="s">&#39;style_opts&#39;</span><span class="p">):</span>
+                 <span class="n">opt_groups</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;style&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(</span><span class="n">allowed_keywords</span><span class="o">=</span><span class="n">style_opts</span><span class="p">),</span>
+                                    <span class="s">&#39;norm&#39;</span><span class="p">:</span>  <span class="n">Options</span><span class="p">(</span><span class="n">framewise</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">axiswise</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                                                     <span class="n">allowed_keywords</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;framewise&#39;</span><span class="p">,</span>
+                                                                       <span class="s">&#39;axiswise&#39;</span><span class="p">])})</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">view_class</span><span class="o">.</span><span class="n">__name__</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span>  <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="n">backend</span><span class="p">]:</span>
+                <span class="n">cls</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="n">backend</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt_groups</span>
 
 </div>
     <span class="nd">@classmethod</span>
@@ -988,13 +1031,13 @@
                                                                       <span class="s">&#39;axiswise&#39;</span><span class="p">])})</span>
             <span class="n">path_items</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt_groups</span>
 
-        <span class="n">cls</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
-                                  <span class="n">groups</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;style&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(),</span>
-                                          <span class="s">&#39;plot&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(),</span>
-                                          <span class="s">&#39;norm&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">()})</span>
+        <span class="n">cls</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
+                                          <span class="n">groups</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;style&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(),</span>
+                                                  <span class="s">&#39;plot&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(),</span>
+                                                  <span class="s">&#39;norm&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">()})</span>
 
         <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">option_setters</span><span class="p">:</span>
-            <span class="n">fn</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
+            <span class="n">fn</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="n">backend</span><span class="p">])</span>
 
 </div></div>
 <div class="viewcode-block" id="StoreOptions"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions">[docs]</a><span class="k">class</span> <span class="nc">StoreOptions</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -1022,7 +1065,7 @@
 <span class="sd">        matching the applied_keys. This method can only be called if</span>
 <span class="sd">        there is a tree with a matching id in Store.custom_options</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">new_id</span> <span class="ow">in</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">new_id</span> <span class="ow">in</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span><span class="s">&quot;The set_ids method requires &quot;</span>
                                  <span class="s">&quot;Store.custom_options to contain&quot;</span>
                                  <span class="s">&quot; a tree with id </span><span class="si">%d</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">new_id</span><span class="p">)</span>
@@ -1069,8 +1112,8 @@
 <span class="sd">        Given a specification, validated it against the default</span>
 <span class="sd">        options tree (Store.options)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">options</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="n">items</span><span class="o">=</span><span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span>
-                             <span class="n">groups</span><span class="o">=</span><span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="n">items</span><span class="o">=</span><span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">()</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span>
+                             <span class="n">groups</span><span class="o">=</span><span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">()</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">apply_customizations</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
 
 </div>
@@ -1109,19 +1152,19 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">clones</span><span class="p">,</span> <span class="n">id_mapping</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">[]</span>
         <span class="n">obj_ids</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">get_object_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-        <span class="n">store_ids</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+        <span class="n">store_ids</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
         <span class="n">offset</span> <span class="o">=</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">store_ids</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">store_ids</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
         <span class="n">obj_ids</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">obj_ids</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span> <span class="k">else</span> <span class="n">obj_ids</span>
         <span class="k">for</span> <span class="n">tree_id</span> <span class="ow">in</span> <span class="n">obj_ids</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">tree_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-                <span class="n">original</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">[</span><span class="n">tree_id</span><span class="p">]</span>
+                <span class="n">original</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">()[</span><span class="n">tree_id</span><span class="p">]</span>
                 <span class="n">clone</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="n">items</span> <span class="o">=</span> <span class="n">original</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span>
                                    <span class="n">groups</span> <span class="o">=</span> <span class="n">original</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span>
                 <span class="n">clones</span><span class="p">[</span><span class="n">tree_id</span> <span class="o">+</span> <span class="n">offset</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">clone</span>
                 <span class="n">id_mapping</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">tree_id</span><span class="p">,</span> <span class="n">tree_id</span> <span class="o">+</span> <span class="n">offset</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">clones</span><span class="p">[</span><span class="n">offset</span><span class="p">]</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="n">groups</span><span class="o">=</span><span class="p">{</span><span class="n">group</span><span class="p">:</span> <span class="n">Options</span><span class="p">()</span>
-                                                    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">groups</span><span class="p">})</span>
+                                                    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">()</span><span class="o">.</span><span class="n">groups</span><span class="p">})</span>
                 <span class="n">id_mapping</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">None</span><span class="p">,</span> <span class="n">offset</span><span class="p">))</span>
 
         <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">cls</span><span class="o">.</span><span class="n">apply_customizations</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="k">if</span> <span class="n">options</span> <span class="k">else</span> <span class="n">t</span>
@@ -1140,7 +1183,7 @@
 <span class="sd">        &gt;&gt;&gt; sorted(merged[&#39;Curve&#39;][&#39;style&#39;].items())</span>
 <span class="sd">        [(&#39;color&#39;, &#39;b&#39;), (&#39;linewidth&#39;, 10)]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">groups</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">()</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">options</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="nb">set</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&lt;=</span> <span class="n">groups</span><span class="p">):</span>
             <span class="n">kwargs</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="n">options</span><span class="p">,</span> <span class="bp">None</span>
         <span class="k">elif</span> <span class="p">(</span><span class="n">options</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">k</span> <span class="ow">in</span> <span class="n">groups</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">options</span><span class="p">)):</span>
@@ -1175,13 +1218,13 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">ids</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">capture_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-            <span class="n">original_custom_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="n">original_custom_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
             <span class="k">return</span> <span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="n">original_custom_keys</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="p">(</span><span class="n">ids</span><span class="p">,</span> <span class="n">original_custom_keys</span><span class="p">)</span> <span class="o">=</span> <span class="n">state</span>
-            <span class="n">current_custom_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="n">current_custom_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">()</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
             <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">current_custom_keys</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">original_custom_keys</span><span class="p">):</span>
-                <span class="k">del</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="k">del</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">()[</span><span class="n">key</span><span class="p">]</span>
                 <span class="n">cls</span><span class="o">.</span><span class="n">restore_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
 </div>
     <span class="nd">@classmethod</span>
@@ -1254,7 +1297,7 @@
         <span class="n">options</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">merge_options</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">spec</span><span class="p">,</span> <span class="n">compositor_applied</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">expand_compositor_keys</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
         <span class="n">custom_trees</span><span class="p">,</span> <span class="n">id_mapping</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">create_custom_trees</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">spec</span><span class="p">)</span>
-        <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">custom_trees</span><span class="p">)</span>
+        <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">custom_trees</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">tree_id</span><span class="p">,</span> <span class="p">(</span><span class="n">match_id</span><span class="p">,</span> <span class="n">new_id</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">custom_trees</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">id_mapping</span><span class="p">):</span>
             <span class="n">cls</span><span class="o">.</span><span class="n">propagate_ids</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">match_id</span><span class="p">,</span> <span class="n">new_id</span><span class="p">,</span> <span class="n">compositor_applied</span><span class="o">+</span><span class="nb">list</span><span class="p">(</span><span class="n">spec</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
         <span class="k">return</span> <span class="n">obj</span></div></div>

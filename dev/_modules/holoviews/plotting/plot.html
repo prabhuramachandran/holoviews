@@ -189,6 +189,44 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span>
 
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">lookup_options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">group</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">renderer</span><span class="o">.</span><span class="n">backend</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">group</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="PlotWrapper"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.plot.PlotWrapper">[docs]</a><span class="k">class</span> <span class="nc">PlotWrapper</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wrapper to select the plotting class based on a function of the</span>
+<span class="sd">    plotted object. Optionally a list of plots to draw plot and style</span>
+<span class="sd">    options from may be supplied.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="n">plots</span><span class="o">=</span><span class="p">[]):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">function</span> <span class="o">=</span> <span class="n">fn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">plots</span> <span class="o">=</span> <span class="n">plots</span>
+
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">function</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">style_opts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">cls</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plots</span><span class="p">:</span>
+            <span class="n">opts</span> <span class="o">+=</span> <span class="n">cls</span><span class="o">.</span><span class="n">style_opts</span>
+        <span class="k">return</span> <span class="n">opts</span>
+
+
+    <span class="nd">@style_opts.setter</span>
+    <span class="k">def</span> <span class="nf">style_opts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">cls</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plots</span><span class="p">:</span>
+           <span class="n">cls</span><span class="o">.</span><span class="n">style_opts</span> <span class="o">=</span> <span class="n">val</span>
+
+
+    <span class="k">def</span> <span class="nf">params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">p</span><span class="p">:</span><span class="bp">None</span> <span class="k">for</span> <span class="n">cls</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">plots</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">params</span><span class="p">())}</span>
 
 </div>
 <div class="viewcode-block" id="DimensionedPlot"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.plotting.html#holoviews.plotting.plot.DimensionedPlot">[docs]</a><span class="k">class</span> <span class="nc">DimensionedPlot</span><span class="p">(</span><span class="n">Plot</span><span class="p">):</span>
@@ -317,7 +355,10 @@
         <span class="k">for</span> <span class="n">gid</span><span class="p">,</span> <span class="n">element_spec_group</span> <span class="ow">in</span> <span class="n">id_groups</span><span class="p">:</span>
             <span class="n">gid</span> <span class="o">=</span> <span class="bp">None</span> <span class="k">if</span> <span class="n">gid</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="n">gid</span>
             <span class="n">group_specs</span> <span class="o">=</span> <span class="p">[</span><span class="n">el</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">element_spec_group</span><span class="p">]</span>
-            <span class="n">optstree</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gid</span><span class="p">,</span> <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
+
+            <span class="n">backend</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">renderer</span><span class="o">.</span><span class="n">backend</span>
+            <span class="n">optstree</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">(</span>
+                <span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gid</span><span class="p">,</span> <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">backend</span><span class="p">))</span>
             <span class="c"># Get the normalization options for the current id</span>
             <span class="c"># and match against customizable elements</span>
             <span class="k">for</span> <span class="n">opts</span> <span class="ow">in</span> <span class="n">optstree</span><span class="p">:</span>
@@ -358,7 +399,7 @@
 <span class="sd">        in opts for the specified opt_type and specs</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">lookup</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">((</span><span class="nb">type</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">group</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">label</span><span class="p">),</span>
-                            <span class="p">{</span><span class="n">o</span><span class="p">:</span> <span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">opt_type</span><span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+                            <span class="p">{</span><span class="n">o</span><span class="p">:</span> <span class="n">cls</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">opt_type</span><span class="p">)</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
                              <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">opts</span><span class="p">})</span>
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="n">lookup</span><span class="p">,</span> <span class="n">specs</span><span class="p">))</span>
 
@@ -400,10 +441,10 @@
                                <span class="n">kdims</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;Frame&#39;</span><span class="p">],</span> <span class="nb">id</span><span class="o">=</span><span class="n">element</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">map</span> <span class="o">=</span> <span class="n">element</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="s">&#39;style&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">style</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">style</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="s">&#39;style&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">style</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">style</span>
         <span class="n">dimensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">kdims</span> <span class="k">if</span> <span class="n">dimensions</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">else</span> <span class="n">dimensions</span>
         <span class="n">keys</span> <span class="o">=</span> <span class="n">keys</span> <span class="k">if</span> <span class="n">keys</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-        <span class="n">plot_opts</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">plot_opts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">map</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">GenericElementPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="n">keys</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">dimensions</span><span class="p">,</span> <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="o">**</span><span class="n">plot_opts</span><span class="p">))</span>
 
 
@@ -457,7 +498,7 @@
             <span class="n">range_extents</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">NaN</span><span class="p">,)</span> <span class="o">*</span> <span class="n">num</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">apply_extents</span><span class="p">:</span>
-            <span class="n">norm_opts</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="s">&#39;norm&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span>
+            <span class="n">norm_opts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">view</span><span class="p">,</span> <span class="s">&#39;norm&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span>
             <span class="k">if</span> <span class="n">norm_opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;framewise&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
                 <span class="n">extents</span> <span class="o">=</span> <span class="n">view</span><span class="o">.</span><span class="n">extents</span>
             <span class="k">else</span><span class="p">:</span>
@@ -593,7 +634,7 @@
             <span class="n">cyclic_index</span> <span class="o">=</span> <span class="n">group_counter</span><span class="p">[</span><span class="n">group_key</span><span class="p">]</span>
             <span class="n">group_counter</span><span class="p">[</span><span class="n">group_key</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
             <span class="n">group_length</span> <span class="o">=</span> <span class="n">map_lengths</span><span class="p">[</span><span class="n">group_key</span><span class="p">]</span>
-            <span class="n">style</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">vmap</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="s">&#39;style&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">max_cycles</span><span class="p">(</span><span class="n">group_length</span><span class="p">)</span>
+            <span class="n">style</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">vmap</span><span class="o">.</span><span class="n">last</span><span class="p">,</span> <span class="s">&#39;style&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">max_cycles</span><span class="p">(</span><span class="n">group_length</span><span class="p">)</span>
             <span class="n">plotopts</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">style</span><span class="p">,</span> <span class="n">cyclic_index</span><span class="o">=</span><span class="n">cyclic_index</span><span class="p">,</span>
                             <span class="n">zorder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">zorder</span><span class="o">+</span><span class="n">zorder</span><span class="p">,</span> <span class="n">ranges</span><span class="o">=</span><span class="n">ranges</span><span class="p">,</span> <span class="n">overlaid</span><span class="o">=</span><span class="n">overlay_type</span><span class="p">,</span>
                             <span class="n">layout_dimensions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">layout_dimensions</span><span class="p">,</span>
@@ -713,7 +754,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">coords</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">product</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rows</span><span class="p">),</span>
                                    <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cols</span><span class="p">)))</span>
         <span class="n">dimensions</span><span class="p">,</span> <span class="n">keys</span> <span class="o">=</span> <span class="n">traversal</span><span class="o">.</span><span class="n">unique_dimkeys</span><span class="p">(</span><span class="n">layout</span><span class="p">)</span>
-        <span class="n">plotopts</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span>
+        <span class="n">plotopts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lookup_options</span><span class="p">(</span><span class="n">layout</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">options</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">GenericLayoutPlot</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">keys</span><span class="o">=</span><span class="n">keys</span><span class="p">,</span> <span class="n">dimensions</span><span class="o">=</span><span class="n">dimensions</span><span class="p">,</span>
                                              <span class="n">uniform</span><span class="o">=</span><span class="n">traversal</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">layout</span><span class="p">),</span>
                                              <span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="n">plotopts</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">))</span></div>
