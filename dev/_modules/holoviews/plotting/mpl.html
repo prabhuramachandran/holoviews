@@ -139,10 +139,10 @@
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">ticker</span>
 <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">rc_params_from_file</span>
 
-<span class="kn">from</span> <span class="nn">...core.options</span> <span class="kn">import</span> <span class="n">Cycle</span><span class="p">,</span> <span class="n">Palette</span><span class="p">,</span> <span class="n">Options</span><span class="p">,</span> <span class="n">StoreOptions</span>
-<span class="kn">from</span> <span class="nn">...core</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">NdLayout</span><span class="p">,</span> <span class="n">Overlay</span><span class="p">,</span> <span class="n">HoloMap</span>
-<span class="kn">from</span> <span class="nn">...core.element</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
-<span class="kn">from</span> <span class="nn">..plot</span> <span class="kn">import</span> <span class="n">PlotWrapper</span>
+<span class="kn">from</span> <span class="nn">...core</span> <span class="kn">import</span> <span class="n">Dimension</span><span class="p">,</span> <span class="n">Layout</span><span class="p">,</span> <span class="n">GridSpace</span><span class="p">,</span> <span class="n">AdjointLayout</span><span class="p">,</span> <span class="n">NdOverlay</span>
+<span class="kn">from</span> <span class="nn">...core.options</span> <span class="kn">import</span> <span class="n">Cycle</span><span class="p">,</span> <span class="n">Palette</span><span class="p">,</span> <span class="n">Options</span>
+<span class="kn">from</span> <span class="nn">...element</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
+<span class="kn">from</span> <span class="nn">..plot</span> <span class="kn">import</span> <span class="n">PlotSelector</span>
 <span class="kn">from</span> <span class="nn">.annotation</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
 <span class="kn">from</span> <span class="nn">.chart</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
 <span class="kn">from</span> <span class="nn">.chart3d</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># pyflakes:ignore (API import)</span>
@@ -203,16 +203,14 @@
 <span class="c"># switching to RasterGridPlot if the plot only contains</span>
 <span class="c"># Raster Elements</span>
 <span class="n">BasicGridPlot</span> <span class="o">=</span> <span class="n">GridPlot</span>
-<span class="k">def</span> <span class="nf">grid_wrapper</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">grid_selector</span><span class="p">(</span><span class="n">grid</span><span class="p">):</span>
     <span class="n">raster_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="bp">True</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">Raster</span><span class="p">)</span> <span class="k">else</span> <span class="bp">False</span>
     <span class="n">all_raster</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">traverse</span><span class="p">(</span><span class="n">raster_fn</span><span class="p">,</span> <span class="p">[</span><span class="n">Element</span><span class="p">]))</span>
-    <span class="k">if</span> <span class="n">all_raster</span><span class="p">:</span>
-        <span class="n">plot_class</span> <span class="o">=</span> <span class="n">RasterGridPlot</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">plot_class</span> <span class="o">=</span> <span class="n">BasicGridPlot</span>
-    <span class="k">return</span> <span class="n">plot_class</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s">&#39;RasterGridPlot&#39;</span> <span class="k">if</span> <span class="n">all_raster</span> <span class="k">else</span> <span class="s">&#39;GridPlot&#39;</span>
 
-<span class="n">GridPlot</span> <span class="o">=</span> <span class="n">PlotWrapper</span><span class="p">(</span><span class="n">grid_wrapper</span><span class="p">,</span> <span class="n">plots</span><span class="o">=</span><span class="p">[</span><span class="n">GridPlot</span><span class="p">,</span> <span class="n">RasterGridPlot</span><span class="p">])</span>
+<span class="n">GridPlot</span> <span class="o">=</span> <span class="n">PlotSelector</span><span class="p">(</span><span class="n">grid_selector</span><span class="p">,</span>
+                        <span class="n">plot_classes</span><span class="o">=</span><span class="p">[(</span><span class="s">&#39;GridPlot&#39;</span><span class="p">,</span> <span class="n">BasicGridPlot</span><span class="p">),</span>
+                                      <span class="p">(</span><span class="s">&#39;RasterGridPlot&#39;</span><span class="p">,</span> <span class="n">RasterGridPlot</span><span class="p">)])</span>
 
 <span class="c"># Register default Elements</span>
 <span class="n">Store</span><span class="o">.</span><span class="n">register</span><span class="p">({</span><span class="n">Curve</span><span class="p">:</span> <span class="n">CurvePlot</span><span class="p">,</span>
