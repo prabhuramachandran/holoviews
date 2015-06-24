@@ -243,7 +243,8 @@
 
 
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">(</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">(values=</span><span class="si">%s</span><span class="s">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__name__</span><span class="p">,</span>
+                                  <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">el</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">])</span>
 
 
 </div>
@@ -433,15 +434,41 @@
 <span class="sd">    given an object and a mode. For a given node of the tree, the</span>
 <span class="sd">    options method computes a Options object containing the result of</span>
 <span class="sd">    inheritance for a given group up to the root of the tree.</span>
+
+<span class="sd">    When constructing an OptionTree, you can specify the option groups</span>
+<span class="sd">    as a list (i.e empty initial option groups at the root) or as a</span>
+<span class="sd">    dictionary (e.g groups={&#39;style&#39;:Option()}). You can also</span>
+<span class="sd">    initialize the OptionTree with the options argument together with</span>
+<span class="sd">    the **kwargs - see StoreOptions.merge_options for more information</span>
+<span class="sd">    on the options specification syntax.</span>
+
+<span class="sd">    You can use the string specifier &#39;.&#39; to refer to the root node in</span>
+<span class="sd">    the options specification. This acts as an alternative was of</span>
+<span class="sd">    specifying the options groups of the current node. Note that this</span>
+<span class="sd">    approach method may only be used with the group lists format.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">identifier</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">groups</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">identifier</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">groups</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
         <span class="k">if</span> <span class="n">groups</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Please supply groups dictionary&#39;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;groups&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">groups</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&#39;Please supply groups list or dictionary&#39;</span><span class="p">)</span>
+        <span class="n">_groups</span> <span class="o">=</span> <span class="p">{</span><span class="n">g</span><span class="p">:</span><span class="n">Options</span><span class="p">()</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">}</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="n">groups</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;groups&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">_groups</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_instantiated&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">False</span>
         <span class="n">AttrTree</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;_instantiated&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+        <span class="n">options</span> <span class="o">=</span> <span class="n">StoreOptions</span><span class="o">.</span><span class="n">merge_options</span><span class="p">(</span><span class="n">_groups</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">options</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">root_groups</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">root_groups</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;groups&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="n">g</span><span class="p">:</span><span class="n">Options</span><span class="p">(</span><span class="o">**</span><span class="n">root_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">g</span><span class="p">,{}))</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">_groups</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+        <span class="k">elif</span> <span class="n">root_groups</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Group specification as a dictionary only supported if &quot;</span>
+                            <span class="s">&quot;the root node &#39;.&#39; syntax not used in the options.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">options</span><span class="p">:</span>
+            <span class="n">StoreOptions</span><span class="o">.</span><span class="n">apply_customizations</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
 
 
     <span class="k">def</span> <span class="nf">_merge_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">group_name</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
@@ -591,20 +618,42 @@
 
         <span class="k">return</span> <span class="n">Options</span><span class="p">(</span><span class="o">**</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">options</span><span class="p">(</span><span class="n">group</span><span class="p">,</span><span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span><span class="o">.</span><span class="n">kwargs</span><span class="p">,</span>
                               <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">group</span><span class="p">]</span><span class="o">.</span><span class="n">kwargs</span><span class="p">))</span>
-
 </div>
-    <span class="k">def</span> <span class="nf">_node_identifier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">parent</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="s">&#39;--+&#39;</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">values</span> <span class="o">=</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">repr</span><span class="p">(</span><span class="n">group</span><span class="p">)</span> <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
-            <span class="k">return</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">identifier</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
-
-
     <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_identifier</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">OptionTree</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__repr__</span><span class="p">()</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evalable representation of the OptionTree.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="s">&#39;groups&#39;</span><span class="p">]</span>
+        <span class="c"># Tab and group entry separators</span>
+        <span class="n">tab</span><span class="p">,</span> <span class="n">gsep</span> <span class="o">=</span> <span class="s">&#39;   &#39;</span><span class="p">,</span> <span class="s">&#39;,</span><span class="se">\n\n</span><span class="s">&#39;</span>
+        <span class="c"># Entry seperator and group specifications</span>
+        <span class="n">esep</span><span class="p">,</span> <span class="n">gspecs</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;,</span><span class="se">\n</span><span class="s">&quot;</span><span class="o">+</span><span class="p">(</span><span class="n">tab</span><span class="o">*</span><span class="mi">2</span><span class="p">)),</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">especs</span><span class="p">,</span> <span class="n">accumulator</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">groups</span><span class="p">[</span><span class="n">group</span><span class="p">]</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">!=</span> <span class="p">{}:</span>
+                <span class="n">accumulator</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;.&#39;</span><span class="p">,</span> <span class="n">groups</span><span class="p">[</span><span class="n">group</span><span class="p">]</span><span class="o">.</span><span class="n">kwargs</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                <span class="n">kwargs</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">groups</span><span class="p">[</span><span class="n">group</span><span class="p">]</span><span class="o">.</span><span class="n">kwargs</span>
+                <span class="n">accumulator</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">kwargs</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">kws</span><span class="p">)</span> <span class="ow">in</span> <span class="n">accumulator</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">group</span><span class="o">==</span><span class="s">&#39;norm&#39;</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">kws</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="ow">is</span> <span class="bp">False</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;axiswise&#39;</span><span class="p">,</span><span class="s">&#39;framewise&#39;</span><span class="p">]):</span>
+                    <span class="k">continue</span>
+                <span class="k">elif</span> <span class="n">kws</span><span class="p">:</span>
+                    <span class="n">especs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">t</span><span class="p">,</span> <span class="n">kws</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">especs</span><span class="p">:</span>
+                <span class="n">format_kws</span> <span class="o">=</span> <span class="p">[(</span><span class="n">t</span><span class="p">,</span><span class="s">&#39;dict(</span><span class="si">%s</span><span class="s">)&#39;</span>
+                               <span class="o">%</span> <span class="s">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s">&#39;</span><span class="si">%s</span><span class="s">=</span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">kws</span><span class="o">.</span><span class="n">items</span><span class="p">())))</span>
+                              <span class="k">for</span> <span class="n">t</span><span class="p">,</span><span class="n">kws</span> <span class="ow">in</span> <span class="n">especs</span><span class="p">]</span>
+                <span class="n">ljust</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span><span class="n">_</span> <span class="ow">in</span> <span class="n">format_kws</span><span class="p">)</span>
+                <span class="n">sep</span> <span class="o">=</span> <span class="p">(</span><span class="n">tab</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">format_kws</span><span class="p">)</span> <span class="o">&gt;</span><span class="mi">1</span> <span class="k">else</span> <span class="s">&#39;&#39;</span>
+                <span class="n">entries</span> <span class="o">=</span> <span class="n">sep</span> <span class="o">+</span> <span class="n">esep</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">sep</span><span class="o">+</span><span class="s">&#39;</span><span class="si">%r</span><span class="s"> : </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="n">ljust</span><span class="p">),</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">format_kws</span><span class="p">])</span>
+                <span class="n">gspecs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s">&#39;</span><span class="si">%s%s</span><span class="s">={</span><span class="se">\n</span><span class="si">%s</span><span class="s">}&#39;</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">format_kws</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">1</span> <span class="k">else</span> <span class="s">&#39;</span><span class="si">%s%s</span><span class="s">={</span><span class="si">%s</span><span class="s">}&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="n">tab</span><span class="p">,</span><span class="n">group</span><span class="p">,</span> <span class="n">entries</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="s">&#39;OptionTree(groups=</span><span class="si">%s</span><span class="s">,</span><span class="se">\n</span><span class="si">%s</span><span class="se">\n</span><span class="s">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">gsep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">gspecs</span><span class="p">))</span>
 
 
 </div>
@@ -978,7 +1027,7 @@
 
         <span class="n">groups</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">,</span> <span class="s">&#39;norm&#39;</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">backend</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">_options</span><span class="p">:</span>
-            <span class="n">cls</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">([],</span> <span class="n">groups</span><span class="o">=</span><span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">Options</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">})</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">([],</span> <span class="n">groups</span><span class="o">=</span><span class="n">groups</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">backend</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">_custom_options</span><span class="p">:</span>
             <span class="n">cls</span><span class="o">.</span><span class="n">_custom_options</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -1043,12 +1092,11 @@
             <span class="n">path_items</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt_groups</span>
 
         <span class="n">cls</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="n">backend</span><span class="p">]</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">path_items</span><span class="o">.</span><span class="n">items</span><span class="p">()),</span>
-                                          <span class="n">groups</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;style&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(),</span>
-                                                  <span class="s">&#39;plot&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">(),</span>
-                                                  <span class="s">&#39;norm&#39;</span><span class="p">:</span> <span class="n">Options</span><span class="p">()})</span>
+                                          <span class="n">groups</span><span class="o">=</span><span class="p">[</span><span class="s">&#39;style&#39;</span><span class="p">,</span> <span class="s">&#39;plot&#39;</span><span class="p">,</span> <span class="s">&#39;norm&#39;</span><span class="p">])</span>
 
         <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">cls</span><span class="o">.</span><span class="n">option_setters</span><span class="p">:</span>
             <span class="n">fn</span><span class="p">(</span><span class="n">cls</span><span class="o">.</span><span class="n">_options</span><span class="p">[</span><span class="n">backend</span><span class="p">])</span>
+
 
 </div></div>
 <div class="viewcode-block" id="StoreOptions"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions">[docs]</a><span class="k">class</span> <span class="nc">StoreOptions</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -1057,6 +1105,12 @@
 <span class="sd">    setting customized option tress on the Store. Designed for use by</span>
 <span class="sd">    either advanced users or the %opts line and cell magics which use</span>
 <span class="sd">    this machinery.</span>
+
+<span class="sd">    This class also holds general classmethods for working with</span>
+<span class="sd">    OptionTree instances: as OptionTrees are designed for attribute</span>
+<span class="sd">    access it is best to minimize the number of methods implemented on</span>
+<span class="sd">    that class and implement the necessary utilities on StoreOptions</span>
+<span class="sd">    instead.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="c">#===============#</span>
@@ -1174,8 +1228,7 @@
                 <span class="n">clones</span><span class="p">[</span><span class="n">tree_id</span> <span class="o">+</span> <span class="n">offset</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">clone</span>
                 <span class="n">id_mapping</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">tree_id</span><span class="p">,</span> <span class="n">tree_id</span> <span class="o">+</span> <span class="n">offset</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">clones</span><span class="p">[</span><span class="n">offset</span><span class="p">]</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="n">groups</span><span class="o">=</span><span class="p">{</span><span class="n">group</span><span class="p">:</span> <span class="n">Options</span><span class="p">()</span>
-                                                    <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">()</span><span class="o">.</span><span class="n">groups</span><span class="p">})</span>
+                <span class="n">clones</span><span class="p">[</span><span class="n">offset</span><span class="p">]</span> <span class="o">=</span> <span class="n">OptionTree</span><span class="p">(</span><span class="n">groups</span><span class="o">=</span><span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">()</span><span class="o">.</span><span class="n">groups</span><span class="p">)</span>
                 <span class="n">id_mapping</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="bp">None</span><span class="p">,</span> <span class="n">offset</span><span class="p">))</span>
 
         <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">cls</span><span class="o">.</span><span class="n">apply_customizations</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="k">if</span> <span class="n">options</span> <span class="k">else</span> <span class="n">t</span>
@@ -1183,18 +1236,18 @@
 
 </div>
     <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="StoreOptions.merge_options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.merge_options">[docs]</a>    <span class="k">def</span> <span class="nf">merge_options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="StoreOptions.merge_options"><a class="viewcode-back" href="../../../Reference_Manual/holoviews.core.html#holoviews.core.options.StoreOptions.merge_options">[docs]</a>    <span class="k">def</span> <span class="nf">merge_options</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="n">groups</span><span class="p">,</span> <span class="n">options</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Given a full options dictionary and options groups specified</span>
 <span class="sd">        as a keywords such as return the full set of merged options:</span>
 
 <span class="sd">        &gt;&gt;&gt; options={&#39;Curve&#39;:{&#39;style&#39;:dict(color=&#39;b&#39;)}}</span>
 <span class="sd">        &gt;&gt;&gt; style={&#39;Curve&#39;:{&#39;linewidth&#39;:10 }}</span>
-<span class="sd">        &gt;&gt;&gt; merged = StoreOptions.merge_options(options, style=style)</span>
+<span class="sd">        &gt;&gt;&gt; merged = StoreOptions.merge_options([&#39;style&#39;], options, style=style)</span>
 <span class="sd">        &gt;&gt;&gt; sorted(merged[&#39;Curve&#39;][&#39;style&#39;].items())</span>
 <span class="sd">        [(&#39;color&#39;, &#39;b&#39;), (&#39;linewidth&#39;, 10)]</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">groups</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">()</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">groups</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">options</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="nb">set</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&lt;=</span> <span class="n">groups</span><span class="p">):</span>
             <span class="n">kwargs</span><span class="p">,</span> <span class="n">options</span> <span class="o">=</span> <span class="n">options</span><span class="p">,</span> <span class="bp">None</span>
         <span class="k">elif</span> <span class="p">(</span><span class="n">options</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">k</span> <span class="ow">in</span> <span class="n">groups</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">options</span><span class="p">)):</span>
@@ -1254,7 +1307,8 @@
         <span class="k">if</span> <span class="p">(</span><span class="n">options</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">and</span> <span class="n">kwargs</span> <span class="o">==</span> <span class="p">{}:</span> <span class="k">yield</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">optstate</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">state</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
-            <span class="n">options</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">merge_options</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">groups</span> <span class="o">=</span> <span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">()</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="n">options</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">merge_options</span><span class="p">(</span><span class="n">groups</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
             <span class="n">cls</span><span class="o">.</span><span class="n">set_options</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">options</span><span class="p">)</span>
             <span class="k">yield</span>
         <span class="k">if</span> <span class="n">options</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
@@ -1305,7 +1359,7 @@
 
         <span class="c"># {&#39;Image.Channel:{&#39;plot&#39;:  Options(size=50),</span>
         <span class="c">#                  &#39;style&#39;: Options(&#39;style&#39;, cmap=&#39;Blues&#39;)]}</span>
-        <span class="n">options</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">merge_options</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">merge_options</span><span class="p">(</span><span class="n">Store</span><span class="o">.</span><span class="n">options</span><span class="p">()</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">options</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">spec</span><span class="p">,</span> <span class="n">compositor_applied</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">expand_compositor_keys</span><span class="p">(</span><span class="n">options</span><span class="p">)</span>
         <span class="n">custom_trees</span><span class="p">,</span> <span class="n">id_mapping</span> <span class="o">=</span> <span class="n">cls</span><span class="o">.</span><span class="n">create_custom_trees</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">spec</span><span class="p">)</span>
         <span class="n">Store</span><span class="o">.</span><span class="n">custom_options</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">custom_trees</span><span class="p">)</span>
